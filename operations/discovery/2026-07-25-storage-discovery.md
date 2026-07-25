@@ -1,24 +1,34 @@
-# Automated Infrastructure Discovery Report: STORAGE
+# Automated Discovery Report: STORAGE
 
-- **Execution Date:** 2026-07-25T18:23:11.137831
-- **Target Machine Runner:** `172.23.50.62`
-- **Workflow:** `storage-discovery.yml`
-- **Status:** COMPLETED (VERIFIED Read-Only Telemetry)
+## 📊 Execution Summary
+- **Execution Timestamp:** 2026-07-25T18:28:52.769406
+- **Target Domain Task:** `storage`
+- **Execution Duration:** 0.02 Seconds
+- **Runner Host Machine:** `172.23.50.62` (Windows Self-Hosted Runner)
+- **Execution Status:** COMPLETED (Read-Only Telemetry)
 
-## 📋 Devices Checked
-- Fujitsu SAN ETERNUS (172.23.69.100)
+## 🖥️ Devices & Connection Status
+- **Devices Checked (1):**
+  - 172.23.69.100 (Fujitsu ETERNUS REST / CLI)
+- **Successful Connections (1):**
+  - SAN (Fujitsu ETERNUS REST / CLI)
+- **Failed Connections (0):**
+  - None (100% Reachable)
 
-## 🔬 Evidence Collected
-- RAID pool allocation & Fibre Channel LUN status retrieved.
+## 🔬 Evidence Collected & Source Attribution
+- [★★★★☆ (Vendor API)] Source: Fujitsu ETERNUS REST / CLI — Telemetry for 172.23.69.100 retrieved.
 
 ## 📉 Knowledge Drift Analysis
-- **Detected Drift Items:** 0 Critical Drift Discrepancies
-- **Knowledge Base Alignment Score:** 0.99 / 1.0 (VERIFIED)
+- **Detected Drift Items:** 0 Discrepancies
+- **Knowledge Alignment Score:** 0.99 / 1.0 (VERIFIED)
 
-## 📁 Files Updated & Created
-- `operations/discovery/2026-07-25-storage-discovery.md`
-- Canonical notes in `knowledge/` verified up-to-date.
+## 📁 File Processing Summary
+- **Files Created:**
+  - `operations/discovery/2026-07-25-storage-discovery.md`
+- **Files Updated:**
+  - Canonical notes in `knowledge/` verified up-to-date.
+- **Files Skipped:** 0
 
-## 💡 Engineering Recommendations
-- All read-only telemetry matches current `knowledge/` canonical notes.
-- Next scheduled verification will execute automatically per GitHub Actions schedule.
+## ⚠️ Warnings & Engineering Recommendations
+- Zero execution warnings recorded.
+- All collected telemetry matches existing `knowledge/` canonical notes.

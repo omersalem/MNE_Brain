@@ -1,0 +1,151 @@
+{
+  "version": "1.0.0",
+  "environment": "Ministry Infrastructure Digital Twin",
+  "paths": {
+    "knowledge": "knowledge",
+    "operations": "operations",
+    "intelligence": "intelligence",
+    "connectors": "connectors",
+    "reports": "operations/discovery"
+  },
+  "trust_levels": {
+    "live_device_cli": {
+      "level": 5,
+      "rating": "\u2605\u2605\u2605\u2605\u2605",
+      "description": "Live Read-Only CLI Telemetry"
+    },
+    "vendor_api": {
+      "level": 4,
+      "rating": "\u2605\u2605\u2605\u2605\u2606",
+      "description": "Vendor REST API Telemetry"
+    },
+    "config_export": {
+      "level": 4,
+      "rating": "\u2605\u2605\u2605\u2605\u2606",
+      "description": "Exported Configuration Snapshot"
+    },
+    "knowledge_base": {
+      "level": 3,
+      "rating": "\u2605\u2605\u2605\u2606\u2606",
+      "description": "Vault Canonical Knowledge Note"
+    },
+    "manual_docs": {
+      "level": 2,
+      "rating": "\u2605\u2605\u2606\u2606\u2606",
+      "description": "Legacy Manual Documentation"
+    },
+    "user_statement": {
+      "level": 1,
+      "rating": "\u2605\u2606\u2606\u2606\u2606",
+      "description": "User Chat Assumption"
+    }
+  },
+  "platforms": {
+    "fortigate": {
+      "enabled": true,
+      "connector": "connectors.fortigate",
+      "mgmt_ip": "172.23.70.4",
+      "port": 443,
+      "auth_method": "api_key_or_ssh",
+      "trust_level": "vendor_api"
+    },
+    "cisco": {
+      "enabled": true,
+      "connector": "connectors.cisco",
+      "mgmt_ip": "172.23.70.254",
+      "port": 22,
+      "auth_method": "ssh_read_only",
+      "trust_level": "live_device_cli"
+    },
+    "fmc": {
+      "enabled": true,
+      "connector": "connectors.fmc",
+      "mgmt_ip": "172.23.70.77",
+      "port": 443,
+      "auth_method": "rest_api",
+      "trust_level": "vendor_api"
+    },
+    "ftd": {
+      "enabled": true,
+      "connector": "connectors.ftd",
+      "mgmt_ip": "172.23.70.78",
+      "port": 443,
+      "auth_method": "rest_api",
+      "trust_level": "vendor_api"
+    },
+    "f5": {
+      "enabled": true,
+      "connector": "connectors.f5",
+      "mgmt_ip": "172.23.70.89",
+      "port": 443,
+      "auth_method": "icontrol_rest",
+      "trust_level": "vendor_api"
+    },
+    "vmware": {
+      "enabled": true,
+      "connector": "connectors.vmware",
+      "vcenter_ip": "172.23.69.38",
+      "port": 443,
+      "auth_method": "vsphere_rest_api",
+      "trust_level": "vendor_api"
+    },
+    "exchange": {
+      "enabled": true,
+      "connector": "connectors.exchange",
+      "host": "172.23.71.35",
+      "port": 5985,
+      "auth_method": "remote_powershell_ems",
+      "trust_level": "live_device_cli"
+    },
+    "ad": {
+      "enabled": true,
+      "connector": "connectors.ad",
+      "host": "172.23.71.27",
+      "port": 389,
+      "auth_method": "ldap_winrm",
+      "trust_level": "vendor_api"
+    },
+    "dns": {
+      "enabled": true,
+      "connector": "connectors.dns",
+      "dns_server": "172.23.71.27",
+      "port": 53,
+      "trust_level": "live_device_cli"
+    },
+    "dhcp": {
+      "enabled": true,
+      "connector": "connectors.dhcp",
+      "dhcp_server": "172.23.71.27",
+      "port": 67,
+      "trust_level": "live_device_cli"
+    },
+    "sccm": {
+      "enabled": true,
+      "connector": "connectors.sccm",
+      "host": "172.23.71.84",
+      "auth_method": "wmi_winrm",
+      "trust_level": "vendor_api"
+    },
+    "linux": {
+      "enabled": true,
+      "connector": "connectors.linux",
+      "mgmt_ip": "172.23.79.200",
+      "port": 22,
+      "auth_method": "ssh_read_only",
+      "trust_level": "live_device_cli"
+    },
+    "san": {
+      "enabled": true,
+      "connector": "connectors.san",
+      "mgmt_ip": "172.23.69.100",
+      "port": 443,
+      "auth_method": "eternus_rest_api",
+      "trust_level": "vendor_api"
+    }
+  },
+  "two_stage_update_policy": {
+    "stage1_auto_generate_reports": true,
+    "stage2_auto_promote_to_knowledge": false,
+    "promotion_requires_verification": true
+  }
+}

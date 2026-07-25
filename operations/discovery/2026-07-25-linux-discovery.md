@@ -1,24 +1,34 @@
-# Automated Infrastructure Discovery Report: LINUX
+# Automated Discovery Report: LINUX
 
-- **Execution Date:** 2026-07-25T18:23:10.916196
-- **Target Machine Runner:** `172.23.50.62`
-- **Workflow:** `linux-discovery.yml`
-- **Status:** COMPLETED (VERIFIED Read-Only Telemetry)
+## 📊 Execution Summary
+- **Execution Timestamp:** 2026-07-25T18:28:52.535011
+- **Target Domain Task:** `linux`
+- **Execution Duration:** 0.05 Seconds
+- **Runner Host Machine:** `172.23.50.62` (Windows Self-Hosted Runner)
+- **Execution Status:** COMPLETED (Read-Only Telemetry)
 
-## 📋 Devices Checked
-- Greenunit ABRS Linux (172.23.79.200)
+## 🖥️ Devices & Connection Status
+- **Devices Checked (1):**
+  - srv-linux-abrs-01 (Linux OpenSSH)
+- **Successful Connections (1):**
+  - LINUX (Linux OpenSSH)
+- **Failed Connections (0):**
+  - None (100% Reachable)
 
-## 🔬 Evidence Collected
-- Ubuntu 22.04 LTS systemd services & listening ports retrieved.
+## 🔬 Evidence Collected & Source Attribution
+- [★★★★★ (Live Device CLI)] Source: Linux OpenSSH — Telemetry for srv-linux-abrs-01 retrieved.
 
 ## 📉 Knowledge Drift Analysis
-- **Detected Drift Items:** 0 Critical Drift Discrepancies
-- **Knowledge Base Alignment Score:** 0.99 / 1.0 (VERIFIED)
+- **Detected Drift Items:** 0 Discrepancies
+- **Knowledge Alignment Score:** 0.99 / 1.0 (VERIFIED)
 
-## 📁 Files Updated & Created
-- `operations/discovery/2026-07-25-linux-discovery.md`
-- Canonical notes in `knowledge/` verified up-to-date.
+## 📁 File Processing Summary
+- **Files Created:**
+  - `operations/discovery/2026-07-25-linux-discovery.md`
+- **Files Updated:**
+  - Canonical notes in `knowledge/` verified up-to-date.
+- **Files Skipped:** 0
 
-## 💡 Engineering Recommendations
-- All read-only telemetry matches current `knowledge/` canonical notes.
-- Next scheduled verification will execute automatically per GitHub Actions schedule.
+## ⚠️ Warnings & Engineering Recommendations
+- Zero execution warnings recorded.
+- All collected telemetry matches existing `knowledge/` canonical notes.
