@@ -13,8 +13,8 @@
 
 ## 2. Core Engineering Principles
 
-### Traffic Path vs. Investigation Plan
-> **Crucial Rule:** Traffic Path $\neq$ Investigation Plan. The traffic path describes how packets travel. The investigation plan describes the minimum work required to identify the root cause. Never confuse them. Senior engineers minimize investigation scope before inspecting devices.
+### Information Gain vs. Device Topology
+> **Supreme Rule:** The purpose of verification is NOT to inspect devices. The purpose of verification is to REDUCE UNCERTAINTY. Every verification step must maximize Information Gain per unit of Operational Cost. Stop immediately when the primary hypothesis is confirmed or all competing hypotheses are eliminated.
 
 ### Order of Trust
 1. **Live Infrastructure** (Highest Trust — Supreme Truth)
@@ -25,60 +25,64 @@
 
 ---
 
-## 3. Investigation Planning Engine (12-Step Sequence)
+## 3. Information Gain Decision Engine (13-Step Adaptive Sequence)
 
-Every production investigation MUST follow this sequence before executing Live Verification:
+Every production investigation MUST follow this sequence before recommending Live Verification:
 
 ```
-1. Understand Problem ──> 2. Determine Scope ──> 3. Determine Blast Radius ──> 4. Generate Hypotheses
-                                                                                       │
-                                                                                       ▼
-8. Request Approval <─── 7. Present Plan <─── 6. Select Minimum Devices <─── 5. Rank by Probability
+1. Understand ──> 2. Scope ──> 3. Blast Radius ──> 4. Hypotheses ──> 5. Rank Probabilities
+                                                                               │
+                                                                               ▼
+9. Request Approval <── 8. Recommend Action <── 7. Evaluate Gain vs Cost <── 6. Measure Uncertainty
         │
         ▼
-9. Read-Only Discovery ─> 10. Update Hypotheses ─> 11. Pinpoint Root Cause ─> 12. Enrich Vault Knowledge
+10. Read-Only Discovery ─> 11. Update Probabilities ─> 12. Evaluate Stop Condition ─> 13. Deliver Diagnosis
 ```
 
 1. **Understand Problem:** Clarify affected service or endpoint.
-2. **Determine Scope:** Classify impact (Single User ➔ Single PC ➔ Single Floor ➔ Single Branch ➔ Global).
+2. **Determine Scope:** Classify impact (Single User ➔ Single Floor ➔ Single Branch ➔ Global).
 3. **Determine Blast Radius:** Identify affected systems vs. confirmed healthy systems.
 4. **Generate Hypotheses:** Map potential failure domains (L1/L2, L3 Routing, Firewall, Auth, DNS, Storage).
-5. **Rank Hypotheses by Probability:** Order hypotheses based on evidence and scope. Do not treat all hypotheses equally.
-6. **Select Minimum Devices Required:** Select the smallest possible set of devices required to confirm or eliminate top hypotheses. Never inspect devices unlikely to contribute to the diagnosis.
-7. **Present Investigation Plan & Exclusions:** Explain why target devices were selected and why other path devices were excluded.
-8. **Request Approval:** Wait for explicit user confirmation before running read-only queries.
-9. **Perform Read-Only Live Verification:** Execute minimal target connectors (`00_meta/framework/connectors/`).
-10. **Update Hypotheses & Exit Conditions:** Progressively eliminate non-causes based on success criteria.
-11. **Pinpoint Root Cause:** Deliver evidence-based diagnosis.
-12. **Enrich Vault Knowledge:** Update `knowledge/` canonical notes and promote reusable SOPs to `intelligence/runbooks/`.
+5. **Rank Hypotheses by Probability:** Order hypotheses based on evidence and vault notes.
+6. **Measure Current Uncertainty:** Quantify what facts remain unconfirmed.
+7. **Evaluate Verification Actions:** Estimate Expected Information Gain vs. Operational Cost for each possible check.
+8. **Recommend Highest-Value Verification Action:** Select the single action that eliminates the most uncertainty with the lowest cost.
+9. **Request Approval:** Wait for explicit user confirmation before running read-only queries.
+10. **Perform Read-Only Live Verification:** Execute minimal target connector (`00_meta/framework/connectors/`).
+11. **Update Probabilities & Eliminate Hypotheses:** Re-rank remaining hypotheses based on new evidence.
+12. **Evaluate Stop Condition:** **STOP IMMEDIATELY** if the primary hypothesis is disproved or confirmed. Never query remaining devices unnecessarily.
+13. **Deliver Evidence Diagnosis & Enrich Vault:** Update `knowledge/` canonical notes and log history in `operations/history/`.
 
 ---
 
-## 4. Mandatory Pre-Verification Investigation Plan Format
+## 4. Mandatory Information Gain Plan Format
 
 In Investigation Mode, before requesting Live Verification approval, The AI Agent MUST present:
 
 ```markdown
-### 📋 Investigation Plan
-- **Investigation Scope:** Single User | Single Floor (VLAN 22) | Single Branch | Global
-- **Blast Radius:** Affected: [Floor 2 Workstations] | Healthy: [Floors 1,3-6, Branches, Core Server Farm]
-- **Current Confidence:** LOW (0.35)
+### 💡 Information Gain Verification Plan
+- **Current Uncertainty:** Does target host `172.23.72.101` exist and respond on VLAN 72?
+- **Current Confidence:** LOW (0.30)
 - **Top Hypotheses (Ranked by Probability):**
-  1. CoreSwitch1 VLAN 22 SVI Gateway / ARP resolution failure (Probability: 60%)
-  2. Floor 2 Access Switch Port / Trunk VLAN tag mismatch (Probability: 30%)
-  3. Client Subnet IP / DHCP Lease Conflict (Probability: 10%)
-- **Excluded Hypotheses (With Reasoning):**
-  - FortiGate HQ Edge (Excluded: External Internet & cross-VLAN servers healthy)
-  - F5 WAF & Exchange DAG (Excluded: Core server farm healthy)
-- **Minimum Devices Required:** CoreSwitch1 (`172.23.70.254`), Floor 2 Access Switch (`172.23.70.221`)
-- **Success Criteria & Exit Conditions:** If `show ip arp vlan 22` on CoreSwitch1 resolves MAC ➔ Eliminate Layer 3, proceed to Access Switch port inspection.
+  1. Target IP `172.23.72.101` is offline or not provisioned on VLAN 72 (Probability: 70%)
+  2. SVI Gateway / Core Switch ARP table missing entry (Probability: 25%)
+  3. Client Subnet IP conflict (Probability: 5%)
+- **Recommended Verification Action:**
+  - **Priority:** 1 (Highest Value)
+  - **Target Device:** Cisco FTD Gateway (`172.23.70.78`)
+  - **Target Read Command:** `show arp | include 172.23.72.101`
+  - **Information Gain:** VERY HIGH (Immediately confirms if host MAC exists on VLAN 72)
+  - **Operational Cost:** VERY LOW (Single read command)
+  - **Estimated Execution Time:** 20 Seconds
+  - **Hypotheses Eliminated:** If ARP missing ➔ Instantly eliminates L3 Routing & Firewall Policy hypotheses.
+  - **Stop Condition:** If ARP is empty, STOP investigation immediately. Do not inspect FortiGate, Core, or DNS.
 ```
 
 ---
 
 ## 5. Intent-Based Mode Selection Engine
 - **⚡ Quick Mode (Intents: Learn, Explain, Search, Review Docs, Design):** Fast answer using static `knowledge/` notes. Never executes live discovery.
-- **🔍 Investigation Mode (Intents: Troubleshoot, Investigate, Verify, RCA, Unknown IP/Route):** Methodical, minimum-device Investigation Plan + Read-Only Live Verification + Verification Summary.
+- **🔍 Investigation Mode (Intents: Troubleshoot, Investigate, Verify, RCA, Unknown IP/Route):** Methodical, Information-Gain Verification Plan + Read-Only Live Verification + Verification Summary.
 
 ---
 
