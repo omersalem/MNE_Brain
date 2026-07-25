@@ -1,6 +1,6 @@
 ---
 name: "search"
-description: "Search across all vault notes, profiles, runbooks, and graph links. Classifies search results using Evidence-Based Reasoning."
+description: "Search across all vault notes and profiles. Uses Quick Mode for documented facts; escalates to Investigation Mode when objects are missing."
 ---
 
 # Skill: Search (`skills/search/skill.md`)
@@ -8,10 +8,8 @@ description: "Search across all vault notes, profiles, runbooks, and graph links
 > **Inheritance:** Extends `[[AGENTS.md]]` and `[[base-agent.md]]`.
 
 ## 1. Purpose
-Search the entire Brain for infrastructure objects while strictly separating Verified Facts, Documented Facts, Assumptions, and Unknown information.
+Search the Brain for infrastructure objects. Operates in **Quick Mode** for standard vault lookups; escalates to **Investigation Mode** when queried objects are unverified or missing.
 
-## 2. Evidence-Based Search Workflow
-1. **Traverse Vault Indices & Canonical Notes:** Search domain indices (`00_meta/04_indices/`), entity notes, profiles, and runbooks.
-2. **Classify Search Results:** Categorize findings into Documented Facts (vault notes) or Verified Facts (live telemetry).
-3. **Handle Missing Objects:** If an object is unknown, do NOT assume non-existence; list it as *Unknown* and recommend read-only Live Verification.
-4. **Conclude with Verification Summary:** Attach standard Verification Summary block detailing sources, confidence, and recommended next actions.
+## 2. Operational Mode Workflow
+- **Quick Mode (Documented Objects):** Search domain notes, profiles, and runbooks. Return concise findings with Wiki citations and confidence ratings.
+- **Investigation Mode Escalation (Missing Objects):** If object (IP, MAC, VM, VLAN) is missing, do NOT assume non-existence. Recommend read-only Live Verification and attach a Verification Summary.

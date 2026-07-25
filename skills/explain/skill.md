@@ -1,6 +1,6 @@
 ---
 name: "explain"
-description: "Explain network topologies, multi-device traffic flows, and component dependencies using Evidence-Based Reasoning."
+description: "Explain network topologies and path flows. Uses Quick Mode for design docs; escalates to Investigation Mode for live traffic paths."
 ---
 
 # Skill: Explain (`skills/explain/skill.md`)
@@ -8,10 +8,8 @@ description: "Explain network topologies, multi-device traffic flows, and compon
 > **Inheritance:** Extends `[[AGENTS.md]]` and `[[base-agent.md]]`.
 
 ## 1. Purpose
-Explain multi-tier network topologies, traffic flows, and component dependencies while distinguishing documentation from live reality.
+Explain multi-tier network topologies, traffic flows, and component dependencies. Uses **Quick Mode** for static architectural explanations; escalates to **Investigation Mode** for live path troubleshooting.
 
-## 2. Evidence-Based Explanation Workflow
-1. **Trace Multi-Device Hop Paths:** Map traffic flows sequentially: `Client ➔ Switch ➔ Core ➔ FortiGate ➔ FTD ➔ F5 ➔ Workload`.
-2. **Classify Path Telemetry:** Categorize each hop into *Verified Facts* (confirmed via telemetry) or *Documented Facts* (vault docs).
-3. **Declare Confidence & State Unknowns:** Never present assumptions as verified facts. Clearly state unknown hop parameters.
-4. **Conclude with Verification Summary:** Attach standard Verification Summary block with hop-by-hop Live Verification recommendations.
+## 2. Operational Mode Workflow
+- **Quick Mode (Architecture & Design):** Provide fast, structured explanations of network design and component roles.
+- **Investigation Mode (Live Path Troubleshooting):** Map multi-hop paths (`Client ➔ Switch ➔ Core ➔ FortiGate ➔ FTD ➔ F5 ➔ Workload`), declare confidence (`VERIFIED`, `HIGH`, `MEDIUM`, `LOW`), recommend hop-by-hop read-only Live Verification, and attach a Verification Summary.
