@@ -13,8 +13,8 @@
 
 ## 2. Core Engineering Principles
 
-### Information Gain vs. Device Topology
-> **Supreme Rule:** The purpose of verification is NOT to inspect devices. The purpose of verification is to REDUCE UNCERTAINTY. Every verification step must maximize Information Gain per unit of Operational Cost. Stop immediately when the primary hypothesis is confirmed or all competing hypotheses are eliminated.
+### Evidence-Driven Reasoning vs. Arbitrary Probabilities
+> **Supreme Rule:** Infrastructure engineers do not guess percentages. Infrastructure engineers evaluate evidence. Never assign arbitrary numerical probabilities (e.g. 60%, 30%). Hypotheses MUST be ranked qualitatively based on supporting, contradicting, and missing evidence (`Primary`, `Secondary`, `Possible`, `Unlikely`, `Eliminated`). Verification always targets the largest missing piece of evidence.
 
 ### Order of Trust
 1. **Live Infrastructure** (Highest Trust — Supreme Truth)
@@ -25,64 +25,62 @@
 
 ---
 
-## 3. Information Gain Decision Engine (13-Step Adaptive Sequence)
+## 3. Evidence Ranking Engine (12-Step Methodical Sequence)
 
 Every production investigation MUST follow this sequence before recommending Live Verification:
 
 ```
-1. Understand ──> 2. Scope ──> 3. Blast Radius ──> 4. Hypotheses ──> 5. Rank Probabilities
-                                                                               │
-                                                                               ▼
-9. Request Approval <── 8. Recommend Action <── 7. Evaluate Gain vs Cost <── 6. Measure Uncertainty
+1. Understand Problem ──> 2. Collect Evidence ──> 3. Formulate Hypotheses ──> 4. Classify & Rank Hypotheses
+                                                                                       │
+                                                                                       ▼
+8. Request Approval <─── 7. Present Plan <─── 6. Select Target Action <─── 5. Identify Missing Evidence
         │
         ▼
-10. Read-Only Discovery ─> 11. Update Probabilities ─> 12. Evaluate Stop Condition ─> 13. Deliver Diagnosis
+9. Read-Only Discovery ─> 10. Update Evidence Model ─> 11. Re-Rank Hypotheses ─> 12. Deliver Diagnosis
 ```
 
-1. **Understand Problem:** Clarify affected service or endpoint.
-2. **Determine Scope:** Classify impact (Single User ➔ Single Floor ➔ Single Branch ➔ Global).
-3. **Determine Blast Radius:** Identify affected systems vs. confirmed healthy systems.
-4. **Generate Hypotheses:** Map potential failure domains (L1/L2, L3 Routing, Firewall, Auth, DNS, Storage).
-5. **Rank Hypotheses by Probability:** Order hypotheses based on evidence and vault notes.
-6. **Measure Current Uncertainty:** Quantify what facts remain unconfirmed.
-7. **Evaluate Verification Actions:** Estimate Expected Information Gain vs. Operational Cost for each possible check.
-8. **Recommend Highest-Value Verification Action:** Select the single action that eliminates the most uncertainty with the lowest cost.
-9. **Request Approval:** Wait for explicit user confirmation before running read-only queries.
-10. **Perform Read-Only Live Verification:** Execute minimal target connector (`00_meta/framework/connectors/`).
-11. **Update Probabilities & Eliminate Hypotheses:** Re-rank remaining hypotheses based on new evidence.
-12. **Evaluate Stop Condition:** **STOP IMMEDIATELY** if the primary hypothesis is disproved or confirmed. Never query remaining devices unnecessarily.
-13. **Deliver Evidence Diagnosis & Enrich Vault:** Update `knowledge/` canonical notes and log history in `operations/history/`.
+1. **Understand Problem:** Clarify affected service, endpoint, or path failure.
+2. **Collect Existing Evidence:** Query Layer 1 `knowledge/`, Layer 3 `intelligence/`, and Layer 2 `operations/`.
+3. **Formulate Hypotheses:** Map potential failure domains (L1/L2, L3 Routing, Firewall, Auth, DNS, Storage).
+4. **Classify & Rank Hypotheses:** Assign qualitative ranks (`Primary`, `Secondary`, `Possible`, `Unlikely`, `Eliminated`) based on evidence strength.
+5. **Identify Missing Evidence:** Explicitly isolate what facts or telemetry remain unverified.
+6. **Select Target Verification Action:** Choose the single verification action that fills the largest missing evidence gap with the lowest operational cost.
+7. **Present Investigation Plan & Evidence Matrix:** Output hypothesis evidence table and target command justification.
+8. **Request Approval:** Wait for explicit user confirmation before running read-only queries.
+9. **Perform Read-Only Live Verification:** Execute minimal target connector (`00_meta/framework/connectors/`).
+10. **Update Evidence Model:** Update Supporting, Contradicting, and Missing evidence.
+11. **Re-Rank & Eliminate Hypotheses:** Move disproved hypotheses to `Eliminated`. Stop if primary hypothesis is verified.
+12. **Deliver Evidence Diagnosis & Enrich Vault:** Update `knowledge/` canonical notes and log history in `operations/history/`.
 
 ---
 
-## 4. Mandatory Information Gain Plan Format
+## 4. Mandatory Hypothesis Evidence Matrix Format
 
 In Investigation Mode, before requesting Live Verification approval, The AI Agent MUST present:
 
 ```markdown
-### 💡 Information Gain Verification Plan
-- **Current Uncertainty:** Does target host `172.23.72.101` exist and respond on VLAN 72?
-- **Current Confidence:** LOW (0.30)
-- **Top Hypotheses (Ranked by Probability):**
-  1. Target IP `172.23.72.101` is offline or not provisioned on VLAN 72 (Probability: 70%)
-  2. SVI Gateway / Core Switch ARP table missing entry (Probability: 25%)
-  3. Client Subnet IP conflict (Probability: 5%)
-- **Recommended Verification Action:**
-  - **Priority:** 1 (Highest Value)
-  - **Target Device:** Cisco FTD Gateway (`172.23.70.78`)
-  - **Target Read Command:** `show arp | include 172.23.72.101`
-  - **Information Gain:** VERY HIGH (Immediately confirms if host MAC exists on VLAN 72)
-  - **Operational Cost:** VERY LOW (Single read command)
-  - **Estimated Execution Time:** 20 Seconds
-  - **Hypotheses Eliminated:** If ARP missing ➔ Instantly eliminates L3 Routing & Firewall Policy hypotheses.
-  - **Stop Condition:** If ARP is empty, STOP investigation immediately. Do not inspect FortiGate, Core, or DNS.
+### 📊 Hypothesis Evidence Matrix
+
+| Hypothesis Rank | Hypothesis Statement | Supporting Evidence | Contradicting Evidence | Missing Evidence | Current Confidence |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **1. Primary** | Target IP `172.23.72.101` inactive on VLAN 72 | Vault inventory lacks IP allocation note | None | Live ARP table verification | `LOW` |
+| **2. Secondary** | Cisco FTD ACL blocking VLAN 72 traffic | `cisco-ftd-01.md` shows default Drop rule | `sw-cisco-core-01` log shows L2 forwarding | Live FTD policy check | `MEDIUM` |
+| **3. Unlikely** | FortiGate HQ Edge dropping packets | `fw-fortigate-hq-01.md` policy 124 ACTIVE | Cross-VLAN server traffic healthy | None | `HIGH` |
+| **4. Eliminated** | Core Switch SVI Gateway DOWN | `sw-cisco-core-01` shows Vlan 72 status UP/UP | None | None | `VERIFIED` |
+
+### 💡 Target Verification Action
+- **Target Missing Evidence:** Live ARP entry for `172.23.72.101` on VLAN 72 gateway.
+- **Target Device:** Cisco FTD Gateway (`172.23.70.78`)
+- **Read Command:** `show arp | include 172.23.72.101`
+- **Expected Evidence Gain:** HIGH (Fills missing ARP evidence, confirms or eliminates Primary hypothesis).
+- **Operational Cost:** VERY LOW (Single read command, 20s execution time).
 ```
 
 ---
 
 ## 5. Intent-Based Mode Selection Engine
 - **⚡ Quick Mode (Intents: Learn, Explain, Search, Review Docs, Design):** Fast answer using static `knowledge/` notes. Never executes live discovery.
-- **🔍 Investigation Mode (Intents: Troubleshoot, Investigate, Verify, RCA, Unknown IP/Route):** Methodical, Information-Gain Verification Plan + Read-Only Live Verification + Verification Summary.
+- **🔍 Investigation Mode (Intents: Troubleshoot, Investigate, Verify, RCA, Unknown IP/Route):** Methodical, Hypothesis Evidence Matrix + Read-Only Live Verification + Verification Summary.
 
 ---
 
