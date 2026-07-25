@@ -1,0 +1,24 @@
+name: "Nightly Virtualization Infrastructure Discovery"
+
+on:
+  schedule:
+    - cron: '0 3 * * *' # Daily at 03:00 AM UTC
+  workflow_dispatch:
+
+jobs:
+  discover-virtualization:
+    name: "Discover VMware vCenter, ESXi & VMs"
+    runs-on: [self-hosted, windows, 172.23.50.62]
+    steps:
+      - name: "Checkout Repository"
+        uses: actions/checkout@v4
+
+      - name: "Execute Virtualization Discovery Task"
+        run: |
+          python scripts/run_discovery.py --task virtualization
+
+      - name: "Commit & Push Documentation Updates"
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "Nightly Infrastructure Discovery: VMware vCenter & VM Allocation Sync"
+          branch: main

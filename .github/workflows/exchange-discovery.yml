@@ -1,0 +1,24 @@
+name: "Weekly Exchange Infrastructure Discovery"
+
+on:
+  schedule:
+    - cron: '0 3 * * 0' # Every Sunday at 03:00 AM UTC
+  workflow_dispatch:
+
+jobs:
+  discover-exchange:
+    name: "Discover Exchange 2019, DAG & Certificates"
+    runs-on: [self-hosted, windows, 172.23.50.62]
+    steps:
+      - name: "Checkout Repository"
+        uses: actions/checkout@v4
+
+      - name: "Execute Exchange Discovery Task"
+        run: |
+          python scripts/run_discovery.py --task messaging
+
+      - name: "Commit & Push Documentation Updates"
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "Weekly Infrastructure Discovery: Exchange 2019 DAG & Certificate Sync"
+          branch: main

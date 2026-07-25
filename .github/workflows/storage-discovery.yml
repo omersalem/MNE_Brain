@@ -1,0 +1,24 @@
+name: "Monthly Storage Infrastructure Discovery"
+
+on:
+  schedule:
+    - cron: '0 2 1 * *' # 1st day of every month at 02:00 AM UTC
+  workflow_dispatch:
+
+jobs:
+  discover-storage:
+    name: "Discover Fujitsu SAN ETERNUS & FC Switches"
+    runs-on: [self-hosted, windows, 172.23.50.62]
+    steps:
+      - name: "Checkout Repository"
+        uses: actions/checkout@v4
+
+      - name: "Execute Storage Discovery Task"
+        run: |
+          python scripts/run_discovery.py --task storage
+
+      - name: "Commit & Push Documentation Updates"
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "Monthly Infrastructure Discovery: Fujitsu SAN & Storage Fabric Sync"
+          branch: main

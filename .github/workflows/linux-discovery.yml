@@ -1,0 +1,24 @@
+name: "Nightly Linux Infrastructure Discovery"
+
+on:
+  schedule:
+    - cron: '0 4 * * *' # Daily at 04:00 AM UTC
+  workflow_dispatch:
+
+jobs:
+  discover-linux:
+    name: "Discover Linux Workloads & Services"
+    runs-on: [self-hosted, windows, 172.23.50.62]
+    steps:
+      - name: "Checkout Repository"
+        uses: actions/checkout@v4
+
+      - name: "Execute Linux Discovery Task"
+        run: |
+          python scripts/run_discovery.py --task linux
+
+      - name: "Commit & Push Documentation Updates"
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "Nightly Infrastructure Discovery: Linux Server Workload Sync"
+          branch: main

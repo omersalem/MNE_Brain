@@ -1,0 +1,24 @@
+name: "Nightly Network Infrastructure Discovery"
+
+on:
+  schedule:
+    - cron: '0 2 * * *' # Daily at 02:00 AM UTC
+  workflow_dispatch:
+
+jobs:
+  discover-network:
+    name: "Discover FortiGate, Cisco, FMC, FTD & F5"
+    runs-on: [self-hosted, windows, 172.23.50.62]
+    steps:
+      - name: "Checkout Repository"
+        uses: actions/checkout@v4
+
+      - name: "Execute Network Discovery Task"
+        run: |
+          python scripts/run_discovery.py --task network
+
+      - name: "Commit & Push Documentation Updates"
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "Nightly Infrastructure Discovery: Network & Security Telemetry Sync"
+          branch: main
