@@ -1,22 +1,27 @@
 name: "Cisco Switch & Router Discovery Profile"
 platform: "cisco"
 vendor: "Cisco Systems"
+purpose: "Read-only discovery of Cisco Catalyst core/access switches, VLANs, and routing tables."
+discovery_frequency: "Daily @ 02:00 AM"
 trust_level: "★★★★★ (Live Device CLI)"
 trust_tier: 5
-connection:
-  mgmt_ip: "172.23.70.254"
-  port: 22
-  protocol: "ssh"
-  auth_type: "ssh_read_only"
 read_commands:
   - "show version"
   - "show vlan brief"
   - "show ip route"
   - "show ip arp"
   - "show interface status"
-normalization:
-  target_file: "knowledge/10_network_and_security/12_routing_and_switching/sw-cisco-core-01.md"
-  schema: "tpl-switch.md"
+read_apis:
+  - "SSH CLI Read-Only Session"
+normalization_rules:
+  map_to_schema: "templates/switch.md"
+  knowledge_target: "knowledge/10_network_and_security/12_routing_and_switching/sw-cisco-core-01.md"
 update_policy:
-  auto_update: false
+  auto_promote_to_knowledge: false
   require_verification: true
+evidence_sources:
+  - "Cisco IOS-XE SSH Telemetry"
+expected_outputs:
+  - "VLAN database mapping"
+  - "Layer 3 SVI ARP tables"
+  - "Switch port status"

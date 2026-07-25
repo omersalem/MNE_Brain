@@ -1,0 +1,32 @@
+# Template: Server Canonical Template
+
+# Metadata
+- **Title:** {title}
+- **Purpose:** {purpose}
+- **Role:** {role}
+- **Location:** {location}
+- **Platform:** {platform}
+- **Vendor:** {vendor}
+- **Model:** {model}
+
+# Management & Connectivity
+- **Management IP / Endpoint:** {mgmt_ip}
+- **Management Access Method:** {mgmt_method}
+
+# System Architecture & Specifications
+- **Interfaces & Ports:** {interfaces}
+- **Active Services & Features:** {services}
+
+# Dependencies & Relationships
+- **Upstream Dependencies:** {upstream}
+- **Downstream Consumers:** {downstream}
+- **Related Devices:** {related_devices}
+- **Related Networks:** {related_networks}
+
+# Discovery & Evidence Provenance
+- **Discovery Source:** {discovery_source}
+- **Trust Level:** {trust_level}
+- **Last Verified:** {last_verified}
+
+## Notes
+- Additional human engineering notes and manual operational context.

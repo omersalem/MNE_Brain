@@ -1,20 +1,26 @@
 name: "VMware vSphere Discovery Profile"
 platform: "vmware"
 vendor: "VMware"
+purpose: "Read-only discovery of vCenter ESXi hosts, clusters, datastores, and guest VMs."
+discovery_frequency: "Daily @ 03:00 AM"
 trust_level: "★★★★☆ (Vendor API)"
 trust_tier: 4
-connection:
-  vcenter_ip: "172.23.69.38"
-  port: 443
-  protocol: "https"
-  auth_type: "vsphere_rest"
 read_commands:
   - "Get-VMHost"
   - "Get-VM"
   - "Get-Datastore"
-normalization:
-  target_file: "knowledge/20_compute_and_virtualization/21_vcenter_and_hosts/vcenter-main.md"
-  schema: "tpl-vcenter.md"
+read_apis:
+  - "GET /rest/vcenter/vm"
+  - "GET /rest/vcenter/host"
+normalization_rules:
+  map_to_schema: "templates/vm.md"
+  knowledge_target: "knowledge/20_compute_and_virtualization/21_vcenter_and_hosts/vcenter-main.md"
 update_policy:
-  auto_update: false
+  auto_promote_to_knowledge: false
   require_verification: true
+evidence_sources:
+  - "VMware vSphere REST API"
+expected_outputs:
+  - "Guest VM inventory"
+  - "Host CPU/RAM allocation"
+  - "Datastore usage"

@@ -3,17 +3,25 @@ platform: "identity"
 vendor: "Microsoft"
 trust_level: "★★★★☆ (Vendor API)"
 trust_tier: 4
-connection:
-  host: "172.23.71.27"
-  port: 389
-  protocol: "ldap_winrm"
+purpose: "Read-only discovery of Active Directory DCs, DNS primary zones, and DHCP scopes."
+discovery_frequency: "Weekly @ Sunday 02:00 AM"
 read_commands:
   - "Get-ADDomainController"
   - "Get-DnsServerZone"
   - "Get-DhcpServerv4Scope"
-normalization:
-  target_file: "knowledge/40_identity_and_core_services/41_active_directory/ad-dc-01.md"
-  schema: "tpl-ad.md"
+read_apis:
+  - "Active Directory LDAP"
+  - "WinRM WMI"
+normalization_rules:
+  map_to_schema: "templates/server.md"
+  knowledge_target: "knowledge/40_identity_and_core_services/41_active_directory/ad-dc-01.md"
 update_policy:
-  auto_update: false
+  auto_promote_to_knowledge: false
   require_verification: true
+evidence_sources:
+  - "Active Directory LDAP"
+  - "Windows DNS WMI"
+expected_outputs:
+  - "Domain Controller health"
+  - "DNS zone record list"
+  - "DHCP lease scopes"

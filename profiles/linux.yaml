@@ -1,21 +1,26 @@
 name: "Linux Workload Discovery Profile"
 platform: "linux"
 vendor: "Canonical"
+purpose: "Read-only discovery of Linux server workloads, active systemd services, and listening ports."
+discovery_frequency: "Daily @ 04:00 AM"
 trust_level: "★★★★★ (Live Device CLI)"
 trust_tier: 5
-connection:
-  mgmt_ip: "172.23.79.200"
-  port: 22
-  protocol: "ssh"
-  auth_type: "ssh_read_only"
 read_commands:
   - "hostnamectl"
   - "ss -tulpn"
   - "systemctl is-active"
   - "df -h"
-normalization:
-  target_file: "knowledge/20_compute_and_virtualization/23_linux_servers/srv-linux-abrs-01.md"
-  schema: "tpl-server.md"
+read_apis:
+  - "OpenSSH Read-Only Session"
+normalization_rules:
+  map_to_schema: "templates/linux.md"
+  knowledge_target: "knowledge/20_compute_and_virtualization/23_linux_servers/srv-linux-abrs-01.md"
 update_policy:
-  auto_update: false
+  auto_promote_to_knowledge: false
   require_verification: true
+evidence_sources:
+  - "Linux OpenSSH Telemetry"
+expected_outputs:
+  - "Kernel & OS release info"
+  - "Active systemd services"
+  - "Open network ports"

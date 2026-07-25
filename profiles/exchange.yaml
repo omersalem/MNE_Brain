@@ -1,20 +1,25 @@
 name: "Exchange 2019 Messaging Discovery Profile"
 platform: "exchange"
 vendor: "Microsoft"
+purpose: "Read-only discovery of Exchange 2019 DAG health, database copies, and SSL certificates."
+discovery_frequency: "Weekly @ Sunday 03:00 AM"
 trust_level: "★★★★★ (Live Device CLI)"
 trust_tier: 5
-connection:
-  host: "172.23.71.35"
-  port: 5985
-  protocol: "winrm"
-  auth_type: "powershell_ems"
 read_commands:
   - "Get-ExchangeServer"
   - "Get-DatabaseAvailabilityGroup"
   - "Get-MailboxDatabase"
-normalization:
-  target_file: "knowledge/40_identity_and_core_services/43_messaging_and_mgmt/exch-srv-01.md"
-  schema: "tpl-exchange.md"
+read_apis:
+  - "Remote Exchange Management Shell (EMS)"
+normalization_rules:
+  map_to_schema: "templates/exchange.md"
+  knowledge_target: "knowledge/40_identity_and_core_services/43_messaging_and_mgmt/exch-srv-01.md"
 update_policy:
-  auto_update: false
+  auto_promote_to_knowledge: false
   require_verification: true
+evidence_sources:
+  - "Exchange EMS PowerShell"
+expected_outputs:
+  - "DAG active copy state"
+  - "Mail queue depth"
+  - "Certificate expiration dates"
