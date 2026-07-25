@@ -1,6 +1,6 @@
 ---
 name: "review"
-description: "Audit vault quality, broken links, SPOFs, and present Evidence Matrices for drift remediation."
+description: "Audit vault quality, broken links, SPOFs, and present Level 1/2 remediation plans."
 ---
 
 # Skill: Review (`skills/review/skill.md`)
@@ -12,5 +12,5 @@ Audit vault quality, link integrity, and SPOF path risks across `knowledge/`, `o
 
 ## 2. Layered Workflow
 1. **Audit Layer 1 `knowledge/`:** Check frontmatter schemas (`tpl-*.md`), link integrity (`[[Entity]]`), and compute Vault Health Score.
-2. **Formulate Evidence Matrix:** When conflicting policies or unverified IPs are detected, present evidence matrices to resolve documentation drift.
+2. **Formulate Level 1/2 Remediation Plan:** Present non-destructive verification actions to resolve documentation drift.
 3. **Promote Stable Incident Lessons:** Promote recurring incident RCA lessons from `operations/incidents/` into `intelligence/runbooks/`.
