@@ -1,6 +1,6 @@
 ---
 name: "search"
-description: "Search vault notes for Search and Learn intents. Escalates to Investigation Mode when queried objects are unverified."
+description: "Search across Layer 1 knowledge/, Layer 3 intelligence/, and Layer 2 operations/ using intent-based retrieval."
 ---
 
 # Skill: Search (`skills/search/skill.md`)
@@ -8,8 +8,10 @@ description: "Search vault notes for Search and Learn intents. Escalates to Inve
 > **Inheritance:** Extends `[[AGENTS.md]]` and `[[base-agent.md]]`.
 
 ## 1. Purpose
-Search the Brain for infrastructure objects. Responds to **Search** and **Learn** intents using Quick Mode; escalates to Investigation Mode when queried objects are unverified or missing.
+Provide deep intent-based search across the 3-layer architecture without scanning unnecessary folders.
 
-## 2. Intent-Based Workflow
-- **Search / Learn Intent (Quick Mode):** Search domain notes, profiles, and runbooks. Return concise findings with Wiki citations and confidence ratings.
-- **Escalation to Investigation Mode:** If object (IP, MAC, VM, VLAN) is missing or unverified, escalate to Investigation Mode, recommend read-only Live Verification, and attach a Verification Summary.
+## 2. Layered Search Strategy
+- **Explain / Learn Intent:** Search `knowledge/` ➔ `intelligence/`.
+- **Search / Lookup Intent:** Search `knowledge/` ➔ `intelligence/` ➔ `operations/` *(only if needed)*.
+- **Review / Audit Intent:** Search `knowledge/` ➔ `operations/` ➔ `intelligence/`.
+- If queried object is unverified, recommend read-only Live Verification (`operations/live-verification/`).

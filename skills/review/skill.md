@@ -1,6 +1,6 @@
 ---
 name: "review"
-description: "Audit vault quality, broken links, SPOFs, and confidence ratings for Review and Audit intents."
+description: "Audit vault quality, SPOF path risks, and link integrity across Layer 1 knowledge/, Layer 2 operations/, and Layer 3 intelligence/."
 ---
 
 # Skill: Review (`skills/review/skill.md`)
@@ -8,8 +8,9 @@ description: "Audit vault quality, broken links, SPOFs, and confidence ratings f
 > **Inheritance:** Extends `[[AGENTS.md]]` and `[[base-agent.md]]`.
 
 ## 1. Purpose
-Audit vault quality, freshness, broken Wiki links, orphan documents, and Single Point of Failure (SPOF) risks for **Review** and **Audit** intents.
+Audit Digital Twin health, link integrity, and SPOF risks across the 3-layer architecture.
 
-## 2. Intent-Based Workflow
-- **Review / Audit Intent (Quick Mode):** Check frontmatter schemas (`tpl-*.md`), link integrity (`[[Entity]]`), and compute Vault Health Score via `quality_evaluator.py`.
-- **Escalation to Investigation Mode:** When outdated notes, conflicting policies, or unverified IPs are detected, escalate to Investigation Mode, recommend read-only Live Verification, and commit audit reports with Verification Summaries.
+## 2. Layered Workflow
+1. **Audit Layer 1 `knowledge/`:** Verify frontmatter schemas (`tpl-*.md`) and Wiki links (`[[Entity]]`).
+2. **Audit Layer 2 `operations/`:** Review incident frequency in `operations/incidents/` and verification logs in `operations/discovery/`.
+3. **Promote Stable Incident Lessons:** Identify recurring incidents in `operations/incidents/` and promote reusable lessons into `intelligence/runbooks/`.

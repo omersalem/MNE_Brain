@@ -4,97 +4,89 @@
 
 ---
 
-## 1. Governance & Core Philosophy
+## 1. 3-Layer Decoupled Repository Architecture
 
-### Core Engineering Principle
-"Documentation answers knowledge questions. Investigation answers production questions. Never confuse documentation with production."
-
-### Order of Trust
-All knowledge evaluation MUST follow this strict hierarchy:
-1. **Live Infrastructure** (Highest Trust — Supreme Truth)
-2. **Verified Discovery Results**
-3. **Current Knowledge Base**
-4. **Imported Documentation**
-5. **User Assumptions** (Lowest Trust)
-
----
-
-## 2. Intent-Based Mode Selection Engine
-
-Before responding to any request, The AI Agent classifies user intent into one of **15 Core Intents** to determine whether to execute **Quick Mode** or **Investigation Mode**:
+The repository is strictly partitioned into three logical layers to separate permanent facts from operational logs and reusable experience:
 
 ```
-                                  ┌───────────────────────────────┐
-                                  │       User Request Input      │
-                                  └───────────────┬───────────────┘
-                                                  │
-                                                  ▼
-                                ┌──────────────────────────────────┐
-                                │ Intent-Based Mode Selection      │
-                                │ (15 Intent Classifications)      │
-                                └─────────────────┬────────────────┘
-                                                  │
-         ┌────────────────────────────────────────┴────────────────────────────────────────┐
-         ▼                                                                                 ▼
- ┌──────────────┐                                                                  ┌────────────────────┐
- │  QUICK MODE  │                                                                  │ INVESTIGATION MODE │
- └──────┬───────┘                                                                  └─────────┬──────────┘
-        │ [Intents: Learn, Explain, Search, Review Docs, Describe Topology,                  │ [Intents: Troubleshoot, Investigate,
-        │  Show Dependencies, Answer Conceptual Questions]                                   │  Verify, Root Cause Analysis, Connectivity/
-        │                                                                                    │  Firewall/Routing/VPN/VMware/F5/AD Problems,
-        ├─► 1. Search KB, Wiki & Graph                                                       │  Unknown IP/Policy/Route, Health Checks]
-        ├─► 2. Generate Concise Answer & Confidence                                          │
-        └─► 3. If Confidence drops ➔ Escalate & Recommend Investigation Mode                 ├─► 1. Deep KB & Incident History Search
-                                                                                             ├─► 2. Evaluate Confidence & Missing Facts
-                                                                                             ├─► 3. Recommend Minimum Read-Only Live Verification
-                                                                                             ├─► 4. Execute Discovery & Compare Telemetry
-                                                                                             └─► 5. Deliver Evidence Diagnosis + Verification Summary
++-----------------------------------------------------------------------------------+
+|                        3-LAYER DECOUPLED BRAIN ARCHITECTURE                       |
++-----------------------------------------------------------------------------------+
+| LAYER 1: knowledge/ (Permanent Infrastructure Facts)                              |
+| - Architecture, Network Topology, Devices, FortiGate, Cisco, F5, AD, Exchange,    |
+|   VMware, Fujitsu SAN, Linux, VLANs, Services, Connection Profiles.               |
++-----------------------------------------------------------------------------------+
+                                      │
+                                      ▼
++-----------------------------------------------------------------------------------+
+| LAYER 2: operations/ (Operational History & Transient Logs)                       |
+| - Incidents (`operations/incidents/`), Discovery Sessions (`operations/discovery/`),|
+|   Live Verification Results (`operations/live-verification/`), Revision History.  |
+| - Rule: Nothing in this layer is treated as permanent infrastructure facts.      |
++-----------------------------------------------------------------------------------+
+                                      │
+                                      ▼
++-----------------------------------------------------------------------------------+
+| LAYER 3: intelligence/ (Reusable Engineering Experience)                          |
+| - SOP Runbooks (`intelligence/runbooks/`), Troubleshooting Guides (`troubleshooting/`),|
+|   Lessons Learned, Best Practices, Known Issues, Architectural Patterns.          |
+| - Rule: Only verified, stable, and reusable operational experience exists here.    |
++-----------------------------------------------------------------------------------+
 ```
 
-### 🎯 Intent-to-Mode Mapping Table
+---
 
-| Intent Classification | Target Operating Mode | Primary Execution Objective |
-| :--- | :--- | :--- |
-| **Learn / Explain / Search** | ⚡ **Quick Mode** | Fast answers using static vault documentation, topology docs, and schemas. |
-| **Review / Describe / Design / Document** | ⚡ **Quick Mode** | Architectural lookups, runbook explanations, and relationship queries. |
-| **Troubleshoot / Investigate / Verify** | 🔍 **Investigation Mode** | Methodical engineering analysis, connectivity, routing, and component failure diagnosis. |
-| **Root Cause Analysis (RCA) / Audit** | 🔍 **Investigation Mode** | End-to-end multi-device path tracing (`Client ➔ Core ➔ FortiGate ➔ FTD ➔ F5 ➔ Workload`). |
-| **Unknown IP / Host / VLAN / Policy / Route** | 🔍 **Investigation Mode** | Production validation using target read-only discovery connectors. |
+## 2. Layered Search Strategy by User Intent
+
+The AI Agent must NOT search all directories equally. It routes query retrieval sequentially through layers based on the classified user intent:
+
+- **Explain / Design / Learn Intent:** `knowledge/` ➔ `intelligence/`
+- **Search / Lookup Intent:** `knowledge/` ➔ `intelligence/` ➔ `operations/` *(only if required)*
+- **Review / Audit Intent:** `knowledge/` ➔ `operations/` ➔ `intelligence/`
+- **Discover / Ingest Intent:** `knowledge/` ➔ Live Infrastructure
+- **Troubleshoot / Investigate Intent:** `knowledge/` ➔ `operations/` ➔ Read-Only Live Verification ➔ `intelligence/`
 
 ---
 
-## 3. Automatic Mode Escalation Workflow
+## 3. Knowledge Promotion Protocol
 
-If Quick Mode encounters insufficient vault knowledge or conflicting documentation, The AI Agent automatically escalates:
+Operational history (`operations/`) MUST NEVER automatically become permanent knowledge (`knowledge/`) or reusable engineering experience (`intelligence/`).
 
-$$	ext{Quick Mode} \longrightarrow 	ext{Confidence Drops to MEDIUM or LOW} \longrightarrow 	ext{Escalate & Recommend Investigation Mode}$$
-
-**Escalation Protocol:** The AI Agent explicitly communicates:
-> *"Additional live investigation is recommended before a reliable production conclusion can be made."*
+**Promotion Criteria:** Information is promoted into `knowledge/` or `intelligence/` ONLY when it is:
+1. **Verified:** Confirmed via live read-only telemetry.
+2. **Stable:** Confirmed non-transient across multiple observations.
+3. **Reusable & Long-term:** Provides value for future engineering operations.
 
 ---
 
-## 4. Mandatory Verification Summary Block (Investigation Mode)
+## 4. Evidence-Based Reasoning & Verification Summary
 
-Every Investigation Mode answer MUST conclude with a standardized **Verification Summary**:
+### Information Classification
+- **Verified Facts:** Telemetry confirmed directly via live read-only inspection.
+- **Documented Facts:** Facts found inside `knowledge/` notes.
+- **Assumptions:** Explicitly labeled hypotheses (never present as facts).
+- **Unknown:** Missing or unverified information (never hide missing info).
+
+### Mandatory Verification Summary Block
+Every Investigation Mode answer MUST conclude with:
 
 ```markdown
 ### 📊 Verification Summary
-- **Knowledge Sources Used:** [[canonical-note-1]], [[connection-profile-1]]
+- **Knowledge Sources Used:** [[knowledge/path/note]], [[connection-profile]]
 - **Confidence Level:** VERIFIED | HIGH | MEDIUM | LOW
 - **Live Verification Status:** Executed | Not Performed | Recommended
 - **Verified Facts:**
-  - [Facts confirmed by live read-only telemetry]
+  - [Live confirmed facts]
 - **Documented Facts:**
-  - [Facts found in static vault notes]
+  - [Vault knowledge facts]
 - **Assumptions:**
-  - [Explicitly labeled hypotheses or None]
+  - [Explicit hypotheses or None]
 - **Unknown Information:**
-  - [Unconfirmed or missing facts]
+  - [Missing parameters]
 - **Recommended Live Verification:**
-  - [Exact read-only verification steps]
+  - [Target read-only queries]
 - **Recommended Next Action:**
-  - [Actionable engineering guidance]
+  - [Actionable guidance]
 ```
 
 ---
