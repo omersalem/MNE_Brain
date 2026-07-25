@@ -1,0 +1,14 @@
+# Obsidian workspace state & local cache
+.obsidian/workspace.json
+.obsidian/workspace-mobile.json
+.obsidian/cache
+
+# Python cache & build artifacts
+__pycache__/
+*.pyc
+*.pyo
+
+# OS System Files
+Thumbs.db
+Desktop.ini
+.DS_Store
