@@ -1,6 +1,6 @@
 ---
 name: "discover"
-description: "Ingest documentation and execute Investigation Mode live verification to enrich Digital Twin canonical notes."
+description: "Ingest documentation and execute Investigation Mode live verification for Discover and Document intents."
 ---
 
 # Skill: Discover (`skills/discover/skill.md`)
@@ -8,8 +8,8 @@ description: "Ingest documentation and execute Investigation Mode live verificat
 > **Inheritance:** Extends `[[AGENTS.md]]` and `[[base-agent.md]]`.
 
 ## 1. Purpose
-Ingest documentation and enrich the Digital Twin. Automatically operates in **Investigation Mode** when incoming documentation contains unverified IP, route, or policy gaps.
+Ingest documentation and enrich the Digital Twin. Classifies incoming requests into **Discover** or **Document** intents.
 
-## 2. Operational Mode Workflow
-- **Quick Mode Pass:** Ingest raw Markdown files, parse entity facts, update YAML frontmatter and Wiki links (`[[Entity-Basename]]`).
-- **Investigation Mode Escalation:** If telemetry is missing, recommend read-only Live Verification using target connectors, enrich vault notes, and attach a Verification Summary.
+## 2. Intent-Based Workflow
+- **Discover / Document Intent (Quick Mode Pass):** Ingest raw Markdown files, parse entity facts, update frontmatter metadata and Wiki links (`[[Entity-Basename]]`).
+- **Escalation to Investigation Mode:** If imported documentation contains unverified IP, route, or policy gaps, escalate to Investigation Mode, recommend read-only Live Verification using target connectors, and attach a Verification Summary.

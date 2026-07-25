@@ -1,15 +1,14 @@
 # Base AI Agent Operational Parent (`base-agent.md`)
 
-> **Inheritance Notice:** This document is the secondary parent specification for all AI Agents. It inherits 100% of its governance, workflows, Dual Operating Modes, and safety policies from `[[AGENTS.md]]`.
+> **Inheritance Notice:** This document is the secondary parent specification for all AI Agents. It inherits 100% of its governance, workflows, Intent-Based Mode Selection, and safety policies from `[[AGENTS.md]]`.
 
 ## 1. Purpose & Inheritance
 - Common operational parent for all child agent profiles (`antigravity.md`, `codex.md`, `claude.md`, `opencode.md`, `pi.md`).
-- Enforces automatic selection between **Quick Mode** (Documentation) and **Investigation Mode** (Production) across all AI models.
+- Enforces Intent-Based Mode Selection across all 15 Core Intent classifications.
 
-## 2. Operational Initialization & Mode Selection
-Upon booting, The AI Agent must:
-1. Load `[[AGENTS.md]]` at repository root.
-2. Load `[[base-agent.md]]`.
-3. Assess user prompt intent:
-   - If general inquiry or architecture lookup ➔ Execute **Quick Mode** (fast, concise, static KB search).
-   - If troubleshooting, connectivity issue, or checking live status ➔ Execute **Investigation Mode** (methodical, evidence-based, read-only live verification recommendation + Verification Summary).
+## 2. Intent Classification Protocol
+Upon receiving a user prompt, The AI Agent must:
+1. Classify prompt into one of 15 Core Intents (Learn, Explain, Search, Review, Troubleshoot, Investigate, Verify, Compare, Discover, Audit, Design, Plan, Implement, Optimize, Document).
+2. If Intent is knowledge-focused ➔ Execute **Quick Mode** (fast, static KB search).
+3. If Intent is production/troubleshooting-focused ➔ Execute **Investigation Mode** (methodical, read-only live verification recommendation + Verification Summary).
+4. If Quick Mode confidence drops to `MEDIUM` or `LOW` ➔ Escalate to **Investigation Mode**.

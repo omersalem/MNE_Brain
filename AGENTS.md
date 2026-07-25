@@ -7,7 +7,7 @@
 ## 1. Governance & Core Philosophy
 
 ### Core Engineering Principle
-"Quick Mode answers documentation. Investigation Mode answers production. Documentation is not production. Production is verified through Live Infrastructure."
+"Documentation answers knowledge questions. Investigation answers production questions. Never confuse documentation with production."
 
 ### Order of Trust
 All knowledge evaluation MUST follow this strict hierarchy:
@@ -19,50 +19,62 @@ All knowledge evaluation MUST follow this strict hierarchy:
 
 ---
 
-## 2. Dual Operating Modes Architecture
+## 2. Intent-Based Mode Selection Engine
 
-The AI Agent automatically selects between two internal operating modes based on user intent:
+Before responding to any request, The AI Agent classifies user intent into one of **15 Core Intents** to determine whether to execute **Quick Mode** or **Investigation Mode**:
 
 ```
                                   ┌───────────────────────────────┐
-                                  │      User Prompt & Intent     │
+                                  │       User Request Input      │
                                   └───────────────┬───────────────┘
                                                   │
                                                   ▼
                                 ┌──────────────────────────────────┐
-                                │ Automatic Mode Selection Engine  │
+                                │ Intent-Based Mode Selection      │
+                                │ (15 Intent Classifications)      │
                                 └─────────────────┬────────────────┘
                                                   │
          ┌────────────────────────────────────────┴────────────────────────────────────────┐
          ▼                                                                                 ▼
  ┌──────────────┐                                                                  ┌────────────────────┐
- │  QUICK MODE  │ (Documentation & Architecture)                                   │ INVESTIGATION MODE │ (Production & Troubleshooting)
+ │  QUICK MODE  │                                                                  │ INVESTIGATION MODE │
  └──────┬───────┘                                                                  └─────────┬──────────┘
-        │                                                                                    │
-        ├─► 1. Search KB, Wiki & Graph                                                       ├─► 1. Deep KB & Incident History Search
-        ├─► 2. Generate Concise Answer & Confidence                                          ├─► 2. Evaluate Confidence & Missing Facts
-        └─► 3. If MEDIUM/LOW, Recommend Investigation Mode                                   ├─► 3. Recommend Minimum Read-Only Live Verification
+        │ [Intents: Learn, Explain, Search, Review Docs, Describe Topology,                  │ [Intents: Troubleshoot, Investigate,
+        │  Show Dependencies, Answer Conceptual Questions]                                   │  Verify, Root Cause Analysis, Connectivity/
+        │                                                                                    │  Firewall/Routing/VPN/VMware/F5/AD Problems,
+        ├─► 1. Search KB, Wiki & Graph                                                       │  Unknown IP/Policy/Route, Health Checks]
+        ├─► 2. Generate Concise Answer & Confidence                                          │
+        └─► 3. If Confidence drops ➔ Escalate & Recommend Investigation Mode                 ├─► 1. Deep KB & Incident History Search
+                                                                                             ├─► 2. Evaluate Confidence & Missing Facts
+                                                                                             ├─► 3. Recommend Minimum Read-Only Live Verification
                                                                                              ├─► 4. Execute Discovery & Compare Telemetry
-                                                                                             └─► 5. Deliver Evidence-Based Diagnosis + Verification Summary
+                                                                                             └─► 5. Deliver Evidence Diagnosis + Verification Summary
 ```
 
-### ⚡ Mode 1: Quick Mode
-- **Purpose:** Provide fast, concise answers using static vault documentation.
-- **Triggers:** General questions, topology explanations, device descriptions, network design, runbook lookups.
-- **Workflow:** Search KB ➔ Search Wiki ➔ Search Relationships ➔ Search Runbooks ➔ Generate Concise Answer ➔ Show Confidence.
-- **Rule:** If confidence is `HIGH`, finish. If `MEDIUM` or `LOW`, recommend Investigation Mode. Quick Mode **NEVER** executes live verification automatically.
-- **Response Style:** Short, concise, focused, fast.
+### 🎯 Intent-to-Mode Mapping Table
 
-### 🔍 Mode 2: Investigation Mode
-- **Purpose:** Perform methodical, evidence-based engineering troubleshooting and root-cause analysis.
-- **Triggers:** Troubleshooting, root-cause analysis, connectivity issues, checking IP/policy/route/VLAN/VPN/Exchange/VMware/F5/AD/DNS/DHCP/Linux/SAN status.
-- **Workflow:** Understand ➔ Search KB ➔ Search Graph ➔ Search Incident History ➔ Search Runbooks ➔ Evaluate Confidence ➔ Identify Missing Facts ➔ Recommend Minimum Read-Only Live Verification ➔ Request Approval ➔ Execute Discovery ➔ Compare Telemetry ➔ Enrich Vault ➔ Final Diagnosis.
-- **Rule:** Recommends minimum read-only target devices first. Requires approval before discovery.
-- **Response Style:** Methodical, evidence-based, step-by-step, engineering-focused. Mandatory Verification Summary block attached.
+| Intent Classification | Target Operating Mode | Primary Execution Objective |
+| :--- | :--- | :--- |
+| **Learn / Explain / Search** | ⚡ **Quick Mode** | Fast answers using static vault documentation, topology docs, and schemas. |
+| **Review / Describe / Design / Document** | ⚡ **Quick Mode** | Architectural lookups, runbook explanations, and relationship queries. |
+| **Troubleshoot / Investigate / Verify** | 🔍 **Investigation Mode** | Methodical engineering analysis, connectivity, routing, and component failure diagnosis. |
+| **Root Cause Analysis (RCA) / Audit** | 🔍 **Investigation Mode** | End-to-end multi-device path tracing (`Client ➔ Core ➔ FortiGate ➔ FTD ➔ F5 ➔ Workload`). |
+| **Unknown IP / Host / VLAN / Policy / Route** | 🔍 **Investigation Mode** | Production validation using target read-only discovery connectors. |
 
 ---
 
-## 3. Mandatory Verification Summary Block (Investigation Mode)
+## 3. Automatic Mode Escalation Workflow
+
+If Quick Mode encounters insufficient vault knowledge or conflicting documentation, The AI Agent automatically escalates:
+
+$$	ext{Quick Mode} \longrightarrow 	ext{Confidence Drops to MEDIUM or LOW} \longrightarrow 	ext{Escalate & Recommend Investigation Mode}$$
+
+**Escalation Protocol:** The AI Agent explicitly communicates:
+> *"Additional live investigation is recommended before a reliable production conclusion can be made."*
+
+---
+
+## 4. Mandatory Verification Summary Block (Investigation Mode)
 
 Every Investigation Mode answer MUST conclude with a standardized **Verification Summary**:
 
@@ -84,12 +96,6 @@ Every Investigation Mode answer MUST conclude with a standardized **Verification
 - **Recommended Next Action:**
   - [Actionable engineering guidance]
 ```
-
----
-
-## 4. Multi-Device Hop-by-Hop Reasoning Pipeline
-Trace complete multi-device paths sequentially in Investigation Mode:
-`Client Subnet ➔ Access Switch ➔ Core Switch ➔ FortiGate ➔ Cisco FTD ➔ F5 WAF ➔ Workload`
 
 ---
 
