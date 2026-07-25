@@ -1,0 +1,19 @@
+name: "F5 BIG-IP WAF Discovery Profile"
+platform: "f5"
+vendor: "F5 Networks"
+trust_level: "★★★★☆ (Vendor API)"
+trust_tier: 4
+connection:
+  mgmt_ip: "172.23.70.89"
+  port: 443
+  protocol: "https"
+  auth_type: "icontrol_rest"
+read_commands:
+  - "list ltm virtual one-line"
+  - "show ltm pool members"
+normalization:
+  target_file: "knowledge/10_network_and_security/14_f5_waf_publishing/f5-vip-public-98.md"
+  schema: "tpl-loadbalancer.md"
+update_policy:
+  auto_update: false
+  require_verification: true

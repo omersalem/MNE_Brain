@@ -1,0 +1,37 @@
+# Ministry Infrastructure AI Brain Configuration
+version: "1.0.0"
+environment: "Ministry Infrastructure Digital Twin"
+
+paths:
+  knowledge: "knowledge"
+  operations: "operations"
+  intelligence: "intelligence"
+  profiles: "profiles"
+  reports: "operations/discovery"
+
+trust_levels:
+  level_5:
+    rating: "★★★★★"
+    name: "Live Device CLI"
+    description: "Live Read-Only CLI Telemetry (SSH / EMS)"
+  level_4:
+    rating: "★★★★☆"
+    name: "Vendor API"
+    description: "Vendor REST API Telemetry (vSphere / FMC / F5)"
+  level_3:
+    rating: "★★★☆☆"
+    name: "Knowledge Base"
+    description: "Vault Canonical Knowledge Notes"
+  level_2:
+    rating: "★★☆☆☆"
+    name: "Manual Docs"
+    description: "Legacy Manual Documentation"
+  level_1:
+    rating: "★☆☆☆☆"
+    name: "User Statement"
+    description: "User Chat Assumption"
+
+orchestration:
+  runner_ip: "172.23.50.62"
+  two_stage_update: true
+  auto_promote_to_knowledge: false

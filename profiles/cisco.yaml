@@ -1,0 +1,22 @@
+name: "Cisco Switch & Router Discovery Profile"
+platform: "cisco"
+vendor: "Cisco Systems"
+trust_level: "★★★★★ (Live Device CLI)"
+trust_tier: 5
+connection:
+  mgmt_ip: "172.23.70.254"
+  port: 22
+  protocol: "ssh"
+  auth_type: "ssh_read_only"
+read_commands:
+  - "show version"
+  - "show vlan brief"
+  - "show ip route"
+  - "show ip arp"
+  - "show interface status"
+normalization:
+  target_file: "knowledge/10_network_and_security/12_routing_and_switching/sw-cisco-core-01.md"
+  schema: "tpl-switch.md"
+update_policy:
+  auto_update: false
+  require_verification: true

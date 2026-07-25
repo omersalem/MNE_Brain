@@ -1,0 +1,20 @@
+name: "Fujitsu SAN Storage Discovery Profile"
+platform: "storage"
+vendor: "Fujitsu"
+trust_level: "★★★★☆ (Vendor API)"
+trust_tier: 4
+connection:
+  mgmt_ip: "172.23.69.100"
+  port: 443
+  protocol: "https"
+  auth_type: "eternus_api"
+read_commands:
+  - "show raid-groups"
+  - "show volumes"
+  - "show fc-ports"
+normalization:
+  target_file: "knowledge/30_storage/32_san_storage/san-fujitsu-eternus-01.md"
+  schema: "tpl-san.md"
+update_policy:
+  auto_update: false
+  require_verification: true

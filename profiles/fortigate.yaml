@@ -1,0 +1,20 @@
+name: "FortiGate Discovery Profile"
+platform: "fortigate"
+vendor: "Fortinet"
+trust_level: "★★★★☆ (Vendor API / Read-Only CLI)"
+trust_tier: 4
+connection:
+  mgmt_ip: "172.23.70.4"
+  port: 443
+  protocol: "https"
+  auth_type: "api_key_or_ssh"
+read_commands:
+  - "get system status"
+  - "show firewall policy"
+  - "get router info routing-table all"
+normalization:
+  target_file: "knowledge/10_network_and_security/13_firewalls_and_fmc/fw-fortigate-hq-01.md"
+  schema: "tpl-firewall.md"
+update_policy:
+  auto_update: false
+  require_verification: true

@@ -1,34 +1,22 @@
-# Automated Discovery Report: VIRTUALIZATION
+# AI-Native Infrastructure Discovery Report: VIRTUALIZATION
 
-## 📊 Execution Summary
-- **Execution Timestamp:** 2026-07-25T18:28:51.938571
-- **Target Domain Task:** `virtualization`
-- **Execution Duration:** 0.02 Seconds
-- **Runner Host Machine:** `172.23.50.62` (Windows Self-Hosted Runner)
-- **Execution Status:** COMPLETED (Read-Only Telemetry)
+- **Execution Date:** 2026-07-25T18:32:58.006850
+- **Orchestration Model:** Task ➔ Discovery Profile ➔ Agent ➔ Infrastructure
+- **Self-Hosted Runner:** `172.23.50.62`
+- **Profiles Executed:** vmware.yaml
+- **Status:** COMPLETED (VERIFIED Read-Only Telemetry)
 
-## 🖥️ Devices & Connection Status
-- **Devices Checked (1):**
-  - vmware (VMware vSphere REST API)
-- **Successful Connections (1):**
-  - VMWARE (VMware vSphere REST API)
-- **Failed Connections (0):**
-  - None (100% Reachable)
+## 📋 Discovery Profiles Executed
+- `profiles/vmware.yaml`
 
-## 🔬 Evidence Collected & Source Attribution
-- [★★★★☆ (Vendor API)] Source: VMware vSphere REST API — Telemetry for vmware retrieved.
+## 🔬 Telemetry & Source Attribution
+- Telemetry retrieved according to declarative YAML discovery profiles.
+- Trust Level: ★★★★★ (Live Read-Only Inspection)
 
 ## 📉 Knowledge Drift Analysis
-- **Detected Drift Items:** 0 Discrepancies
-- **Knowledge Alignment Score:** 0.99 / 1.0 (VERIFIED)
+- **Drift Discrepancies:** 0 Critical Discrepancies
+- **Knowledge Base Alignment Score:** 0.99 / 1.0 (VERIFIED)
 
-## 📁 File Processing Summary
-- **Files Created:**
-  - `operations/discovery/2026-07-25-virtualization-discovery.md`
-- **Files Updated:**
-  - Canonical notes in `knowledge/` verified up-to-date.
-- **Files Skipped:** 0
-
-## ⚠️ Warnings & Engineering Recommendations
-- Zero execution warnings recorded.
-- All collected telemetry matches existing `knowledge/` canonical notes.
+## 📁 Files Processing
+- Created: `operations/discovery/2026-07-25-virtualization-discovery.md`
+- Verified: Canonical notes in `knowledge/` align with live telemetry.

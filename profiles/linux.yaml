@@ -1,0 +1,21 @@
+name: "Linux Workload Discovery Profile"
+platform: "linux"
+vendor: "Canonical"
+trust_level: "★★★★★ (Live Device CLI)"
+trust_tier: 5
+connection:
+  mgmt_ip: "172.23.79.200"
+  port: 22
+  protocol: "ssh"
+  auth_type: "ssh_read_only"
+read_commands:
+  - "hostnamectl"
+  - "ss -tulpn"
+  - "systemctl is-active"
+  - "df -h"
+normalization:
+  target_file: "knowledge/20_compute_and_virtualization/23_linux_servers/srv-linux-abrs-01.md"
+  schema: "tpl-server.md"
+update_policy:
+  auto_update: false
+  require_verification: true

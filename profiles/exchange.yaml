@@ -1,0 +1,20 @@
+name: "Exchange 2019 Messaging Discovery Profile"
+platform: "exchange"
+vendor: "Microsoft"
+trust_level: "★★★★★ (Live Device CLI)"
+trust_tier: 5
+connection:
+  host: "172.23.71.35"
+  port: 5985
+  protocol: "winrm"
+  auth_type: "powershell_ems"
+read_commands:
+  - "Get-ExchangeServer"
+  - "Get-DatabaseAvailabilityGroup"
+  - "Get-MailboxDatabase"
+normalization:
+  target_file: "knowledge/40_identity_and_core_services/43_messaging_and_mgmt/exch-srv-01.md"
+  schema: "tpl-exchange.md"
+update_policy:
+  auto_update: false
+  require_verification: true

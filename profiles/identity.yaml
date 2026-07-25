@@ -1,0 +1,19 @@
+name: "Active Directory & DNS Discovery Profile"
+platform: "identity"
+vendor: "Microsoft"
+trust_level: "★★★★☆ (Vendor API)"
+trust_tier: 4
+connection:
+  host: "172.23.71.27"
+  port: 389
+  protocol: "ldap_winrm"
+read_commands:
+  - "Get-ADDomainController"
+  - "Get-DnsServerZone"
+  - "Get-DhcpServerv4Scope"
+normalization:
+  target_file: "knowledge/40_identity_and_core_services/41_active_directory/ad-dc-01.md"
+  schema: "tpl-ad.md"
+update_policy:
+  auto_update: false
+  require_verification: true
