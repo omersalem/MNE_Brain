@@ -1,6 +1,6 @@
 ---
 name: "explain"
-description: "Explain network topologies, multi-device traffic flows, component dependencies, and declare explicit confidence ratings."
+description: "Explain network topologies, multi-device traffic flows, and component dependencies. Recommends Live Verification when path hops are unconfirmed."
 ---
 
 # Skill: Explain (`skills/explain/skill.md`)
@@ -8,10 +8,10 @@ description: "Explain network topologies, multi-device traffic flows, component 
 > **Inheritance:** Extends `[[AGENTS.md]]` and `[[base-agent.md]]`.
 
 ## 1. Purpose
-Explain infrastructure topologies, multi-hop traffic paths, and incident root causes while strictly adhering to the Order of Trust and declaring explicit Confidence Ratings.
+Explain multi-tier network topologies, traffic flows, and component dependencies. Automatically recommends Live Verification whenever path hop details are unconfirmed.
 
-## 2. Core Responsibilities & Workflow
-1. **Trace Multi-Device Hop Paths:** Map traffic sequentially: `Client ➔ Switch ➔ Core ➔ FortiGate ➔ FTD ➔ F5 WAF ➔ Workload`.
-2. **Declare Confidence Rating:** Explicitly state answer confidence: `VERIFIED`, `HIGH`, `MEDIUM`, or `LOW`.
-3. **Trigger Live Verification:** If confidence is `LOW` or `MEDIUM`, explain what is known/unknown and recommend read-only Live Verification instead of guessing.
-4. **Highlight Dependencies:** Show upstream providers and downstream consumers using Wiki links (`[[Entity-Basename]]`).
+## 2. Embedded Live Verification Workflow
+1. **Trace Multi-Device Hop Paths:** Map traffic flows sequentially: `Client ➔ Access Switch ➔ Core Switch ➔ FortiGate ➔ Cisco FTD ➔ F5 WAF ➔ Target Workload`.
+2. **Evaluate Path Confidence:** Assign confidence rating (`VERIFIED`, `HIGH`, `MEDIUM`, `LOW`) to every hop in the path.
+3. **Trigger Embedded Live Verification:** If any hop or policy in the path is unknown or unverified, state what is unknown and recommend read-only Live Verification across target devices instead of guessing.
+4. **Explain Upstream & Downstream Dependencies:** Link related entities using bidirectional Wiki links (`[[Entity-Basename]]`). Never present assumptions as verified facts.

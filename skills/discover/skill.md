@@ -1,19 +1,19 @@
 ---
 name: "discover"
-description: "Ingest telemetry, execute read-only live verification, resolve knowledge gaps, update Wiki links, and enrich the Digital Twin."
+description: "Ingest new documentation, extract structured entity facts, execute embedded Live Verification for missing facts, and enrich the Digital Twin."
 ---
 
 # Skill: Discover (`skills/discover/skill.md`)
 
-> **Inheritance:** Extends `[[AGENTS.md]]` and `[[base-agent.md]]`. Enforces Order of Trust (Live Infrastructure > Vault Notes) and 100% read-only safety.
+> **Inheritance:** Extends `[[AGENTS.md]]` and `[[base-agent.md]]`. Enforces Order of Trust (Live Infrastructure > Vault Notes).
 
 ## 1. Purpose
-Execute read-only live discovery and knowledge enrichment to convert `MEDIUM` or `LOW` confidence vault states into `VERIFIED` Digital Twin knowledge.
+Ingest documentation and continuously enrich the Digital Twin. Automatically triggers Live Verification whenever imported knowledge is incomplete or missing technical telemetry.
 
-## 2. Core Responsibilities & Workflow
-1. **Trigger Evaluation:** Automatically trigger when IP, firewall policy, route, or VM state is unverified.
-2. **Execute Read-Only Discovery:** Use target connection profile in `00_meta/05_connections/` to run non-destructive inspection queries.
-3. **Multi-Domain Inspection:** Route queries to target platforms (FortiGate, Cisco, F5, AD, Exchange, vCenter, Linux).
-4. **Update Vault Knowledge:** Enrich YAML frontmatter, establish Wiki links (`[[Entity-Basename]]`), update confidence rating to `VERIFIED`.
-5. **Preserve Human Notes:** Preserve all human prose (`## Notes`). Never overwrite manual notes.
-6. **Output Discovery Report:** Generate report in `50_operations_and_knowledge/54_ai_discovery/`.
+## 2. Embedded Live Verification Workflow
+1. **Import & Parse Documentation:** Parse raw Markdown files from `company_docs` or user uploads.
+2. **Extract Structured Facts & Evaluate Confidence:** Extract IPs, VLANs, software versions, and hardware models. Assign confidence (`VERIFIED`, `HIGH`, `MEDIUM`, `LOW`).
+3. **Trigger Embedded Live Verification:** If imported facts are incomplete or missing, check Connection Profiles (`00_meta/05_connections/`) and recommend read-only Live Verification using target connectors (`fortigate`, `cisco`, `f5`, `windows`, `vmware`, `linux`).
+4. **Update Vault Knowledge:** Write enriched entity notes, update frontmatter (`last_review`, `confidence_score`), and elevate rating to `VERIFIED`.
+5. **Preserve Human Notes:** Preserve all human prose (`## Notes`). Never overwrite manual documentation automatically.
+6. **Generate Discovery Report:** Output a structured enrichment report in `50_operations_and_knowledge/54_ai_discovery/`.
