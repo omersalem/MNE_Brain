@@ -1,45 +1,70 @@
 # AGENTS.md — Supreme Repository Governance & Single Source of Truth
 
-> **Mandatory Rule:** This document is the single source of truth for all repository governance, standards, safety rules, and engineering philosophies. All AI Agents operating on this repository—regardless of AI model, platform, or interface—behave identically and inherit 100% of their rules from this file.
+> **Mandatory Rule:** This document is the single source of truth for all repository governance, standards, safety rules, and engineering philosophies. All AI Agents operating on this repository behave identically and inherit 100% of their rules from this file.
 
 ---
 
-## 1. Governance & Core Philosophy
-- **Model Independence:** AI models, tools, and platforms change; structured plain-text Markdown knowledge endures.
-- **Read-Only Enforced:** Production infrastructure must never be modified by automated scripts or AI commands.
-- **Preserve Human Notes:** Automated discovery and enrichment must never overwrite or delete human-authored notes.
-- **Single Source of Truth:** All infrastructure facts must be maintained in canonical Markdown entity notes linked via Wiki links (`[[Entity-Basename]]`).
+## 1. Governance & Order of Trust
+
+### The Hierarchy of Trust
+The AI Agent must NEVER guess or treat unverified documentation as certainty. All knowledge evaluation follows this strict Order of Trust:
+1. **Live Infrastructure** (Highest Trust - Supreme Truth)
+2. **Verified Discovery Results**
+3. **Current Knowledge Base**
+4. **Imported Documentation**
+5. **User Assumptions** (Lowest Trust)
+
+Never reverse this order. Live infrastructure telemetry is the ultimate source of truth.
 
 ---
 
-## 2. Unified Operational Workflows
+## 2. Live Verification Decision Engine
 
-### Unified Engineering & Cognitive Workflow
-Every AI Agent follows the exact same 7-step execution pipeline:
+Before delivering any technical conclusion or troubleshooting diagnosis, The AI Agent executes the **Live Verification Decision Engine**:
+
 ```
-1. UNDERSTAND ──> 2. ANALYZE ──> 3. PLAN ──> 4. VALIDATE ──> 5. EXECUTE ──> 6. REVIEW ──> 7. IMPROVE
+Search Knowledge ──> Evaluate Confidence ──> Determine Missing Info ──> Recommend Live Verification ──> Request Approval ──> Read-Only Discovery ──> Update Vault ──> Final Answer
 ```
-1. **Understand:** Read prompt, search vault knowledge, clarify target scope.
-2. **Analyze:** Inspect domain indices (`00_meta/04_indices/`), dependencies, and log histories.
-3. **Plan:** Formulate action plan (or `implementation_plan.md` if complex).
-4. **Validate:** Verify read-only safety, path parameters, and YAML frontmatter schemas.
-5. **Execute:** Perform non-destructive tool calls, script updates, or note edits.
-6. **Review:** Gather empirical evidence (test exit code 0) confirming success.
-7. **Improve:** Evaluate if documentation should be enriched or if a new runbook/incident record is needed.
 
-### Unified Discovery Workflow
-- Apply 7-tier knowledge priority order (Vault Docs ➔ Diagrams ➔ Exported Configs ➔ Manuals ➔ Notes ➔ User Answers ➔ Read-Only Discovery).
-- All live discovery must execute via the 11-stage universal discovery pipeline (`00_meta/framework/`).
-- Present simple 4-option menus when asking the user for missing access parameters.
+### Answer Confidence Ratings
+Every technical response MUST declare an explicit Confidence Level:
+- **`VERIFIED`**: Conclusion confirmed using live read-only infrastructure telemetry.
+- **`HIGH`**: Confirmed by multiple trusted, recent knowledge sources in the vault.
+- **`MEDIUM`**: Reasonable confidence from static vault notes; Live Verification is recommended.
+- **`LOW`**: Insufficient or conflicting documentation. **NEVER** present LOW confidence as certainty. Recommends read-only Live Verification instead of guessing.
 
-### Unified Documentation & Wiki Workflow
-- Structure every note with YAML frontmatter demarcated by `---` matching `00_meta/02_schemas/tpl-*.md`.
-- Form explicit bidirectional Wiki links: `[[Entity-Basename]]` (no file extensions or paths inside brackets).
-- Preserve human-authored sections (`## Notes`, `## Custom Configurations`).
+### Live Verification Triggers
+The AI Agent MUST automatically recommend Live Verification when:
+- Target IP address, hostname, interface, or VLAN is missing or unknown.
+- Documentation is incomplete, conflicting, or outdated.
+- Firewall policies, static routes, NAT rules, or VM host placements cannot be confirmed.
+- The target object has never been discovered or verified.
 
 ---
 
-## 3. Read-Only Safety & Security Rules
-- **STRICT PROHIBITION:** Never execute state-changing CLI/API commands (`set`, `config`, `commit`, `Remove-*`, `reboot`, `shutdown`).
-- Mask passwords, tokens, and private keys in all logs and outputs.
-- Highlight single points of failure (SPOFs) and critical redundancy risks in audit reports.
+## 3. Multi-Device Hop-by-Hop Reasoning Pipeline
+
+When analyzing path connectivity or service failures (e.g. "Why can't Floor 2 access Server X?"), The AI Agent MUST trace the complete multi-device path:
+
+```
+[Client Subnet] ──> [Access Switch] ──> [Core Switch] ──> [FortiGate] ──> [Cisco FTD] ──> [F5 WAF] ──> [Server VLAN] ──> [Target Workload]
+```
+
+The AI Agent recommends read-only verification across every hop in the path until the exact failure point is identified.
+
+---
+
+## 4. Multi-Domain Target Inspection Routing
+- **Unknown Server IP:** Check ARP table ➔ MAC table ➔ Routing ➔ Firewall Objects ➔ Active Sessions.
+- **Unknown Firewall Policy:** Query FortiGate REST/SSH ➔ Cisco FMC REST API.
+- **Unknown Virtual Machine:** Query vCenter vSphere API ➔ ESXi Host.
+- **Unknown Identity / Mail Object:** Query Active Directory WinRM ➔ Exchange EMS.
+- **Unknown DNS Record:** Query Windows DNS Server.
+- **Unknown Linux Service:** Query Linux SSH (`systemctl`, `ss`).
+
+---
+
+## 5. Read-Only Safety & Security Rules
+- **STRICT PROHIBITION:** Read-only mode is permanently active. Never execute configuration commands (`set`, `config`, `commit`, `Remove-*`, `reboot`, `shutdown`).
+- Mask sensitive credentials in memory during execution.
+- Highlight single points of failure (SPOFs) in security and operational audits.

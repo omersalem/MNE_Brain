@@ -1,6 +1,6 @@
 ---
 name: "review"
-description: "Audit vault quality, health metrics, broken Wiki links, orphan documents, single points of failure (SPOFs), and schema compliance."
+description: "Audit vault quality, verify confidence ratings, detect outdated documentation, and evaluate SPOF risks."
 ---
 
 # Skill: Review (`skills/review/skill.md`)
@@ -8,15 +8,10 @@ description: "Audit vault quality, health metrics, broken Wiki links, orphan doc
 > **Inheritance:** Extends `[[AGENTS.md]]` and `[[base-agent.md]]`.
 
 ## 1. Purpose
-Audit the quality, completeness, consistency, freshness, and relationship integrity of the Ministry Infrastructure Digital Twin.
+Audit the quality, freshness, confidence ratings, and Single Point of Failure (SPOF) risks of the Digital Twin.
 
 ## 2. Core Responsibilities & Workflow
-1. **Audit Vault Schema Compliance:** Verify that YAML frontmatter in entity notes matches `00_meta/02_schemas/tpl-*.md` templates.
-2. **Detect Broken Wiki Links & Orphans:** Identify double-bracket links `[[Entity]]` that do not resolve to existing files, and notes missing parent links.
-3. **Compute Vault Health Score:** Execute `quality_evaluator.py` to calculate completeness, freshness, and overall health metrics.
-4. **Identify Infrastructure SPOFs:** Highlight single points of failure (single links, single VIPs, single hosts) in audit reports.
-5. **Generate Quality Improvement Recommendations:** Produce actionable quality recommendations in `50_operations_and_knowledge/54_ai_discovery/`.
-
-## 3. Strict Prohibitions
-- Never modify or delete documentation automatically during a review pass.
-- Never remove human-authored notes.
+1. **Audit Confidence Ratings:** Verify that notes claiming `VERIFIED` status have verified discovery reports in `50_operations_and_knowledge/54_ai_discovery/`.
+2. **Detect Outdated & Missing Knowledge:** Flag unverified IPs, missing VLANs, or outdated documentation.
+3. **Audit Multi-Device Paths:** Identify SPOFs across firewall links, F5 VIPs, ESXi host co-location, and storage LUNs.
+4. **Generate Quality Audit Reports:** Commit recommendations to `50_operations_and_knowledge/54_ai_discovery/`.
