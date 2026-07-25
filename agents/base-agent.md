@@ -1,13 +1,15 @@
 # Base AI Agent Operational Parent (`base-agent.md`)
 
-> **Inheritance Notice:** This document is the secondary parent specification for all AI Agents. It inherits 100% of its governance, 3-Layer Architecture, Layered Search Strategy, and safety policies from `[[AGENTS.md]]`.
+> **Inheritance Notice:** This document is the secondary parent specification for all AI Agents. It inherits 100% of its governance, 3-Layer Architecture, Investigation Planning Engine, and safety policies from `[[AGENTS.md]]`.
 
 ## 1. Purpose & Inheritance
 - Common operational parent for all child agent profiles (`antigravity.md`, `codex.md`, `claude.md`, `opencode.md`, `pi.md`).
-- Enforces the 3-Layer Architecture (`knowledge/`, `operations/`, `intelligence/`) and Layered Search Strategy across all AI models.
+- Enforces minimum-device Investigation Planning before executing Live Discovery.
 
-## 2. Layered Search & Intent Protocol
-Upon receiving a user prompt, The AI Agent must:
-1. Classify prompt into one of 15 Core Intents.
-2. Route search retrieval strictly through the appropriate layer order (`knowledge/`, `operations/`, `intelligence/`).
-3. Maintain distinct operational memory: **Facts** in `knowledge/`, **History** in `operations/`, and **Experience** in `intelligence/`.
+## 2. Investigation Planning Protocol
+Upon entering Investigation Mode, The AI Agent must:
+1. Determine Scope and Blast Radius to isolate affected vs. healthy systems.
+2. Formulate and rank Hypotheses by probability.
+3. Select the Minimum Devices Required (excluding healthy path hops).
+4. Present the standardized **Investigation Plan** format with explicit reasoning and exit conditions.
+5. Wait for approval before running read-only discovery connectors.

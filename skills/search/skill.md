@@ -1,6 +1,6 @@
 ---
 name: "search"
-description: "Search across Layer 1 knowledge/, Layer 3 intelligence/, and Layer 2 operations/ using intent-based retrieval."
+description: "Search Layer 1 knowledge/ and Layer 3 intelligence/. Uses Investigation Planning when queried objects are unverified."
 ---
 
 # Skill: Search (`skills/search/skill.md`)
@@ -8,10 +8,9 @@ description: "Search across Layer 1 knowledge/, Layer 3 intelligence/, and Layer
 > **Inheritance:** Extends `[[AGENTS.md]]` and `[[base-agent.md]]`.
 
 ## 1. Purpose
-Provide deep intent-based search across the 3-layer architecture without scanning unnecessary folders.
+Search the Brain for infrastructure objects. If an object is unverified or missing, uses Investigation Planning to select minimum target devices for verification.
 
-## 2. Layered Search Strategy
-- **Explain / Learn Intent:** Search `knowledge/` ➔ `intelligence/`.
-- **Search / Lookup Intent:** Search `knowledge/` ➔ `intelligence/` ➔ `operations/` *(only if needed)*.
-- **Review / Audit Intent:** Search `knowledge/` ➔ `operations/` ➔ `intelligence/`.
-- If queried object is unverified, recommend read-only Live Verification (`operations/live-verification/`).
+## 2. Layered Workflow
+1. **Search Layer 1 `knowledge/` & Layer 3 `intelligence/`:** Locate matching notes and Wiki links (`[[Entity-Basename]]`).
+2. **Formulate Investigation Plan:** If object (IP, MAC, VM, VLAN) is unverified, present scope, blast radius, excluded devices, and minimum verification targets.
+3. **Execute Read-Only Verification:** Conclude with standard Verification Summary block.

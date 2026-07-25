@@ -1,6 +1,6 @@
 ---
 name: "review"
-description: "Audit vault quality, SPOF path risks, and link integrity across Layer 1 knowledge/, Layer 2 operations/, and Layer 3 intelligence/."
+description: "Audit vault quality, broken links, SPOFs, and present minimum-device Investigation Plans for drift remediation."
 ---
 
 # Skill: Review (`skills/review/skill.md`)
@@ -8,9 +8,9 @@ description: "Audit vault quality, SPOF path risks, and link integrity across La
 > **Inheritance:** Extends `[[AGENTS.md]]` and `[[base-agent.md]]`.
 
 ## 1. Purpose
-Audit Digital Twin health, link integrity, and SPOF risks across the 3-layer architecture.
+Audit vault quality, link integrity, and SPOF path risks across `knowledge/`, `operations/`, and `intelligence/`.
 
 ## 2. Layered Workflow
-1. **Audit Layer 1 `knowledge/`:** Verify frontmatter schemas (`tpl-*.md`) and Wiki links (`[[Entity]]`).
-2. **Audit Layer 2 `operations/`:** Review incident frequency in `operations/incidents/` and verification logs in `operations/discovery/`.
-3. **Promote Stable Incident Lessons:** Identify recurring incidents in `operations/incidents/` and promote reusable lessons into `intelligence/runbooks/`.
+1. **Audit Layer 1 `knowledge/`:** Check frontmatter schemas (`tpl-*.md`), link integrity (`[[Entity]]`), and compute Vault Health Score.
+2. **Formulate Remediation Investigation Plan:** When conflicting policies or unverified IPs are detected, present minimum target devices required to resolve drift.
+3. **Promote Stable Incident Lessons:** Promote recurring incident RCA lessons from `operations/incidents/` into `intelligence/runbooks/`.

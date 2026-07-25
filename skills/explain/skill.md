@@ -1,6 +1,6 @@
 ---
 name: "explain"
-description: "Explain network topologies and path flows using Layer 1 knowledge/ and Layer 3 intelligence/ runbooks."
+description: "Explain network topologies and path flows. Differentiates Traffic Path from Investigation Plan."
 ---
 
 # Skill: Explain (`skills/explain/skill.md`)
@@ -8,9 +8,9 @@ description: "Explain network topologies and path flows using Layer 1 knowledge/
 > **Inheritance:** Extends `[[AGENTS.md]]` and `[[base-agent.md]]`.
 
 ## 1. Purpose
-Explain multi-tier network topologies and dependencies using permanent facts from `knowledge/` and SOP runbooks from `intelligence/runbooks/`.
+Explain multi-tier network topologies and dependencies while clearly distinguishing Traffic Paths from Investigation Plans.
 
 ## 2. Layered Workflow
-1. **Query Layer 1 `knowledge/`:** Map entity topology facts and bidirectional Wiki links (`[[Entity-Basename]]`).
-2. **Query Layer 3 `intelligence/`:** Pull relevant SOP runbooks or troubleshooting patterns.
-3. **Declare Confidence & Verification Summary:** Attach standard Verification Summary.
+1. **Map Traffic Path:** Explain how traffic flows end-to-end (`Client ➔ Core ➔ FortiGate ➔ FTD ➔ F5 ➔ Workload`).
+2. **Formulate Minimum Investigation Plan:** When troubleshooting, explain why only minimum target hops are inspected while other healthy path devices are excluded.
+3. **Declare Confidence:** Attach Verification Summary with explicit exit criteria.
