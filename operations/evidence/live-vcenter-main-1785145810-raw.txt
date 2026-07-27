@@ -1,0 +1,15 @@
+
+--- Executing: uptime ---
+Unknown command: `uptime'
+
+--- Executing: df -h ---
+Unknown command: `df'
+
+--- Executing: service-control --status ---
+Running:
+ applmgmt lookupsvc lwsmd observability observability-vapi pschealth vlcm vmafdd vmcad vmdird vmonapi vmware-analytics vmware-certificateauthority vmware-certificatemanagement vmware-cis-license vmware-content-library vmware-eam vmware-envoy vmware-hvc vmware-infraprofile vmware-perfcharts vmware-pod vmware-postgres-archiver vmware-rhttpproxy vmware-sca vmware-sps vmware-statsmonitor vmware-stsd vmware-topologysvc vmware-trustmanagement vmware-updatemgr vmware-vapi-endpoint vmware-vdtc vmware-vmon vmware-vpostgres vmware-vpxd vmware-vpxd-svcs vmware-vsan-health vmware-vsm vsphere-ui vstats vtsdb wcp
+Stopped:
+ vmcam vmware-imagebuilder vmware-netdumper vmware-rbd-watchdog vmware-vcha
+
+--- Executing: cat /etc/photon-release ---
+Unknown command: `cat'

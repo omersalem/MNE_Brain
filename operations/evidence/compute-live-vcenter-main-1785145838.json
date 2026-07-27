@@ -1,0 +1,14 @@
+{
+  "evidence_id": "live-vcenter-main-1785145838",
+  "target_entity": "vcenter-main",
+  "fqdn": "vcenter.mne.gov.ps",
+  "ip": "172.23.69.38",
+  "port": 22,
+  "protocol": "SSH",
+  "username": "root",
+  "timestamp": "2026-07-27T12:50:38.258797",
+  "trust_tier": 5,
+  "status": "UP",
+  "error": "",
+  "raw_output_path": "operations/evidence/live-vcenter-main-1785145838-raw.txt"
+}

@@ -1,0 +1,54 @@
+--- Initial Prompt ---
+Connected to service
+
+    * List APIs: "help api list"
+    * List Plugins: "help pi list"
+    * Launch BASH: "shell"
+
+Command> 
+--- BASH Switch ---
+shell
+Shell access is granted to root
+[1;31mroot@localhost [ [0m~[1;31m ]# [0m
+
+--- Executing: uptime ---
+uptime
+ 09:52:05 up 274 days,  1:30,  5 users,  load average: 0.07, 0.11, 0.11
+[1;31mroot@localhost [ [0m~[1;31m ]# [0m
+
+--- Executing: df -h ---
+df -h
+Filesystem                                   Size  Used Avail Use% Mounted on
+devtmpfs                                      14G     0   14G   0% /dev
+tmpfs                                         14G  1.2M   14G   1% /dev/shm
+tmpfs                                         14G  1.3M   14G   1% /run
+tmpfs                                         14G     0   14G   0% /sys/fs/cgroup
+/dev/mapper/vg_root_0-lv_root_0               47G   11G   34G  25% /
+tmpfs                                         14G  5.0M   14G   1% /tmp
+/dev/sda3                                    488M   30M  422M   7% /boot
+/dev/sda2                                     10M  2.0M  8.1M  20% /boot/efi
+/dev/mapper/vg_lvm_snapshot-lv_lvm_snapshot  196G   28K  186G   1% /storage/lvm_snapshot
+/dev/mapper/core_vg-core                      49G  200M   47G   1% /storage/core
+/dev/mapper/log_vg-log                        25G  4.6G   19G  20% /storage/log
+/dev/mapper/db_vg-db                          25G  769M   23G   4% /storage/db
+/dev/mapper/dblog_vg-dblog                    25G   81M   24G   1% /storage/dblog
+/dev/mapper/seat_vg-seat                      49G  714M   46G   2% /storage/seat
+/dev/mapper/netdump_vg-netdump               9.8G   24K  9.3G   1% /storage/netdump
+/dev/mapper/autodeploy_vg-autodeploy          25G   40K   24G   1% /storage/autodeploy
+/dev/mapper/imagebuilder_vg-imagebuilder      25G   36K   24G   1% /storage/imagebuilder
+/dev/mapper/updatemgr_vg-updatemgr            98G  878M   92G   1% /storage/updatemgr
+/dev/mapper/archive_vg-archive                98G   89G  4.8G  95% /storage/archive
+/dev/mapper/vtsdb_vg-vtsdb                    49G   32M   47G   1% /storage/vtsdb
+/dev/mapper/vtsdblog_vg-vtsdblog              25G   33M   24G   1% /storage/vtsdblog
+/dev/mapper/lifecycle_vg-lifecycle            98G  4.3G   89G   5% /storage/lifecycle
+[1;31mroot@localhost [ [0m~[1;31m ]# [0m
+
+--- Executing: cat /etc/photon-release ---
+cat /etc/photon-release
+VMware Photon OS 3.0
+PHOTON_BUILD_NUMBER=05f9d3d8d
+[1;31mroot@localhost [ [0m~[1;31m ]# [0m
+
+--- Executing: service-control --status ---
+service-control --status
+
