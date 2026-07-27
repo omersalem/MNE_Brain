@@ -1,0 +1,27 @@
+--- Initial Prompt ---
+
+
+User Access Verification
+
+Password: 
+--- After Line Password ---
+
+Tubas-RT>
+--- After Enable Cmd ---
+enable
+Password: 
+--- After Enable Password ---
+
+Tubas-RT#
+--- Show Version Output ---
+terminal length 0
+Tubas-RT#show version | include uptime|bytes of memory|processor
+Tubas-RT uptime is 1 day, 3 hours, 44 minutes
+Cisco 2801 (revision 7.0) with 358400K/34816K bytes of memory.
+Tubas-RT#
+--- Show IP Int Brief ---
+show ip interface brief
+Interface                  IP-Address      OK? Method Status                Protocol
+FastEthernet0/0            10.230.18.2     YES NVRAM  up                    up      
+FastEthernet0/1            unassigned      YES NVRAM  administratively down down    
+Tubas-RT#

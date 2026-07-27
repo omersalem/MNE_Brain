@@ -1,0 +1,31 @@
+--- Initial Prompt ---
+
+
+User Access Verification
+
+Username: 
+--- After Username ---
+noway
+Password: 
+--- After Line Password ---
+
+
+Tulkarem-RT>
+--- After Enable Cmd ---
+enable
+Password: 
+--- After Enable Password ---
+
+Tulkarem-RT#
+--- Show Version Output ---
+terminal length 0
+Tulkarem-RT#show version | include uptime|bytes of memory|processor
+Tulkarem-RT uptime is 1 hour, 58 minutes
+Cisco 2801 (revision 6.0) with 358400K/34816K bytes of memory.
+Tulkarem-RT#
+--- Show IP Int Brief ---
+show ip interface brief
+Interface                  IP-Address      OK? Method Status                Protocol
+FastEthernet0/0            10.165.18.2     YES NVRAM  up                    up      
+FastEthernet0/1            unassigned      YES NVRAM  administratively down down    
+Tulkarem-RT#

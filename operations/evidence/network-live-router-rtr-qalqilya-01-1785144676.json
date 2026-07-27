@@ -1,0 +1,17 @@
+{
+  "evidence_id": "live-router-rtr-qalqilya-01-1785144676",
+  "target_entity": "rtr-qalqilya-01",
+  "branch": "Qalqilya",
+  "ip": "10.180.18.2",
+  "port": 23,
+  "protocol": "Telnet",
+  "auth_type": "line_enable",
+  "username": "",
+  "line_pw_env": "MNE_ROUTER_QALQILYA_LINE_PASSWORD",
+  "enable_pw_env": "MNE_ROUTER_QALQILYA_ENABLE_PASSWORD",
+  "timestamp": "2026-07-27T12:31:16.874455",
+  "trust_tier": 5,
+  "status": "UP",
+  "error": "",
+  "raw_output_path": "operations/evidence/live-router-rtr-qalqilya-01-1785144676-raw.txt"
+}

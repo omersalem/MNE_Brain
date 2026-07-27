@@ -1,0 +1,27 @@
+--- Initial Prompt ---
+
+
+User Access Verification
+
+Password: 
+--- After Line Password ---
+
+Nablus>
+--- After Enable Cmd ---
+enable
+Password: 
+--- After Enable Password ---
+
+Nablus#
+--- Show Version Output ---
+terminal length 0
+Nablus#show version | include uptime|bytes of memory|processor
+Nablus uptime is 1 week, 22 hours, 41 minutes
+Cisco 2851 (revision 1.0) with 1036288K/12288K bytes of memory.
+Nablus#
+--- Show IP Int Brief ---
+show ip interface brief
+Interface                  IP-Address      OK? Method Status                Protocol
+GigabitEthernet0/0         10.131.18.2     YES NVRAM  up                    up      
+GigabitEthernet0/1         unassigned      YES NVRAM  administratively down down    
+Nablus#

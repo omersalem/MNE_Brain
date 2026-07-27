@@ -30,6 +30,7 @@ Context: [[index-network-and-security]] | Site: [[site-hebron]]
 - **Branch Office:** Hebron (الخليل)
 - **Management IP:** `10.40.18.2`
 - **Subnet Allocation:** `10.40.18.0/24`
-- **Management Protocol:** Telnet (Port 23) / HTTP (Port 80)
-- **Authentication Env Var:** `MNE_ROUTER_HEBRON_USERNAME` / `MNE_ROUTER_HEBRON_PASSWORD`
+- **Management Protocol:** Telnet (Port 23)
+- **Authentication Scheme:** Line Password (`vivajaradatos`) + Enable Password (`5alelo`) [No Username]
+- **Authentication Env Var:** `MNE_ROUTER_HEBRON_LINE_PASSWORD` / `MNE_ROUTER_HEBRON_ENABLE_PASSWORD`
 - **Live Status:** UP / Verified

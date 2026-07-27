@@ -30,6 +30,7 @@ Context: [[index-network-and-security]] | Site: [[site-hq]]
 - **Branch Office:** Abu Dis (ابو ديس)
 - **Management IP:** `10.70.18.2`
 - **Subnet Allocation:** `10.70.18.0/24`
-- **Management Protocol:** SSH (Port 22)
-- **Authentication Env Var:** `MNE_ROUTER_ABUDIS_USERNAME` / `MNE_ROUTER_ABUDIS_PASSWORD`
+- **Management Protocol:** Telnet (Port 23)
+- **Authentication Scheme:** Line Password (`vivajaradatos`) + Enable Password (`deeso`) [No Username]
+- **Authentication Env Var:** `MNE_ROUTER_ABUDIS_LINE_PASSWORD` / `MNE_ROUTER_ABUDIS_ENABLE_PASSWORD`
 - **Live Status:** UP / Verified

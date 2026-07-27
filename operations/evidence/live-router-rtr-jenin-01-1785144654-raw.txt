@@ -1,0 +1,27 @@
+--- Initial Prompt ---
+
+
+User Access Verification
+
+Password: 
+--- After Line Password ---
+
+Jenin>
+--- After Enable Cmd ---
+enable
+Password: 
+--- After Enable Password ---
+
+Jenin#
+--- Show Version Output ---
+terminal length 0
+Jenin#show version | include uptime|bytes of memory|processor
+Jenin uptime is 1 week, 1 day, 1 hour, 12 minutes
+Cisco 2851 (revision 1.0) with 512000K/12288K bytes of memory.
+Jenin#
+--- Show IP Int Brief ---
+show ip interface brief
+Interface                  IP-Address      OK? Method Status                Protocol
+GigabitEthernet0/0         10.201.18.2     YES NVRAM  up                    up      
+GigabitEthernet0/1         unassigned      YES NVRAM  administratively down down    
+Jenin#

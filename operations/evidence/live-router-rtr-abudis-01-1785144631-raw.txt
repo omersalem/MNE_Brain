@@ -1,0 +1,26 @@
+--- Initial Prompt ---
+
+
+User Access Verification
+
+Username: 
+--- After Username ---
+
+Username: 
+--- After Line Password ---
+vivajaradatos
+Password: 
+--- After Enable Cmd ---
+
+--- Show Version Output ---
+
+% Login invalid
+
+Username: terminal length 0
+Password: 
+--- Show IP Int Brief ---
+
+% Login invalid
+
+Username: show ip interface brief
+Password: 

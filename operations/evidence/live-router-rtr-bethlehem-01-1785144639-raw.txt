@@ -1,0 +1,27 @@
+--- Initial Prompt ---
+
+
+User Access Verification
+
+Password: 
+--- After Line Password ---
+
+Bethlehem>
+--- After Enable Cmd ---
+enable
+Password: 
+--- After Enable Password ---
+
+Bethlehem#
+--- Show Version Output ---
+terminal length 0
+Bethlehem#show version | include uptime|bytes of memory|processor
+Bethlehem uptime is 6 days, 22 hours, 46 minutes
+Cisco 2851 (revision 1.0) with 249856K/12288K bytes of memory.
+Bethlehem#
+--- Show IP Int Brief ---
+show ip interface brief
+Interface                  IP-Address      OK? Method Status                Protocol
+GigabitEthernet0/0         10.60.18.2      YES NVRAM  up                    up      
+GigabitEthernet0/1         unassigned      YES NVRAM  administratively down down    
+Bethlehem#

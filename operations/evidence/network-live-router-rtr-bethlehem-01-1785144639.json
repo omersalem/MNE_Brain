@@ -1,0 +1,17 @@
+{
+  "evidence_id": "live-router-rtr-bethlehem-01-1785144639",
+  "target_entity": "rtr-bethlehem-01",
+  "branch": "Bethlehem",
+  "ip": "10.60.18.2",
+  "port": 23,
+  "protocol": "Telnet",
+  "auth_type": "line_enable",
+  "username": "",
+  "line_pw_env": "MNE_ROUTER_BETHLEHEM_LINE_PASSWORD",
+  "enable_pw_env": "MNE_ROUTER_BETHLEHEM_ENABLE_PASSWORD",
+  "timestamp": "2026-07-27T12:30:39.249655",
+  "trust_tier": 5,
+  "status": "UP",
+  "error": "",
+  "raw_output_path": "operations/evidence/live-router-rtr-bethlehem-01-1785144639-raw.txt"
+}

@@ -1,0 +1,17 @@
+{
+  "evidence_id": "live-router-rtr-abudis-01-1785144606",
+  "target_entity": "rtr-abudis-01",
+  "branch": "Abu Dis",
+  "ip": "10.70.18.2",
+  "port": 23,
+  "protocol": "Telnet",
+  "auth_type": "line_enable",
+  "username": "",
+  "line_pw_env": "MNE_ROUTER_ABUDIS_LINE_PASSWORD",
+  "enable_pw_env": "MNE_ROUTER_ABUDIS_ENABLE_PASSWORD",
+  "timestamp": "2026-07-27T12:30:06.329108",
+  "trust_tier": 5,
+  "status": "UP",
+  "error": "",
+  "raw_output_path": "operations/evidence/live-router-rtr-abudis-01-1785144606-raw.txt"
+}

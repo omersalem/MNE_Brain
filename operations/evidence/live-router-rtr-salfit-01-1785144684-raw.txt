@@ -1,0 +1,27 @@
+--- Initial Prompt ---
+
+
+User Access Verification
+
+Password: 
+--- After Line Password ---
+
+Salfeet-RT>
+--- After Enable Cmd ---
+enable
+Password: 
+--- After Enable Password ---
+
+Salfeet-RT#
+--- Show Version Output ---
+terminal length 0
+Salfeet-RT#show version | include uptime|bytes of memory|processor
+Salfeet-RT uptime is 2 weeks, 2 days, 5 minutes
+Cisco 2801 (revision 5.0) with 358400K/34816K bytes of memory.
+Salfeet-RT#
+--- Show IP Int Brief ---
+show ip interface brief
+Interface                  IP-Address      OK? Method Status                Protocol
+FastEthernet0/0            10.235.18.2     YES NVRAM  up                    up      
+FastEthernet0/1            unassigned      YES NVRAM  administratively down down    
+Salfeet-RT#

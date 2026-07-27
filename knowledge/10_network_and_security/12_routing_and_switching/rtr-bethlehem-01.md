@@ -30,6 +30,7 @@ Context: [[index-network-and-security]] | Site: [[site-bethlehem]]
 - **Branch Office:** Bethlehem (بيت لحم)
 - **Management IP:** `10.60.18.2`
 - **Subnet Allocation:** `10.60.18.0/24`
-- **Management Protocol:** SSH (Port 22)
-- **Authentication Env Var:** `MNE_ROUTER_BETHLEHEM_USERNAME` / `MNE_ROUTER_BETHLEHEM_PASSWORD`
+- **Management Protocol:** Telnet (Port 23)
+- **Authentication Scheme:** Line Password (`vivajaradatos`) + Enable Password (`la7em`) [No Username]
+- **Authentication Env Var:** `MNE_ROUTER_BETHLEHEM_LINE_PASSWORD` / `MNE_ROUTER_BETHLEHEM_ENABLE_PASSWORD`
 - **Live Status:** UP / Verified

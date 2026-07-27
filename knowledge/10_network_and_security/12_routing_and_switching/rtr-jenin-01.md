@@ -30,6 +30,7 @@ Context: [[index-network-and-security]] | Site: [[site-jenin]]
 - **Branch Office:** Jenin (جنين)
 - **Management IP:** `10.201.18.2`
 - **Subnet Allocation:** `10.201.18.0/24`
-- **Management Protocol:** SSH (Port 22)
-- **Authentication Env Var:** `MNE_ROUTER_JENIN_USERNAME` / `MNE_ROUTER_JENIN_PASSWORD`
+- **Management Protocol:** Telnet (Port 23)
+- **Authentication Scheme:** Line Password (`vivajaradatos`) + Enable Password (`jenina`) [No Username]
+- **Authentication Env Var:** `MNE_ROUTER_JENIN_LINE_PASSWORD` / `MNE_ROUTER_JENIN_ENABLE_PASSWORD`
 - **Live Status:** UP / Verified

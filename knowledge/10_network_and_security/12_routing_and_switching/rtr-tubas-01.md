@@ -30,6 +30,7 @@ Context: [[index-network-and-security]] | Site: [[site-tubas]]
 - **Branch Office:** Tubas (طوباس)
 - **Management IP:** `10.230.18.2`
 - **Subnet Allocation:** `10.230.18.0/24`
-- **Management Protocol:** SSH (Port 22)
-- **Authentication Env Var:** `MNE_ROUTER_TUBAS_USERNAME` / `MNE_ROUTER_TUBAS_PASSWORD`
+- **Management Protocol:** Telnet (Port 23)
+- **Authentication Scheme:** Line Password (`vivajaradatos`) + Enable Password (`vivajaradatos`) [No Username]
+- **Authentication Env Var:** `MNE_ROUTER_TUBAS_LINE_PASSWORD` / `MNE_ROUTER_TUBAS_ENABLE_PASSWORD`
 - **Live Status:** UP / Verified

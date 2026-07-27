@@ -30,6 +30,7 @@ Context: [[index-network-and-security]] | Site: [[site-qalqilya]]
 - **Branch Office:** Qalqilya (قلقيليه)
 - **Management IP:** `10.180.18.2`
 - **Subnet Allocation:** `10.180.18.0/24`
-- **Management Protocol:** SSH (Port 22)
-- **Authentication Env Var:** `MNE_ROUTER_QALQILYA_USERNAME` / `MNE_ROUTER_QALQILYA_PASSWORD`
+- **Management Protocol:** Telnet (Port 23)
+- **Authentication Scheme:** Line Password (`vivajaradatos`) + Enable Password (`qalqilo`) [No Username]
+- **Authentication Env Var:** `MNE_ROUTER_QALQILYA_LINE_PASSWORD` / `MNE_ROUTER_QALQILYA_ENABLE_PASSWORD`
 - **Live Status:** UP / Verified

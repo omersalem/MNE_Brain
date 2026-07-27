@@ -1,0 +1,17 @@
+{
+  "evidence_id": "live-router-rtr-salfit-01-1785144684",
+  "target_entity": "rtr-salfit-01",
+  "branch": "Salfit",
+  "ip": "10.235.18.2",
+  "port": 23,
+  "protocol": "Telnet",
+  "auth_type": "line_enable",
+  "username": "",
+  "line_pw_env": "MNE_ROUTER_SALFIT_LINE_PASSWORD",
+  "enable_pw_env": "MNE_ROUTER_SALFIT_ENABLE_PASSWORD",
+  "timestamp": "2026-07-27T12:31:24.389813",
+  "trust_tier": 5,
+  "status": "UP",
+  "error": "",
+  "raw_output_path": "operations/evidence/live-router-rtr-salfit-01-1785144684-raw.txt"
+}

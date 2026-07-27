@@ -1,0 +1,17 @@
+{
+  "evidence_id": "live-router-rtr-tubas-01-1785144691",
+  "target_entity": "rtr-tubas-01",
+  "branch": "Tubas",
+  "ip": "10.230.18.2",
+  "port": 23,
+  "protocol": "Telnet",
+  "auth_type": "line_enable",
+  "username": "",
+  "line_pw_env": "MNE_ROUTER_TUBAS_LINE_PASSWORD",
+  "enable_pw_env": "MNE_ROUTER_TUBAS_ENABLE_PASSWORD",
+  "timestamp": "2026-07-27T12:31:31.903310",
+  "trust_tier": 5,
+  "status": "UP",
+  "error": "",
+  "raw_output_path": "operations/evidence/live-router-rtr-tubas-01-1785144691-raw.txt"
+}

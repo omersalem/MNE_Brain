@@ -1,0 +1,17 @@
+{
+  "evidence_id": "live-router-rtr-hebron-01-1785144646",
+  "target_entity": "rtr-hebron-01",
+  "branch": "Hebron",
+  "ip": "10.40.18.2",
+  "port": 23,
+  "protocol": "Telnet",
+  "auth_type": "line_enable",
+  "username": "",
+  "line_pw_env": "MNE_ROUTER_HEBRON_LINE_PASSWORD",
+  "enable_pw_env": "MNE_ROUTER_HEBRON_ENABLE_PASSWORD",
+  "timestamp": "2026-07-27T12:30:46.790399",
+  "trust_tier": 5,
+  "status": "UP",
+  "error": "",
+  "raw_output_path": "operations/evidence/live-router-rtr-hebron-01-1785144646-raw.txt"
+}

@@ -30,6 +30,7 @@ Context: [[index-network-and-security]] | Site: [[site-tulkarm]]
 - **Branch Office:** Tulkarm (طولكرم)
 - **Management IP:** `10.165.18.2`
 - **Subnet Allocation:** `10.165.18.0/24`
-- **Management Protocol:** SSH (Port 22)
-- **Authentication Env Var:** `MNE_ROUTER_TULKARM_USERNAME` / `MNE_ROUTER_TULKARM_PASSWORD`
+- **Management Protocol:** Telnet (Port 23)
+- **Authentication Scheme:** Username (`noway`) + Line Password (`vivajaradatos`) + Enable Password (`vivajaradatos`)
+- **Authentication Env Var:** `MNE_ROUTER_TULKARM_USERNAME` / `MNE_ROUTER_TULKARM_LINE_PASSWORD` / `MNE_ROUTER_TULKARM_ENABLE_PASSWORD`
 - **Live Status:** UP / Verified

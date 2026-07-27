@@ -30,6 +30,7 @@ Context: [[index-network-and-security]] | Site: [[site-jericho]]
 - **Branch Office:** Jericho (اريحا)
 - **Management IP:** `10.211.18.2`
 - **Subnet Allocation:** `10.211.18.0/24`
-- **Management Protocol:** SSH (Port 22)
-- **Authentication Env Var:** `MNE_ROUTER_JERICHO_USERNAME` / `MNE_ROUTER_JERICHO_PASSWORD`
+- **Management Protocol:** Telnet (Port 23)
+- **Authentication Scheme:** Line Password (`vivajaradatos`) + Enable Password (`ree7o`) [No Username]
+- **Authentication Env Var:** `MNE_ROUTER_JERICHO_LINE_PASSWORD` / `MNE_ROUTER_JERICHO_ENABLE_PASSWORD`
 - **Live Status:** UP / Verified

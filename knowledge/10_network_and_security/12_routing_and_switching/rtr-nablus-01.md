@@ -30,6 +30,7 @@ Context: [[index-network-and-security]] | Site: [[site-hq]]
 - **Branch Office:** Nablus (نابلس)
 - **Management IP:** `10.131.18.2`
 - **Subnet Allocation:** `10.131.18.0/24`
-- **Management Protocol:** Telnet (Port 23) / HTTP (Port 80)
-- **Authentication Env Var:** `MNE_ROUTER_NABLUS_USERNAME` / `MNE_ROUTER_NABLUS_PASSWORD`
+- **Management Protocol:** Telnet (Port 23)
+- **Authentication Scheme:** Line Password (`vivajaradatos`) + Enable Password (`nabulsi`) [No Username]
+- **Authentication Env Var:** `MNE_ROUTER_NABLUS_LINE_PASSWORD` / `MNE_ROUTER_NABLUS_ENABLE_PASSWORD`
 - **Live Status:** UP / Verified
