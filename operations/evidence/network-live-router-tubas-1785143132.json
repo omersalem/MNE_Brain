@@ -1,0 +1,20 @@
+{
+  "evidence_id": "live-router-tubas-1785143132",
+  "target_entity": "rtr-tubas-01",
+  "branch": "Tubas",
+  "ip": "10.230.18.2",
+  "port": 22,
+  "protocol": "SSH",
+  "timestamp": "2026-07-27T12:05:32.678956",
+  "trust_tier": 5,
+  "status": "success",
+  "raw_output_path": "operations/evidence/live-router-tubas-1785143132-raw.txt",
+  "normalized_output": {
+    "device": "rtr-tubas-01",
+    "host": "10.230.18.2",
+    "username_env": "MNE_ROUTER_TUBAS_USERNAME",
+    "password_env": "MNE_ROUTER_TUBAS_PASSWORD",
+    "status": "UP",
+    "protocol": "SSH"
+  }
+}

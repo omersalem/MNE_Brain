@@ -250,6 +250,46 @@
         200
       ]
     },
+    "MNE-RTR-ABUDIS-01": {
+      "aliases": [
+        "MNE-RTR-ABUDIS-01",
+        "rtr-abudis-01"
+      ],
+      "canonical_note": "knowledge/10_network_and_security/12_routing_and_switching/rtr-abudis-01.md",
+      "fqdns": [],
+      "id": "MNE-RTR-ABUDIS-01",
+      "ips": [
+        "10.70.18.0",
+        "10.70.18.2"
+      ],
+      "last_verified": "2026-07-27",
+      "related_entities": [],
+      "services": [],
+      "site": "Abu Dis (\u0627\u0628\u0648 \u062f\u064a\u0633)",
+      "trust_tier": 5,
+      "type": "cisco_router",
+      "vlans": []
+    },
+    "MNE-RTR-BETHLEHEM-01": {
+      "aliases": [
+        "MNE-RTR-BETHLEHEM-01",
+        "rtr-bethlehem-01"
+      ],
+      "canonical_note": "knowledge/10_network_and_security/12_routing_and_switching/rtr-bethlehem-01.md",
+      "fqdns": [],
+      "id": "MNE-RTR-BETHLEHEM-01",
+      "ips": [
+        "10.60.18.0",
+        "10.60.18.2"
+      ],
+      "last_verified": "2026-07-27",
+      "related_entities": [],
+      "services": [],
+      "site": "Bethlehem (\u0628\u064a\u062a \u0644\u062d\u0645)",
+      "trust_tier": 5,
+      "type": "cisco_router",
+      "vlans": []
+    },
     "MNE-RTR-CISCO-WAN-01": {
       "aliases": [
         "MNE-RTR-CISCO-WAN-01",
@@ -266,6 +306,166 @@
       "services": [],
       "site": "HQ",
       "trust_tier": 3,
+      "type": "cisco_router",
+      "vlans": []
+    },
+    "MNE-RTR-HEBRON-01": {
+      "aliases": [
+        "MNE-RTR-HEBRON-01",
+        "rtr-hebron-01"
+      ],
+      "canonical_note": "knowledge/10_network_and_security/12_routing_and_switching/rtr-hebron-01.md",
+      "fqdns": [],
+      "id": "MNE-RTR-HEBRON-01",
+      "ips": [
+        "10.40.18.0",
+        "10.40.18.2"
+      ],
+      "last_verified": "2026-07-27",
+      "related_entities": [],
+      "services": [],
+      "site": "Hebron (\u0627\u0644\u062e\u0644\u064a\u0644)",
+      "trust_tier": 5,
+      "type": "cisco_router",
+      "vlans": []
+    },
+    "MNE-RTR-JENIN-01": {
+      "aliases": [
+        "MNE-RTR-JENIN-01",
+        "rtr-jenin-01"
+      ],
+      "canonical_note": "knowledge/10_network_and_security/12_routing_and_switching/rtr-jenin-01.md",
+      "fqdns": [],
+      "id": "MNE-RTR-JENIN-01",
+      "ips": [
+        "10.201.18.0",
+        "10.201.18.2"
+      ],
+      "last_verified": "2026-07-27",
+      "related_entities": [],
+      "services": [],
+      "site": "Jenin (\u062c\u0646\u064a\u0646)",
+      "trust_tier": 5,
+      "type": "cisco_router",
+      "vlans": []
+    },
+    "MNE-RTR-JERICHO-01": {
+      "aliases": [
+        "MNE-RTR-JERICHO-01",
+        "rtr-jericho-01"
+      ],
+      "canonical_note": "knowledge/10_network_and_security/12_routing_and_switching/rtr-jericho-01.md",
+      "fqdns": [],
+      "id": "MNE-RTR-JERICHO-01",
+      "ips": [
+        "10.211.18.0",
+        "10.211.18.2"
+      ],
+      "last_verified": "2026-07-27",
+      "related_entities": [],
+      "services": [],
+      "site": "Jericho (\u0627\u0631\u064a\u062d\u0627)",
+      "trust_tier": 5,
+      "type": "cisco_router",
+      "vlans": []
+    },
+    "MNE-RTR-NABLUS-01": {
+      "aliases": [
+        "MNE-RTR-NABLUS-01",
+        "rtr-nablus-01"
+      ],
+      "canonical_note": "knowledge/10_network_and_security/12_routing_and_switching/rtr-nablus-01.md",
+      "fqdns": [],
+      "id": "MNE-RTR-NABLUS-01",
+      "ips": [
+        "10.131.18.0",
+        "10.131.18.2"
+      ],
+      "last_verified": "2026-07-27",
+      "related_entities": [],
+      "services": [],
+      "site": "Nablus (\u0646\u0627\u0628\u0644\u0633)",
+      "trust_tier": 5,
+      "type": "cisco_router",
+      "vlans": []
+    },
+    "MNE-RTR-QALQILYA-01": {
+      "aliases": [
+        "MNE-RTR-QALQILYA-01",
+        "rtr-qalqilya-01"
+      ],
+      "canonical_note": "knowledge/10_network_and_security/12_routing_and_switching/rtr-qalqilya-01.md",
+      "fqdns": [],
+      "id": "MNE-RTR-QALQILYA-01",
+      "ips": [
+        "10.180.18.0",
+        "10.180.18.2"
+      ],
+      "last_verified": "2026-07-27",
+      "related_entities": [],
+      "services": [],
+      "site": "Qalqilya (\u0642\u0644\u0642\u064a\u0644\u064a\u0647)",
+      "trust_tier": 5,
+      "type": "cisco_router",
+      "vlans": []
+    },
+    "MNE-RTR-SALFEET-01": {
+      "aliases": [
+        "MNE-RTR-SALFEET-01",
+        "rtr-salfeet-01"
+      ],
+      "canonical_note": "knowledge/10_network_and_security/12_routing_and_switching/rtr-salfeet-01.md",
+      "fqdns": [],
+      "id": "MNE-RTR-SALFEET-01",
+      "ips": [
+        "10.235.18.0",
+        "10.235.18.2"
+      ],
+      "last_verified": "2026-07-27",
+      "related_entities": [],
+      "services": [],
+      "site": "Salfit (\u0633\u0644\u0641\u064a\u062a)",
+      "trust_tier": 5,
+      "type": "cisco_router",
+      "vlans": []
+    },
+    "MNE-RTR-TUBAS-01": {
+      "aliases": [
+        "MNE-RTR-TUBAS-01",
+        "rtr-tubas-01"
+      ],
+      "canonical_note": "knowledge/10_network_and_security/12_routing_and_switching/rtr-tubas-01.md",
+      "fqdns": [],
+      "id": "MNE-RTR-TUBAS-01",
+      "ips": [
+        "10.230.18.0",
+        "10.230.18.2"
+      ],
+      "last_verified": "2026-07-27",
+      "related_entities": [],
+      "services": [],
+      "site": "Tubas (\u0637\u0648\u0628\u0627\u0633)",
+      "trust_tier": 5,
+      "type": "cisco_router",
+      "vlans": []
+    },
+    "MNE-RTR-TULKARM-01": {
+      "aliases": [
+        "MNE-RTR-TULKARM-01",
+        "rtr-tulkarm-01"
+      ],
+      "canonical_note": "knowledge/10_network_and_security/12_routing_and_switching/rtr-tulkarm-01.md",
+      "fqdns": [],
+      "id": "MNE-RTR-TULKARM-01",
+      "ips": [
+        "10.165.18.0",
+        "10.165.18.2"
+      ],
+      "last_verified": "2026-07-27",
+      "related_entities": [],
+      "services": [],
+      "site": "Tulkarm (\u0637\u0648\u0644\u0643\u0631\u0645)",
+      "trust_tier": 5,
       "type": "cisco_router",
       "vlans": []
     },
@@ -765,9 +965,15 @@
       "vlans": []
     }
   },
-  "generated_at": "2026-07-27T10:58:51.335779",
+  "generated_at": "2026-07-27T12:05:46.125373",
   "sub_indices": {
     "branches": {
+      "abu dis (\u0627\u0628\u0648 \u062f\u064a\u0633)": [
+        "MNE-RTR-ABUDIS-01"
+      ],
+      "bethlehem (\u0628\u064a\u062a \u0644\u062d\u0645)": [
+        "MNE-RTR-BETHLEHEM-01"
+      ],
       "branch": [
         "README",
         "MNE-SITE-BRANCH-BETHLEHEM",
@@ -783,6 +989,9 @@
         "MNE-SITE-BRANCH-TUBAS",
         "MNE-SITE-BRANCH-TULKARM",
         "MNE-SEC-BLOCKED-IPS"
+      ],
+      "hebron (\u0627\u0644\u062e\u0644\u064a\u0644)": [
+        "MNE-RTR-HEBRON-01"
       ],
       "hq": [
         "MNE-SITE-HQ",
@@ -808,6 +1017,27 @@
         "MNE-EXCH-SRV-01",
         "MNE-EXCH-SRV-02",
         "MNE-SCCM-SRV-01"
+      ],
+      "jenin (\u062c\u0646\u064a\u0646)": [
+        "MNE-RTR-JENIN-01"
+      ],
+      "jericho (\u0627\u0631\u064a\u062d\u0627)": [
+        "MNE-RTR-JERICHO-01"
+      ],
+      "nablus (\u0646\u0627\u0628\u0644\u0633)": [
+        "MNE-RTR-NABLUS-01"
+      ],
+      "qalqilya (\u0642\u0644\u0642\u064a\u0644\u064a\u0647)": [
+        "MNE-RTR-QALQILYA-01"
+      ],
+      "salfit (\u0633\u0644\u0641\u064a\u062a)": [
+        "MNE-RTR-SALFEET-01"
+      ],
+      "tubas (\u0637\u0648\u0628\u0627\u0633)": [
+        "MNE-RTR-TUBAS-01"
+      ],
+      "tulkarm (\u0637\u0648\u0644\u0643\u0631\u0645)": [
+        "MNE-RTR-TULKARM-01"
       ]
     },
     "hostnames": {
@@ -886,8 +1116,38 @@
       "mne-fw-fg-hq-01": [
         "MNE-FW-FG-HQ-01"
       ],
+      "mne-rtr-abudis-01": [
+        "MNE-RTR-ABUDIS-01"
+      ],
+      "mne-rtr-bethlehem-01": [
+        "MNE-RTR-BETHLEHEM-01"
+      ],
       "mne-rtr-cisco-wan-01": [
         "MNE-RTR-CISCO-WAN-01"
+      ],
+      "mne-rtr-hebron-01": [
+        "MNE-RTR-HEBRON-01"
+      ],
+      "mne-rtr-jenin-01": [
+        "MNE-RTR-JENIN-01"
+      ],
+      "mne-rtr-jericho-01": [
+        "MNE-RTR-JERICHO-01"
+      ],
+      "mne-rtr-nablus-01": [
+        "MNE-RTR-NABLUS-01"
+      ],
+      "mne-rtr-qalqilya-01": [
+        "MNE-RTR-QALQILYA-01"
+      ],
+      "mne-rtr-salfeet-01": [
+        "MNE-RTR-SALFEET-01"
+      ],
+      "mne-rtr-tubas-01": [
+        "MNE-RTR-TUBAS-01"
+      ],
+      "mne-rtr-tulkarm-01": [
+        "MNE-RTR-TULKARM-01"
       ],
       "mne-san-fuj-eternus-01": [
         "MNE-SAN-FUJ-ETERNUS-01"
@@ -961,8 +1221,38 @@
       "readme": [
         "README"
       ],
+      "rtr-abudis-01": [
+        "MNE-RTR-ABUDIS-01"
+      ],
+      "rtr-bethlehem-01": [
+        "MNE-RTR-BETHLEHEM-01"
+      ],
       "rtr-cisco-wan-01": [
         "MNE-RTR-CISCO-WAN-01"
+      ],
+      "rtr-hebron-01": [
+        "MNE-RTR-HEBRON-01"
+      ],
+      "rtr-jenin-01": [
+        "MNE-RTR-JENIN-01"
+      ],
+      "rtr-jericho-01": [
+        "MNE-RTR-JERICHO-01"
+      ],
+      "rtr-nablus-01": [
+        "MNE-RTR-NABLUS-01"
+      ],
+      "rtr-qalqilya-01": [
+        "MNE-RTR-QALQILYA-01"
+      ],
+      "rtr-salfeet-01": [
+        "MNE-RTR-SALFEET-01"
+      ],
+      "rtr-tubas-01": [
+        "MNE-RTR-TUBAS-01"
+      ],
+      "rtr-tulkarm-01": [
+        "MNE-RTR-TULKARM-01"
       ],
       "san-fujitsu-eternus-01": [
         "MNE-SAN-FUJ-ETERNUS-01"
@@ -1051,65 +1341,99 @@
       "10.110.19.3": [
         "MNE-SITE-BRANCH-RAMALLAH-GOLD"
       ],
+      "10.131.18.0": [
+        "MNE-RTR-NABLUS-01"
+      ],
+      "10.131.18.2": [
+        "MNE-RTR-NABLUS-01"
+      ],
       "10.165.18.0": [
-        "MNE-SITE-BRANCH-TULKARM"
+        "MNE-SITE-BRANCH-TULKARM",
+        "MNE-RTR-TULKARM-01"
       ],
       "10.165.18.1": [
         "MNE-SITE-BRANCH-TULKARM"
+      ],
+      "10.165.18.2": [
+        "MNE-RTR-TULKARM-01"
       ],
       "10.165.18.3": [
         "MNE-SITE-BRANCH-TULKARM"
       ],
       "10.180.18.0": [
-        "MNE-SITE-BRANCH-QALQILYA"
+        "MNE-SITE-BRANCH-QALQILYA",
+        "MNE-RTR-QALQILYA-01"
       ],
       "10.180.18.1": [
         "MNE-SITE-BRANCH-QALQILYA"
+      ],
+      "10.180.18.2": [
+        "MNE-RTR-QALQILYA-01"
       ],
       "10.180.18.3": [
         "MNE-SITE-BRANCH-QALQILYA"
       ],
       "10.201.18.0": [
-        "MNE-SITE-BRANCH-JENIN"
+        "MNE-SITE-BRANCH-JENIN",
+        "MNE-RTR-JENIN-01"
       ],
       "10.201.18.1": [
         "MNE-SITE-BRANCH-JENIN"
+      ],
+      "10.201.18.2": [
+        "MNE-RTR-JENIN-01"
       ],
       "10.201.18.3": [
         "MNE-SITE-BRANCH-JENIN"
       ],
       "10.211.18.0": [
-        "MNE-SITE-BRANCH-JERICHO"
+        "MNE-SITE-BRANCH-JERICHO",
+        "MNE-RTR-JERICHO-01"
       ],
       "10.211.18.1": [
         "MNE-SITE-BRANCH-JERICHO"
+      ],
+      "10.211.18.2": [
+        "MNE-RTR-JERICHO-01"
       ],
       "10.211.18.3": [
         "MNE-SITE-BRANCH-JERICHO"
       ],
       "10.230.18.0": [
-        "MNE-SITE-BRANCH-TUBAS"
+        "MNE-SITE-BRANCH-TUBAS",
+        "MNE-RTR-TUBAS-01"
       ],
       "10.230.18.1": [
         "MNE-SITE-BRANCH-TUBAS"
+      ],
+      "10.230.18.2": [
+        "MNE-RTR-TUBAS-01"
       ],
       "10.230.18.3": [
         "MNE-SITE-BRANCH-TUBAS"
       ],
       "10.235.18.0": [
-        "MNE-SITE-BRANCH-SALFEET"
+        "MNE-SITE-BRANCH-SALFEET",
+        "MNE-RTR-SALFEET-01"
       ],
       "10.235.18.1": [
         "MNE-SITE-BRANCH-SALFEET"
+      ],
+      "10.235.18.2": [
+        "MNE-RTR-SALFEET-01"
       ],
       "10.235.18.3": [
         "MNE-SITE-BRANCH-SALFEET"
       ],
       "10.40.18.0": [
-        "MNE-SITE-BRANCH-HEBRON"
+        "MNE-SITE-BRANCH-HEBRON",
+        "MNE-RTR-HEBRON-01"
       ],
       "10.40.18.1": [
         "MNE-SITE-BRANCH-HEBRON"
+      ],
+      "10.40.18.2": [
+        "MNE-RTR-HEBRON-01"
       ],
       "10.40.18.3": [
         "MNE-SITE-BRANCH-HEBRON"
@@ -1124,19 +1448,27 @@
         "MNE-SITE-BRANCH-HEBRON-GOLD"
       ],
       "10.60.18.0": [
-        "MNE-SITE-BRANCH-BETHLEHEM"
+        "MNE-SITE-BRANCH-BETHLEHEM",
+        "MNE-RTR-BETHLEHEM-01"
       ],
       "10.60.18.1": [
         "MNE-SITE-BRANCH-BETHLEHEM"
+      ],
+      "10.60.18.2": [
+        "MNE-RTR-BETHLEHEM-01"
       ],
       "10.60.18.3": [
         "MNE-SITE-BRANCH-BETHLEHEM"
       ],
       "10.70.18.0": [
-        "MNE-SITE-BRANCH-JERUSALEM"
+        "MNE-SITE-BRANCH-JERUSALEM",
+        "MNE-RTR-ABUDIS-01"
       ],
       "10.70.18.1": [
         "MNE-SITE-BRANCH-JERUSALEM"
+      ],
+      "10.70.18.2": [
+        "MNE-RTR-ABUDIS-01"
       ],
       "10.70.18.3": [
         "MNE-SITE-BRANCH-JERUSALEM"
@@ -1270,6 +1602,6 @@
       ]
     }
   },
-  "total_entities": 37,
+  "total_entities": 47,
   "version": "2.0"
 }

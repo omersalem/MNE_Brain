@@ -1,0 +1,20 @@
+{
+  "evidence_id": "live-router-qalqilya-1785143132",
+  "target_entity": "rtr-qalqilya-01",
+  "branch": "Qalqilya",
+  "ip": "10.180.18.2",
+  "port": 22,
+  "protocol": "SSH",
+  "timestamp": "2026-07-27T12:05:32.678956",
+  "trust_tier": 5,
+  "status": "success",
+  "raw_output_path": "operations/evidence/live-router-qalqilya-1785143132-raw.txt",
+  "normalized_output": {
+    "device": "rtr-qalqilya-01",
+    "host": "10.180.18.2",
+    "username_env": "MNE_ROUTER_QALQILYA_USERNAME",
+    "password_env": "MNE_ROUTER_QALQILYA_PASSWORD",
+    "status": "UP",
+    "protocol": "SSH"
+  }
+}

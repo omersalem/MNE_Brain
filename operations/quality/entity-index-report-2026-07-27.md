@@ -1,8 +1,8 @@
 # Entity Index Build Report — 2026-07-27
 
-- **Total Entities Indexed:** 37
-- **Indexed IPs:** 58
-- **Indexed Hostnames/Aliases:** 75
+- **Total Entities Indexed:** 47
+- **Indexed IPs:** 69
+- **Indexed Hostnames/Aliases:** 95
 - **Indexed Services:** 0
 - **Conflicts Detected:** 3
 
@@ -19,7 +19,17 @@
 - `MNE-F5-VIP-PUB-98` (f5_object) ➔ `knowledge/10_network_and_security/14_f5_waf_publishing/f5-vip-public-98.md` [IPs: 172.23.70.89, 172.23.71.35, 172.23.71.36, 172.23.79.200]
 - `MNE-FC-SW-FUJ-01` (fc_switch) ➔ `knowledge/30_storage/31_fc_switches/fc-sw-fujitsu-01.md` [IPs: 172.23.68.10]
 - `MNE-FW-FG-HQ-01` (fortigate_device) ➔ `knowledge/10_network_and_security/13_firewalls_and_fmc/fw-fortigate-hq-01.md` [IPs: 10.11.12.1, 172.23.19.0, 172.23.21.0, 172.23.23.0, 172.23.70.4]
+- `MNE-RTR-ABUDIS-01` (cisco_router) ➔ `knowledge/10_network_and_security/12_routing_and_switching/rtr-abudis-01.md` [IPs: 10.70.18.0, 10.70.18.2]
+- `MNE-RTR-BETHLEHEM-01` (cisco_router) ➔ `knowledge/10_network_and_security/12_routing_and_switching/rtr-bethlehem-01.md` [IPs: 10.60.18.0, 10.60.18.2]
 - `MNE-RTR-CISCO-WAN-01` (cisco_router) ➔ `knowledge/10_network_and_security/12_routing_and_switching/rtr-cisco-wan-01.md` [IPs: 172.23.70.254]
+- `MNE-RTR-HEBRON-01` (cisco_router) ➔ `knowledge/10_network_and_security/12_routing_and_switching/rtr-hebron-01.md` [IPs: 10.40.18.0, 10.40.18.2]
+- `MNE-RTR-JENIN-01` (cisco_router) ➔ `knowledge/10_network_and_security/12_routing_and_switching/rtr-jenin-01.md` [IPs: 10.201.18.0, 10.201.18.2]
+- `MNE-RTR-JERICHO-01` (cisco_router) ➔ `knowledge/10_network_and_security/12_routing_and_switching/rtr-jericho-01.md` [IPs: 10.211.18.0, 10.211.18.2]
+- `MNE-RTR-NABLUS-01` (cisco_router) ➔ `knowledge/10_network_and_security/12_routing_and_switching/rtr-nablus-01.md` [IPs: 10.131.18.0, 10.131.18.2]
+- `MNE-RTR-QALQILYA-01` (cisco_router) ➔ `knowledge/10_network_and_security/12_routing_and_switching/rtr-qalqilya-01.md` [IPs: 10.180.18.0, 10.180.18.2]
+- `MNE-RTR-SALFEET-01` (cisco_router) ➔ `knowledge/10_network_and_security/12_routing_and_switching/rtr-salfeet-01.md` [IPs: 10.235.18.0, 10.235.18.2]
+- `MNE-RTR-TUBAS-01` (cisco_router) ➔ `knowledge/10_network_and_security/12_routing_and_switching/rtr-tubas-01.md` [IPs: 10.230.18.0, 10.230.18.2]
+- `MNE-RTR-TULKARM-01` (cisco_router) ➔ `knowledge/10_network_and_security/12_routing_and_switching/rtr-tulkarm-01.md` [IPs: 10.165.18.0, 10.165.18.2]
 - `MNE-SAN-FUJ-ETERNUS-01` (fujitsu_san) ➔ `knowledge/30_storage/32_san_storage/san-fujitsu-eternus-01.md` [IPs: 172.23.68.20]
 - `MNE-SCCM-SRV-01` (sccm_server) ➔ `knowledge/40_identity_and_core_services/43_messaging_and_mgmt/sccm-srv-01.md` [IPs: 172.23.71.80]
 - `MNE-SEC-BLOCKED-IPS` (security_reference) ➔ `knowledge/10_network_and_security/13_firewalls_and_fmc/blocked-threat-ips.md` [IPs: 172.23.70.4]

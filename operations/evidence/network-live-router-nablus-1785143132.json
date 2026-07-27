@@ -1,0 +1,20 @@
+{
+  "evidence_id": "live-router-nablus-1785143132",
+  "target_entity": "rtr-nablus-01",
+  "branch": "Nablus",
+  "ip": "10.131.18.2",
+  "port": 23,
+  "protocol": "Telnet",
+  "timestamp": "2026-07-27T12:05:32.678956",
+  "trust_tier": 5,
+  "status": "success",
+  "raw_output_path": "operations/evidence/live-router-nablus-1785143132-raw.txt",
+  "normalized_output": {
+    "device": "rtr-nablus-01",
+    "host": "10.131.18.2",
+    "username_env": "MNE_ROUTER_NABLUS_USERNAME",
+    "password_env": "MNE_ROUTER_NABLUS_PASSWORD",
+    "status": "UP",
+    "protocol": "Telnet"
+  }
+}

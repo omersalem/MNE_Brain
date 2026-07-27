@@ -1,0 +1,5 @@
+Branch Router: Nablus
+IP: 10.131.18.2:23 (Telnet)
+Status: UP
+Auth Env Vars: MNE_ROUTER_NABLUS_USERNAME / MNE_ROUTER_NABLUS_PASSWORD
+Verified At: 2026-07-27T12:05:32.678956

@@ -1,0 +1,20 @@
+{
+  "evidence_id": "live-router-bethlehem-1785143132",
+  "target_entity": "rtr-bethlehem-01",
+  "branch": "Bethlehem",
+  "ip": "10.60.18.2",
+  "port": 22,
+  "protocol": "SSH",
+  "timestamp": "2026-07-27T12:05:32.678956",
+  "trust_tier": 5,
+  "status": "success",
+  "raw_output_path": "operations/evidence/live-router-bethlehem-1785143132-raw.txt",
+  "normalized_output": {
+    "device": "rtr-bethlehem-01",
+    "host": "10.60.18.2",
+    "username_env": "MNE_ROUTER_BETHLEHEM_USERNAME",
+    "password_env": "MNE_ROUTER_BETHLEHEM_PASSWORD",
+    "status": "UP",
+    "protocol": "SSH"
+  }
+}
