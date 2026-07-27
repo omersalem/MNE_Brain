@@ -1,0 +1,47 @@
+# Evidence Selection Policy
+# 00_meta/03_ai_contracts/evidence-selection-policy.yaml
+
+priority_order:
+  1: canonical_asset
+  2: direct_dependency
+  3: relevant_runbook
+  4: relevant_incident
+  5: approved_live_evidence
+
+route_selection_limits:
+  asset_lookup:
+    max_canonical: 1
+    include_dependencies: false
+    include_runbooks: false
+    include_live: false
+  topology:
+    max_canonical: 1
+    include_dependencies: true
+    include_runbooks: false
+    include_live: false
+  explanation:
+    max_canonical: 2
+    include_dependencies: false
+    include_runbooks: false
+    include_live: false
+  incident:
+    max_canonical: 2
+    include_dependencies: true
+    max_runbooks: 1
+    max_incidents: 1
+    include_live: true
+  troubleshooting:
+    max_canonical: 2
+    include_dependencies: true
+    max_runbooks: 1
+    max_incidents: 1
+    include_live: true
+  health_check:
+    max_canonical: 1
+    include_dependencies: false
+    include_live: true
+  remediation:
+    max_canonical: 1
+    include_dependencies: true
+    include_policy: true
+    include_live: true

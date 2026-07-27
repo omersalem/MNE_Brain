@@ -1,15 +1,21 @@
 ---
-id: "MNE-SEC-BLOCKED-IPS"
-title: "Blocked Threat IPs & Mitigation Index"
-type: "security_reference"
-status: "active"
-last_updated: "2026-07-25"
+id: MNE-SEC-BLOCKED-IPS
+title: Blocked Threat IPs & Mitigation Index
+type: security_reference
+status: active
+last_updated: '2026-07-25'
 tags:
-  - security/blocked-ips
-  - fortigate/policy-275
-  - f5/address-list
+- security/blocked-ips
+- fortigate/policy-275
+- f5/address-list
+aliases:
+- MNE-SEC-BLOCKED-IPS
+owner: NetOps
+source: Canonical Audit
+trust_tier: 3
+last_verified: '2026-07-27'
+related_entities: []
 ---
-
 # Blocked Threat IPs & Perimeter Block Rules
 
 This document tracks active threat IP blocks enforced on **FortiGate (`FG-MNE`)** and **F5 BIG-IP WAF**.

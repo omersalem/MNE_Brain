@@ -26,39 +26,44 @@ def main():
 
     profiles_used = task_profile_map.get(args.task, [])
     report_dir = os.path.join(VAULT_ROOT, "operations", "discovery")
+    evidence_dir = os.path.join(VAULT_ROOT, "operations", "evidence")
     os.makedirs(report_dir, exist_ok=True)
     report_filename = f"{today_str}-{args.task}-discovery.md"
     report_path = os.path.join(report_dir, report_filename)
 
-    report_content = f"""# AI-Native Infrastructure Discovery Report: {args.task.upper()}
+    # Truthful status evaluation: check if evidence adapter emitted live evidence
+    has_live_evidence = False
+    if os.path.exists(evidence_dir):
+        evidence_files = [f for f in os.listdir(evidence_dir) if f.startswith(f"{args.task}-") and f.endswith(".json")]
+        if evidence_files:
+            has_live_evidence = True
+
+    status_str = "live_verified" if has_live_evidence else "not_run"
+    trust_tier_str = "Tier 5 (Live Read-Only Evidence)" if has_live_evidence else "Tier 0 (No Live Execution)"
+
+    report_content = f"""# Infrastructure Discovery Report: {args.task.upper()}
 
 - **Execution Date:** {start_time.isoformat()}
-- **Orchestration Model:** Task ➔ Discovery Profile ➔ Agent ➔ Infrastructure
-- **Self-Hosted Runner:** `172.23.50.62`
-- **Profiles Executed:** {', '.join(profiles_used)}
-- **Status:** COMPLETED (VERIFIED Read-Only Telemetry)
+- **Orchestration Model:** Task ➔ Discovery Profile ➔ Adapter ➔ Evidence Pack
+- **Profiles Requested:** {', '.join(profiles_used)}
+- **Status:** {status_str}
 
-## 📋 Discovery Profiles Executed
+## 📋 Discovery Profiles Configured
 {chr(10).join(f"- `profiles/{p}`" for p in profiles_used)}
 
 ## 🔬 Telemetry & Source Attribution
-- Telemetry retrieved according to declarative YAML discovery profiles.
-- Trust Level: ★★★★★ (Live Read-Only Inspection)
+- Trust Tier: {trust_tier_str}
+- Live Evidence Attached: {'Yes' if has_live_evidence else 'No (Dry Run / Static Policy)'}
 
-## 📉 Knowledge Drift Analysis
-- **Drift Discrepancies:** 0 Critical Discrepancies
-- **Knowledge Base Alignment Score:** 0.99 / 1.0 (VERIFIED)
-
-## 📁 Files Processing
-- Created: `operations/discovery/{report_filename}`
-- Verified: Canonical notes in `knowledge/` align with live telemetry.
+## 📁 Artifacts
+- Discovery Report: `operations/discovery/{report_filename}`
 """
 
     with open(report_path, "w", encoding="utf-8") as rf:
         rf.write(report_content)
 
-    print(f"[SUCCESS] Written AI-Native Discovery Report: {report_path}")
-    print(f"=== AI-Native Discovery Task [{args.task.upper()}] Finished Successfully ===")
+    print(f"[DISCOVERY] Written Report: {report_path} with status: {status_str}")
+    print(f"=== Discovery Task [{args.task.upper()}] Completed ===")
 
 if __name__ == "__main__":
     main()

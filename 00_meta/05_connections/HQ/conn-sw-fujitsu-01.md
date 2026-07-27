@@ -26,7 +26,7 @@ Context: [[master-dashboard]] | Related Asset: [[sw-fujitsu-core-02]]
 - **Protocol:** SSH
 - **Authentication Method:** Password
 - **Username:** `admin`
-- **Password:** `Abcd@1234`
+- **Password:** `LOADED_FROM_ENV`
 - **API Token:** N/A
 - **Domain:** N/A
 

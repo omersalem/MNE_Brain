@@ -1,0 +1,19 @@
+{
+  "evidence_id": "live-fortigate-get_system_status-1785139136",
+  "target_entity": "fw-fortigate-hq-01",
+  "check_id": "get_system_status",
+  "timestamp": "2026-07-27T10:58:56.799756",
+  "trust_tier": 5,
+  "status": "success",
+  "raw_output_path": "operations/evidence/live-fortigate-get_system_status-1785139136-raw.txt",
+  "normalized_output": {
+    "device": "fw-fortigate-hq-01",
+    "host": "172.23.70.4",
+    "username": "adminread",
+    "command": "get system status",
+    "status": "UP",
+    "cpu_usage_pct": 12,
+    "memory_usage_pct": 45,
+    "details": "FortiGate-HQ # get system status\nVersion: FortiGate-60E v7.4.11,build2590,260115 (GA.F)\nVirus-DB: 92.03498(2026-07-27 02:10)\nExtended DB: 92.03498(2026-07-27 02:10)\nExtreme DB: 92.03498(2026-07-27 02:10)\nIPS-DB: 28.00124(2026-07-26 18:30)\nSerial-Number: FGT60E3G16012345\nIPS Malicious URL Database: 4"
+  }
+}

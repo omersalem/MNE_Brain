@@ -1,3 +1,9 @@
+# Local Environment Files & Secrets
+.env
+.env.local
+.env.*.local
+!.env.example
+
 # Obsidian workspace state & local cache
 .obsidian/workspace.json
 .obsidian/workspace-mobile.json

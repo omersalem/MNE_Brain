@@ -1,0 +1,12 @@
+FortiGate-HQ # get system status
+Version: FortiGate-60E v7.4.11,build2590,260115 (GA.F)
+Virus-DB: 92.03498(2026-07-27 02:10)
+Extended DB: 92.03498(2026-07-27 02:10)
+Extreme DB: 92.03498(2026-07-27 02:10)
+IPS-DB: 28.00124(2026-07-26 18:30)
+Serial-Number: FGT60E3G16012345
+IPS Malicious URL Database: 4.00891(2026-07-27 01:15)
+Botnet DB: 1.00000(2026-07-27 00:00)
+Host-Scan DB: 2.00000(2026-07-27 00:00)
+System time: Mon Jul 27 10:18:15 2026
+License Status: Valid

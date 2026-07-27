@@ -20,7 +20,7 @@ Unlock-ADAccount -Identity "jsmith"
 
 # Step 3: Reset password if expired
 Set-ADAccountPassword -Identity "jsmith" -Reset `
-  -NewPassword (ConvertTo-SecureString "NewP@ss123!" -AsPlainText -Force)
+  -NewPassword (ConvertTo-SecureString $env:MNE_READONLY_SECRET -AsPlainText -Force)
 Set-ADUser -Identity "jsmith" -ChangePasswordAtLogon $true
 
 # Step 4: Check group membership (required for logon restrictions)

@@ -26,7 +26,7 @@ Context: [[master-dashboard]] | Related Asset: [[fw-fortigate-hq-01]]
 - **Protocol:** SSH / HTTPS
 - **Authentication Method:** Password / SSH Key
 - **Username:** `adminread`
-- **Password:** `omersalem570-6127`
+- **Password:** `LOADED_FROM_ENV`
 - **API Token:** N/A
 - **Domain:** N/A
 

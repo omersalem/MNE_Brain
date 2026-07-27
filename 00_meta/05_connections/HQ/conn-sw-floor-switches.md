@@ -19,7 +19,7 @@ Context: [[master-dashboard]] | Related Asset: [[sw-cisco-access-01]]
 - **Access Level:** Read-Only (User EXEC)
 - **Port:** 22 (SSH)
 - **Username:** `admin`
-- **Password:** `Axizo@1234`
+- **Password:** `LOADED_FROM_ENV`
 - **Protocol:** SSH (`Netmiko`)
 
 ## 🏢 Switch Fleet IP Allocations

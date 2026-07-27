@@ -1,18 +1,23 @@
 ---
-id: "MNE-FC-SW-FUJ-01"
-title: "fc-sw-fujitsu-01"
-type: "fc_switch"
-status: "active"
-vendor: "Fujitsu / Brocade"
-site: "HQ"
-owner: "SysAdmin-Team"
-criticality: "critical"
-environment: "production"
-last_review: "2026-07-24"
+id: MNE-FC-SW-FUJ-01
+title: fc-sw-fujitsu-01
+type: fc_switch
+status: active
+vendor: Fujitsu / Brocade
+site: HQ
+owner: SysAdmin-Team
+criticality: critical
+environment: production
+last_review: '2026-07-24'
 tags:
-  - ministry/storage/fc-switch
+- ministry/storage/fc-switch
+aliases:
+- MNE-FC-SW-FUJ-01
+source: Canonical Audit
+trust_tier: 3
+last_verified: '2026-07-27'
+related_entities: []
 ---
-
 # fc-sw-fujitsu-01
 
 Context: [[index-storage]] | Site: [[site-hq]]

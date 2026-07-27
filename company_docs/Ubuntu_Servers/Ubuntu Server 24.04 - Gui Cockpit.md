@@ -239,7 +239,7 @@ Create new user:
   "+" button → Create New Account
     Full name: John Smith
     User name: jsmith
-    Password: [set or leave for SSH key only]
+    password = secret_ref("MNE_PLATFORM_READONLY_CREDENTIAL")MNE_DEVICE_READONLY_PASSWORD") or leave for SSH key only]
     
 User details (click any user):
   → Change password

@@ -91,7 +91,7 @@ New-Mailbox `
   -DisplayName        "John Smith" `
   -UserPrincipalName  "jsmith@domain.com" `
   -SamAccountName     "jsmith" `
-  -Password           (ConvertTo-SecureString "P@ssword123!" -AsPlainText -Force) `
+  -Password           (ConvertTo-SecureString $env:MNE_READONLY_SECRET -AsPlainText -Force) `
   -ResetPasswordOnNextLogon $true `
   -Database           "Mailbox Database 0001" `
   -OrganizationalUnit "OU=Users,DC=domain,DC=com"

@@ -170,7 +170,7 @@ show arp
 
 ### Default Credentials
 - Username: `admin`
-- Password: (blank by default)
+- password = secret_ref("MNE_PLATFORM_READONLY_CREDENTIAL")MNE_DEVICE_READONLY_PASSWORD") by default)
 - Web GUI: `http://<management-IP>` or `https://<management-IP>`
 
 ---

@@ -1,22 +1,27 @@
 ---
-id: "MNE-FW-FG-HQ-01"
-title: "FG-MNE-B (FortiGate 601E)"
-type: "fortigate_device"
-status: "active"
-vendor: "Fortinet"
-model: "FortiGate 601E"
-firmware: "FortiOS 7.4.x"
-mgmt_ip: "172.23.70.4"
-cluster_ip: "10.11.12.1"
-site: "HQ"
-owner: "SecOps-Team"
-criticality: "critical"
-environment: "production"
-last_review: "2026-07-24"
+id: MNE-FW-FG-HQ-01
+title: FG-MNE-B (FortiGate 601E)
+type: fortigate_device
+status: active
+vendor: Fortinet
+model: FortiGate 601E
+firmware: FortiOS 7.4.x
+mgmt_ip: 172.23.70.4
+cluster_ip: 10.11.12.1
+site: HQ
+owner: SecOps-Team
+criticality: critical
+environment: production
+last_review: '2026-07-24'
 tags:
-  - ministry/security/fortigate
+- ministry/security/fortigate
+aliases:
+- MNE-FW-FG-HQ-01
+source: Canonical Audit
+trust_tier: 3
+last_verified: '2026-07-27'
+related_entities: []
 ---
-
 # FG-MNE-B (FortiGate 601E)
 
 Context: [[master-dashboard]] | Parent: [[index-network-and-security]]

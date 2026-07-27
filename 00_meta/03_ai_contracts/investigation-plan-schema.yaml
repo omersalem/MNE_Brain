@@ -1,0 +1,58 @@
+# Investigation Plan Schema
+# 00_meta/03_ai_contracts/investigation-plan-schema.yaml
+
+schema:
+  type: object
+  required:
+    - is_live_verification_required
+    - is_kb_sufficient
+    - active_hypotheses
+    - unknown_variables
+    - highest_information_gain_check
+    - minimum_devices_required
+    - command_sequence
+    - expected_confidence_gain
+    - stop_conditions
+    - operational_cost_estimate
+  properties:
+    is_live_verification_required:
+      type: boolean
+    is_kb_sufficient:
+      type: boolean
+    active_hypotheses:
+      type: array
+      items:
+        type: object
+        required:
+          - id
+          - hypothesis
+          - verification_evidence
+          - falsification_evidence
+          - confidence
+    unknown_variables:
+      type: array
+      items:
+        type: string
+    highest_information_gain_check:
+      type: object
+      required:
+        - target_device
+        - check_id
+        - rationale
+    minimum_devices_required:
+      type: array
+      items:
+        type: string
+    command_sequence:
+      type: array
+      items:
+        type: string
+    expected_confidence_gain:
+      type: string
+    stop_conditions:
+      type: array
+      items:
+        type: string
+    operational_cost_estimate:
+      type: string
+      enum: ["low", "medium", "high"]

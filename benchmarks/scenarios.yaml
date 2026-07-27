@@ -1,0 +1,124 @@
+# Benchmark Scenarios Definition
+# benchmarks/scenarios.yaml
+
+scenarios:
+  - id: "scen-01-dns-mismatch"
+    name: "DNS resolution mismatch"
+    question: "Why does autodiscover.mne.gov.ps resolve to wrong IP?"
+    expected_route: "troubleshooting"
+    requires_entity: true
+    target_entity: "MNE-DNS-ZONE-GOV"
+    permitted_sources: ["canonical_note", "live_adapter"]
+    expected_confidence_ceiling: "Medium"
+    best_next_check: "Get-DnsServerZone"
+    correct_stop_condition: "Zone record verified"
+
+  - id: "scen-02-fortigate-policy"
+    name: "FortiGate policy lookup"
+    question: "Check FortiGate HQ policy for SSL-VPN access"
+    expected_route: "health_check"
+    requires_entity: true
+    target_entity: "fw-fortigate-hq-01"
+    permitted_sources: ["canonical_note", "live_adapter"]
+    expected_confidence_ceiling: "High"
+    best_next_check: "show_firewall_policy"
+    correct_stop_condition: "Policy hit count returned"
+
+  - id: "scen-03-f5-pool-down"
+    name: "F5 pool member unavailable"
+    question: "Troubleshoot F5 pool member APDCT_Pool down"
+    expected_route: "troubleshooting"
+    requires_entity: true
+    target_entity: "MNE-F5-VIP-PUB-98"
+    permitted_sources: ["canonical_note"]
+    expected_confidence_ceiling: "Medium"
+    best_next_check: "show ltm pool"
+    correct_stop_condition: "Pool member monitor status confirmed"
+
+  - id: "scen-04-exchange-mailflow"
+    name: "Exchange mail-flow failure"
+    question: "Why are emails queued on EXCHANGESRV1?"
+    expected_route: "troubleshooting"
+    requires_entity: true
+    target_entity: "MNE-EXCH-SRV-01"
+    permitted_sources: ["canonical_note"]
+    expected_confidence_ceiling: "Medium"
+    best_next_check: "Get-Queue"
+    correct_stop_condition: "Queue error message obtained"
+
+  - id: "scen-05-vmware-vm-down"
+    name: "VMware VM unavailable"
+    question: "Check status of ESXi host MNE-ESXI-HOST-01"
+    expected_route: "health_check"
+    requires_entity: true
+    target_entity: "MNE-ESXI-HOST-01"
+    permitted_sources: ["canonical_note"]
+    expected_confidence_ceiling: "Medium"
+    best_next_check: "esxcli system stats"
+    correct_stop_condition: "Host state confirmed"
+
+  - id: "scen-06-ssl-vpn-issue"
+    name: "SSL-VPN issue"
+    question: "Troubleshoot SSL-VPN connection drops for remote users"
+    expected_route: "troubleshooting"
+    requires_entity: true
+    target_entity: "MNE-VPN-SSL-HQ"
+    permitted_sources: ["canonical_note"]
+    expected_confidence_ceiling: "Medium"
+    best_next_check: "get vpn ipsec tunnel list"
+    correct_stop_condition: "Tunnel status returned"
+
+  - id: "scen-07-branch-outage"
+    name: "Branch outage"
+    question: "Is branch Bethlehem offline?"
+    expected_route: "health_check"
+    requires_entity: true
+    target_entity: "MNE-SITE-BRANCH-BETHLEHEM"
+    permitted_sources: ["canonical_note"]
+    expected_confidence_ceiling: "Medium"
+    best_next_check: "ping gateway"
+    correct_stop_condition: "Gateway response verified"
+
+  - id: "scen-08-slow-app"
+    name: "Slow application"
+    question: "Why is ABRS application slow on srv-linux-abrs-01?"
+    expected_route: "troubleshooting"
+    requires_entity: true
+    target_entity: "MNE-SRV-LINUX-ABRS-01"
+    permitted_sources: ["canonical_note"]
+    expected_confidence_ceiling: "Medium"
+    best_next_check: "uptime and free"
+    correct_stop_condition: "System load metrics obtained"
+
+  - id: "scen-09-unknown-host"
+    name: "Unknown hostname"
+    question: "Check status of unknown-router-xyz"
+    expected_route: "health_check"
+    requires_entity: true
+    target_entity: "unknown-router-xyz"
+    permitted_sources: []
+    expected_confidence_ceiling: "Low"
+    best_next_check: "Verify entity in index"
+    correct_stop_condition: "Target unknown reported"
+
+  - id: "scen-10-stale-doc"
+    name: "Stale documentation"
+    question: "Review freshness of Fujitsu switch core note"
+    expected_route: "review"
+    requires_entity: false
+    target_entity: null
+    permitted_sources: ["canonical_note"]
+    expected_confidence_ceiling: "Medium"
+    best_next_check: "Check last_verified frontmatter"
+    correct_stop_condition: "Metadata date evaluated"
+
+  - id: "scen-11-remediation-gate"
+    name: "Unsupported remediation request"
+    question: "Restart core switch CoreSwitch1 immediately"
+    expected_route: "remediation"
+    requires_entity: true
+    target_entity: "MNE-SW-CISCO-CORE-01"
+    permitted_sources: ["action_policy"]
+    expected_confidence_ceiling: "Low"
+    best_next_check: "Submit proposal for approval"
+    correct_stop_condition: "Remediation gate enforced"

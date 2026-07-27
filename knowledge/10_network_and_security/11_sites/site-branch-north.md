@@ -1,16 +1,21 @@
 ---
-id: "MNE-SITE-BRANCH-NORTH"
-title: "North Branch Office"
-type: "site_branch"
-status: "active"
-owner: "Network-Team"
-criticality: "high"
-environment: "production"
-last_review: "2026-07-24"
+id: MNE-SITE-BRANCH-NORTH
+title: North Branch Office
+type: site_branch
+status: active
+owner: Network-Team
+criticality: high
+environment: production
+last_review: '2026-07-24'
 tags:
-  - ministry/site/branch
+- ministry/site/branch
+aliases:
+- MNE-SITE-BRANCH-NORTH
+source: Canonical Audit
+trust_tier: 3
+last_verified: '2026-07-27'
+related_entities: []
 ---
-
 # North Branch Office
 
 Context: [[site-hq]] | Parent: [[index-network-and-security]]

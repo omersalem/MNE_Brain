@@ -1,0 +1,51 @@
+# Evidence Pack Schema Definition
+# 00_meta/03_ai_contracts/evidence-pack-schema.yaml
+
+schema:
+  type: object
+  required:
+    - question
+    - query_route
+    - resolved_entities
+    - evidence_items
+    - unknowns
+    - generated_at
+  properties:
+    question:
+      type: string
+    query_route:
+      type: string
+    resolved_entities:
+      type: array
+    evidence_items:
+      type: array
+      items:
+        type: object
+        required:
+          - id
+          - source
+          - trust_tier
+          - freshness
+          - content_snippet
+        properties:
+          id:
+            type: string
+          source:
+            type: string
+          trust_tier:
+            type: integer
+          observed_at:
+            type: string
+          freshness:
+            type: string
+          summary:
+            type: string
+            description: "Optional concise summary field reserved for future summary cache integration."
+          content_snippet:
+            type: string
+    unknowns:
+      type: array
+      items:
+        type: string
+    generated_at:
+      type: string

@@ -26,7 +26,7 @@ Context: [[master-dashboard]] | Related Asset: [[vcenter-main]]
 - **Protocol:** HTTPS / SSH
 - **Authentication Method:** Password
 - **Username:** `root`
-- **Password:** `Kh@fud$2021`
+- **Password:** `LOADED_FROM_ENV`
 - **API Token:** N/A
 - **Domain:** `vsphere.local`
 

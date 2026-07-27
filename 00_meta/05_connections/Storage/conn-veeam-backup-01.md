@@ -26,7 +26,7 @@ Context: [[master-dashboard]] | Related Asset: [[index-storage]]
 - **Protocol:** WinRM / NTLM
 - **Authentication Method:** Local Administrator
 - **Username:** `administrator`
-- **Password:** `omersalem570-6127`
+- **Password:** `LOADED_FROM_ENV`
 - **API Token:** N/A
 - **Domain:** WORKGROUP
 

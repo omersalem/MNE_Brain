@@ -1,0 +1,72 @@
+# Deterministic Query Routing Rules
+# 00_meta/03_ai_contracts/query-routing-rules.yaml
+
+rules:
+  - id: "remediation_action"
+    keywords: ["fix", "change", "restart", "allow", "modify", "remediate", "delete", "disable", "enable"]
+    route: "remediation"
+    requires_entity_resolution: true
+    live_check_allowed: false
+    remediation_gate_required: true
+
+  - id: "health_check"
+    keywords: ["health", "status", "status of", "is down", "offline", "check health", "telemetry", "policy for"]
+    route: "health_check"
+    requires_entity_resolution: true
+    live_check_allowed: true
+    remediation_gate_required: false
+
+  - id: "troubleshooting"
+    keywords: ["troubleshoot", "why", "why is", "why does", "failing", "error", "unreachable", "slow", "outage", "packet loss", "issue", "queued", "wrong"]
+    route: "troubleshooting"
+    requires_entity_resolution: true
+    live_check_allowed: true
+    remediation_gate_required: false
+
+  - id: "incident"
+    keywords: ["incident", "outage report", "alert", "severity", "impact"]
+    route: "incident"
+    requires_entity_resolution: true
+    live_check_allowed: true
+    remediation_gate_required: false
+
+  - id: "topology_path"
+    keywords: ["topology", "path", "route between", "diagram", "neighbors", "connected to"]
+    route: "topology"
+    requires_entity_resolution: true
+    live_check_allowed: false
+    remediation_gate_required: false
+
+  - id: "review_audit"
+    keywords: ["review", "audit", "compliance", "stale", "metadata check", "freshness"]
+    route: "review"
+    requires_entity_resolution: false
+    live_check_allowed: false
+    remediation_gate_required: false
+
+  - id: "documentation_lookup"
+    keywords: ["manual", "doc", "guide", "runbook", "standard"]
+    route: "documentation"
+    requires_entity_resolution: false
+    live_check_allowed: false
+    remediation_gate_required: false
+
+  - id: "explanation_concept"
+    keywords: ["explain", "how does", "what is", "overview", "concept", "architecture of"]
+    route: "explanation"
+    requires_entity_resolution: false
+    live_check_allowed: false
+    remediation_gate_required: false
+
+  - id: "asset_lookup_default"
+    keywords: ["where is", "ip of", "find device", "asset", "host", "vlan", "fqdn"]
+    route: "asset_lookup"
+    requires_entity_resolution: true
+    live_check_allowed: false
+    remediation_gate_required: false
+
+default_route:
+  route: "explanation"
+  requires_entity_resolution: false
+  live_check_allowed: false
+  remediation_gate_required: false

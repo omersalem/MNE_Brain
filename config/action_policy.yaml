@@ -1,68 +1,28 @@
-# Controlled Autonomous Remediation Policy
-version: "1.0.0"
-default_mode: "read_only"
-write_operations_allowed: false
+# Controlled Action Policy & Read Allow-Lists
+# config/action_policy.yaml
 
-risk_levels:
-  level_0:
-    name: "Read Only"
-    impact: "No Impact"
-    automatic_allowed: true
-    approval_required: "none"
-  level_1:
-    name: "Low Risk"
-    impact: "Minimal Non-Disruptive"
-    automatic_allowed: false
-    approval_required: "operator"
-  level_2:
-    name: "Controlled Change"
-    impact: "Low Scope Modification"
-    automatic_allowed: false
-    approval_required: "operator"
-  level_3:
-    name: "High Impact"
-    impact: "Service / Routing / Policy Change"
-    automatic_allowed: false
-    approval_required: "human_mandatory"
-  level_4:
-    name: "Emergency Only"
-    impact: "Core Infrastructure Impact"
-    automatic_allowed: false
-    approval_required: "strictly_prohibited"
+allowed_read_profiles:
+  fortigate:
+    platform: "fortigate"
+    trust_tier: 5
+    allowed_checks:
+      get_system_status:
+        command: "get system status"
+        description: "FortiOS version, uptime, and system health"
+      get_system_interface_physical:
+        command: "get system interface physical"
+        description: "Physical interface link status and speed"
+      show_firewall_policy:
+        command: "show firewall policy"
+        description: "Firewall policy configuration and rules"
+      get_router_info_routing_table_all:
+        command: "get router info routing-table all"
+        description: "Full IP routing table"
+      get_vpn_ipsec_tunnel_list:
+        command: "get vpn ipsec tunnel list"
+        description: "IPsec VPN tunnel status"
 
-approved_actions:
-  fortigate_add_address_object:
-    risk_level: "level_2"
-    automatic_allowed: false
-    approval_required: "operator"
-    allowed_platforms: ["fortigate"]
-  fortigate_modify_policy:
-    risk_level: "level_3"
-    automatic_allowed: false
-    approval_required: "human_mandatory"
-    allowed_platforms: ["fortigate"]
-  cisco_change_interface_description:
-    risk_level: "level_1"
-    automatic_allowed: false
-    approval_required: "operator"
-    allowed_platforms: ["cisco"]
-  cisco_create_vlan:
-    risk_level: "level_2"
-    automatic_allowed: false
-    approval_required: "operator"
-    allowed_platforms: ["cisco"]
-  f5_toggle_pool_member:
-    risk_level: "level_2"
-    automatic_allowed: false
-    approval_required: "operator"
-    allowed_platforms: ["f5"]
-  vmware_power_on_vm:
-    risk_level: "level_2"
-    automatic_allowed: false
-    approval_required: "operator"
-    allowed_platforms: ["vmware"]
-  exchange_restart_approved_service:
-    risk_level: "level_3"
-    automatic_allowed: false
-    approval_required: "human_mandatory"
-    allowed_platforms: ["exchange"]
+level_0_read_only_default: true
+remediation_write_gate:
+  require_human_approval: true
+  require_pre_conditions_verified: true

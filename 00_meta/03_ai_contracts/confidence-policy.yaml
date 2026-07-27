@@ -1,0 +1,17 @@
+# Confidence Policy Specification
+# 00_meta/03_ai_contracts/confidence-policy.yaml
+
+confidence_levels:
+  High:
+    condition: "Supported by timestamped live read-only evidence OR multiple mutually consistent trust-tier 3+ canonical sources."
+    requires_live_timestamp: false
+  Medium:
+    condition: "Supported by single canonical note or documented runbook without recent live telemetry."
+    requires_live_timestamp: false
+  Low:
+    condition: "Unverified claim, missing evidence, or conflicting sources."
+    requires_live_timestamp: false
+
+rules:
+  - "NEVER state High confidence for troubleshooting or health check without live evidence or canonical alignment."
+  - "If confidence is Low, specify the single highest-value Next Check."

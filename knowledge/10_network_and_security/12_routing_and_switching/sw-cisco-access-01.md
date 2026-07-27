@@ -1,20 +1,25 @@
 ---
-id: "MNE-SW-CISCO-ACC-01"
-title: "sw-cisco-access-01"
-type: "cisco_access_switch"
-status: "active"
-vendor: "Cisco"
-model: "Catalyst 9300"
-os: "Cisco IOS-XE"
-site: "HQ"
-owner: "Network-Team"
-criticality: "medium"
-environment: "production"
-last_review: "2026-07-24"
+id: MNE-SW-CISCO-ACC-01
+title: sw-cisco-access-01
+type: cisco_access_switch
+status: active
+vendor: Cisco
+model: Catalyst 9300
+os: Cisco IOS-XE
+site: HQ
+owner: Network-Team
+criticality: medium
+environment: production
+last_review: '2026-07-24'
 tags:
-  - ministry/cisco/access-switch
+- ministry/cisco/access-switch
+aliases:
+- MNE-SW-CISCO-ACC-01
+source: Canonical Audit
+trust_tier: 3
+last_verified: '2026-07-27'
+related_entities: []
 ---
-
 # sw-cisco-access-01
 
 Context: [[index-network-and-security]] | Site: [[site-hq]]

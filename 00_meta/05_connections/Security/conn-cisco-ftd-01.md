@@ -26,7 +26,7 @@ Context: [[master-dashboard]] | Related Asset: [[cisco-ftd-01]]
 - **Protocol:** SSH / HTTPS
 - **Authentication Method:** Password
 - **Username:** `admin`
-- **Password:** `Cisco@2024`
+- **Password:** `LOADED_FROM_ENV`
 - **API Token:** N/A
 - **Domain:** N/A
 

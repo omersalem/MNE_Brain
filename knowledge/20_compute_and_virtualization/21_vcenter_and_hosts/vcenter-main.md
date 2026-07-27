@@ -1,19 +1,24 @@
 ---
-id: "MNE-VCENTER-MAIN"
-title: "vcenter-main"
-type: "vcenter_server"
-status: "active"
-vendor: "VMware"
-version: "vSphere 7.0"
-site: "HQ"
-owner: "SysAdmin-Team"
-criticality: "critical"
-environment: "production"
-last_review: "2026-07-24"
+id: MNE-VCENTER-MAIN
+title: vcenter-main
+type: vcenter_server
+status: active
+vendor: VMware
+version: vSphere 7.0
+site: HQ
+owner: SysAdmin-Team
+criticality: critical
+environment: production
+last_review: '2026-07-24'
 tags:
-  - ministry/vmware/vcenter
+- ministry/vmware/vcenter
+aliases:
+- MNE-VCENTER-MAIN
+source: Canonical Audit
+trust_tier: 3
+last_verified: '2026-07-27'
+related_entities: []
 ---
-
 # vcenter-main
 
 Context: [[index-vmware]] | Site: [[site-hq]]

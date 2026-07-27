@@ -1,19 +1,24 @@
 ---
-id: "MNE-ESXI-HOST-01"
-title: "esxi-host-01"
-type: "esxi_host"
-status: "active"
-vendor: "Fujitsu / VMware"
-version: "ESXi 7.0"
-site: "HQ"
-owner: "SysAdmin-Team"
-criticality: "critical"
-environment: "production"
-last_review: "2026-07-24"
+id: MNE-ESXI-HOST-01
+title: esxi-host-01
+type: esxi_host
+status: active
+vendor: Fujitsu / VMware
+version: ESXi 7.0
+site: HQ
+owner: SysAdmin-Team
+criticality: critical
+environment: production
+last_review: '2026-07-24'
 tags:
-  - ministry/vmware/esxi
+- ministry/vmware/esxi
+aliases:
+- MNE-ESXI-HOST-01
+source: Canonical Audit
+trust_tier: 3
+last_verified: '2026-07-27'
+related_entities: []
 ---
-
 # esxi-host-01
 
 Context: [[index-vmware]] | Server: [[vcenter-main]]

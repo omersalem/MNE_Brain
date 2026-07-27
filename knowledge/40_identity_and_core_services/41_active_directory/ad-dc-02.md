@@ -1,20 +1,25 @@
 ---
-id: "MNE-AD-DC-02"
-title: "MNE-DC2 (Secondary Domain Controller)"
-type: "ad_domain_controller"
-status: "active"
-vendor: "Microsoft"
-os: "Windows Server 2022"
-mgmt_ip: "172.23.71.28"
-site: "HQ"
-owner: "SysAdmin-Team"
-criticality: "critical"
-environment: "production"
-last_review: "2026-07-24"
+id: MNE-AD-DC-02
+title: MNE-DC2 (Secondary Domain Controller)
+type: ad_domain_controller
+status: active
+vendor: Microsoft
+os: Windows Server 2022
+mgmt_ip: 172.23.71.28
+site: HQ
+owner: SysAdmin-Team
+criticality: critical
+environment: production
+last_review: '2026-07-24'
 tags:
-  - ministry/microsoft/active-directory
+- ministry/microsoft/active-directory
+aliases:
+- MNE-AD-DC-02
+source: Canonical Audit
+trust_tier: 3
+last_verified: '2026-07-27'
+related_entities: []
 ---
-
 # MNE-DC2 (Secondary Domain Controller)
 
 Context: [[index-microsoft]] | Domain: `mne.gov.ps`

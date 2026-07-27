@@ -38,9 +38,13 @@ A Write operation is permitted ONLY when:
 
 ---
 
-## 3. Credential Protection & Secret Policy
-- Credentials, passwords, tokens, private SSH keys, and API secrets are used internally ONLY by read/action execution paths.
-- **NEVER** expose, print, or leak credentials in chat responses, artifacts, or summaries unless explicitly requested by the user.
+## 3. Credential Architecture & Secret Protection Policy
+- Plaintext passwords, tokens, SSH keys, and certificates MUST NEVER exist in tracked files, Markdown documentation, YAML profiles, or code.
+- All credentials are stored ONLY inside the local `.env` file and loaded via `python-dotenv` (`load_dotenv()` and `os.getenv()`).
+- The `.env` file is never committed to Git. Only `.env.example` remains committed.
+- Profiles and discovery contracts remain documentation-only and contain zero credentials or credential references.
+- **NEVER** expose, print, or leak credentials in chat responses, artifacts, or summaries.
+
 
 ---
 
@@ -54,3 +58,23 @@ Observation (Direct Fact) ──> Interpretation (Hypothesis) ──> Required V
 ## 5. Read-Only Default Safety Rules
 - Read-only discovery remains active by default.
 - Never execute configuration changes without policy authorization, rollback plans, and action audit logs (`operations/actions/`).
+
+---
+
+## 6. Refined AI Architecture & Query Flow (Version 2)
+```
+Question ➔ Deterministic Query Router (Phase D)
+            ├── Concept / Generic Query ➔ Evidence Pack Builder (Phase C)
+            └── Asset Query ➔ Entity Resolution (Phase B) ➔ Evidence Pack Builder (Phase C)
+         ➔ Investigation Planning Engine (Phase D.5)
+         ➔ Read-Only Verification (Phase F, if required)
+         ➔ Dynamic Answer Template (Phase E)
+```
+- **Query Router:** `scripts/route_query.py` (Rule-based deterministic routing)
+- **Entity Resolver:** `scripts/build_entity_index.py` (Modular index structure)
+- **Evidence Pack Builder:** `scripts/build_evidence_pack.py` (Decoupled summary-ready context retrieval)
+- **Investigation Planning Engine:** `tasks/investigate.md` (Highest information gain analysis & Stop Early principle)
+- **Dynamic Templates:** `00_meta/03_ai_contracts/dynamic-answer-templates.md` (Route-tailored concise responses)
+- **Credential Provider:** `config/secrets-map.yaml` & `00_meta/03_ai_contracts/credential-management.md`
+- **Read-Only Verification Adapter:** `scripts/live_verify.py` & `scripts/adapters/fortigate_read.py`
+- **Continuous Validation:** `scripts/validate_brain.py` (12-step quality gate)

@@ -1,0 +1,1275 @@
+{
+  "entities": {
+    "MNE-AD-DC-01": {
+      "aliases": [
+        "MNE-AD-DC-01",
+        "ad-dc-01"
+      ],
+      "canonical_note": "knowledge/40_identity_and_core_services/41_active_directory/ad-dc-01.md",
+      "fqdns": [],
+      "id": "MNE-AD-DC-01",
+      "ips": [
+        "172.23.71.27",
+        "172.23.71.28"
+      ],
+      "last_verified": "2026-07-27",
+      "related_entities": [],
+      "services": [],
+      "site": "HQ",
+      "trust_tier": 3,
+      "type": "ad_domain_controller",
+      "vlans": []
+    },
+    "MNE-AD-DC-02": {
+      "aliases": [
+        "MNE-AD-DC-02",
+        "ad-dc-02"
+      ],
+      "canonical_note": "knowledge/40_identity_and_core_services/41_active_directory/ad-dc-02.md",
+      "fqdns": [],
+      "id": "MNE-AD-DC-02",
+      "ips": [
+        "172.23.71.27",
+        "172.23.71.28"
+      ],
+      "last_verified": "2026-07-27",
+      "related_entities": [],
+      "services": [],
+      "site": "HQ",
+      "trust_tier": 3,
+      "type": "ad_domain_controller",
+      "vlans": []
+    },
+    "MNE-CISCO-FMC-01": {
+      "aliases": [
+        "MNE-CISCO-FMC-01",
+        "cisco-fmc-01"
+      ],
+      "canonical_note": "knowledge/10_network_and_security/13_firewalls_and_fmc/cisco-fmc-01.md",
+      "fqdns": [],
+      "id": "MNE-CISCO-FMC-01",
+      "ips": [
+        "172.23.70.77",
+        "172.23.70.78"
+      ],
+      "last_verified": "2026-07-27",
+      "related_entities": [],
+      "services": [],
+      "site": "HQ",
+      "trust_tier": 3,
+      "type": "cisco_fmc",
+      "vlans": []
+    },
+    "MNE-CISCO-FTD-01": {
+      "aliases": [
+        "MNE-CISCO-FTD-01",
+        "cisco-ftd-01"
+      ],
+      "canonical_note": "knowledge/10_network_and_security/13_firewalls_and_fmc/cisco-ftd-01.md",
+      "fqdns": [],
+      "id": "MNE-CISCO-FTD-01",
+      "ips": [
+        "172.23.70.77",
+        "172.23.70.78"
+      ],
+      "last_verified": "2026-07-27",
+      "related_entities": [],
+      "services": [],
+      "site": "HQ",
+      "trust_tier": 3,
+      "type": "cisco_ftd",
+      "vlans": [
+        71,
+        75,
+        79
+      ]
+    },
+    "MNE-DHCP-SCOPE-USERS": {
+      "aliases": [
+        "MNE-DHCP-SCOPE-USERS",
+        "dhcp-scope-user-lan"
+      ],
+      "canonical_note": "knowledge/40_identity_and_core_services/42_dns_and_dhcp/dhcp-scope-user-lan.md",
+      "fqdns": [],
+      "id": "MNE-DHCP-SCOPE-USERS",
+      "ips": [
+        "172.23.80.0"
+      ],
+      "last_verified": "2026-07-27",
+      "related_entities": [],
+      "services": [],
+      "site": "HQ",
+      "trust_tier": 3,
+      "type": "dhcp_scope",
+      "vlans": []
+    },
+    "MNE-DNS-ZONE-GOV": {
+      "aliases": [
+        "MNE-DNS-ZONE-GOV",
+        "dns-zone-mne-gov-ps"
+      ],
+      "canonical_note": "knowledge/40_identity_and_core_services/42_dns_and_dhcp/dns-zone-mne-gov-ps.md",
+      "fqdns": [],
+      "id": "MNE-DNS-ZONE-GOV",
+      "ips": [],
+      "last_verified": "2026-07-27",
+      "related_entities": [],
+      "services": [],
+      "site": "HQ",
+      "trust_tier": 3,
+      "type": "dns_zone",
+      "vlans": []
+    },
+    "MNE-ESXI-HOST-01": {
+      "aliases": [
+        "MNE-ESXI-HOST-01",
+        "esxi-host-01"
+      ],
+      "canonical_note": "knowledge/20_compute_and_virtualization/21_vcenter_and_hosts/esxi-host-01.md",
+      "fqdns": [],
+      "id": "MNE-ESXI-HOST-01",
+      "ips": [
+        "172.23.69.41"
+      ],
+      "last_verified": "2026-07-27",
+      "related_entities": [],
+      "services": [],
+      "site": "HQ",
+      "trust_tier": 3,
+      "type": "esxi_host",
+      "vlans": []
+    },
+    "MNE-EXCH-SRV-01": {
+      "aliases": [
+        "MNE-EXCH-SRV-01",
+        "exch-srv-01"
+      ],
+      "canonical_note": "knowledge/40_identity_and_core_services/43_messaging_and_mgmt/exch-srv-01.md",
+      "fqdns": [],
+      "id": "MNE-EXCH-SRV-01",
+      "ips": [
+        "172.23.71.35",
+        "172.23.71.36"
+      ],
+      "last_verified": "2026-07-27",
+      "related_entities": [],
+      "services": [],
+      "site": "HQ",
+      "trust_tier": 3,
+      "type": "exchange_server",
+      "vlans": []
+    },
+    "MNE-EXCH-SRV-02": {
+      "aliases": [
+        "MNE-EXCH-SRV-02",
+        "exch-srv-02"
+      ],
+      "canonical_note": "knowledge/40_identity_and_core_services/43_messaging_and_mgmt/exch-srv-02.md",
+      "fqdns": [],
+      "id": "MNE-EXCH-SRV-02",
+      "ips": [
+        "172.23.71.35",
+        "172.23.71.36"
+      ],
+      "last_verified": "2026-07-27",
+      "related_entities": [],
+      "services": [],
+      "site": "HQ",
+      "trust_tier": 3,
+      "type": "exchange_server",
+      "vlans": []
+    },
+    "MNE-F5-VIP-PUB-98": {
+      "aliases": [
+        "MNE-F5-VIP-PUB-98",
+        "f5-vip-public-98"
+      ],
+      "canonical_note": "knowledge/10_network_and_security/14_f5_waf_publishing/f5-vip-public-98.md",
+      "fqdns": [],
+      "id": "MNE-F5-VIP-PUB-98",
+      "ips": [
+        "172.23.70.89",
+        "172.23.71.35",
+        "172.23.71.36",
+        "172.23.79.200"
+      ],
+      "last_verified": "2026-07-27",
+      "related_entities": [],
+      "services": [],
+      "site": "HQ",
+      "trust_tier": 3,
+      "type": "f5_object",
+      "vlans": []
+    },
+    "MNE-FC-SW-FUJ-01": {
+      "aliases": [
+        "MNE-FC-SW-FUJ-01",
+        "fc-sw-fujitsu-01"
+      ],
+      "canonical_note": "knowledge/30_storage/31_fc_switches/fc-sw-fujitsu-01.md",
+      "fqdns": [],
+      "id": "MNE-FC-SW-FUJ-01",
+      "ips": [
+        "172.23.68.10"
+      ],
+      "last_verified": "2026-07-27",
+      "related_entities": [],
+      "services": [],
+      "site": "HQ",
+      "trust_tier": 3,
+      "type": "fc_switch",
+      "vlans": []
+    },
+    "MNE-FW-FG-HQ-01": {
+      "aliases": [
+        "MNE-FW-FG-HQ-01",
+        "fw-fortigate-hq-01"
+      ],
+      "canonical_note": "knowledge/10_network_and_security/13_firewalls_and_fmc/fw-fortigate-hq-01.md",
+      "fqdns": [
+        "vpn.mne.gov.ps"
+      ],
+      "id": "MNE-FW-FG-HQ-01",
+      "ips": [
+        "10.11.12.1",
+        "172.23.19.0",
+        "172.23.21.0",
+        "172.23.23.0",
+        "172.23.70.4"
+      ],
+      "last_verified": "2026-07-27",
+      "related_entities": [],
+      "services": [],
+      "site": "HQ",
+      "trust_tier": 3,
+      "type": "fortigate_device",
+      "vlans": [
+        19,
+        21,
+        23,
+        200
+      ]
+    },
+    "MNE-RTR-CISCO-WAN-01": {
+      "aliases": [
+        "MNE-RTR-CISCO-WAN-01",
+        "rtr-cisco-wan-01"
+      ],
+      "canonical_note": "knowledge/10_network_and_security/12_routing_and_switching/rtr-cisco-wan-01.md",
+      "fqdns": [],
+      "id": "MNE-RTR-CISCO-WAN-01",
+      "ips": [
+        "172.23.70.254"
+      ],
+      "last_verified": "2026-07-27",
+      "related_entities": [],
+      "services": [],
+      "site": "HQ",
+      "trust_tier": 3,
+      "type": "cisco_router",
+      "vlans": []
+    },
+    "MNE-SAN-FUJ-ETERNUS-01": {
+      "aliases": [
+        "MNE-SAN-FUJ-ETERNUS-01",
+        "san-fujitsu-eternus-01"
+      ],
+      "canonical_note": "knowledge/30_storage/32_san_storage/san-fujitsu-eternus-01.md",
+      "fqdns": [],
+      "id": "MNE-SAN-FUJ-ETERNUS-01",
+      "ips": [
+        "172.23.68.20"
+      ],
+      "last_verified": "2026-07-27",
+      "related_entities": [],
+      "services": [],
+      "site": "HQ",
+      "trust_tier": 3,
+      "type": "fujitsu_san",
+      "vlans": []
+    },
+    "MNE-SCCM-SRV-01": {
+      "aliases": [
+        "MNE-SCCM-SRV-01",
+        "sccm-srv-01"
+      ],
+      "canonical_note": "knowledge/40_identity_and_core_services/43_messaging_and_mgmt/sccm-srv-01.md",
+      "fqdns": [],
+      "id": "MNE-SCCM-SRV-01",
+      "ips": [
+        "172.23.71.80"
+      ],
+      "last_verified": "2026-07-27",
+      "related_entities": [],
+      "services": [],
+      "site": "HQ",
+      "trust_tier": 3,
+      "type": "sccm_server",
+      "vlans": []
+    },
+    "MNE-SEC-BLOCKED-IPS": {
+      "aliases": [
+        "MNE-SEC-BLOCKED-IPS",
+        "blocked-threat-ips"
+      ],
+      "canonical_note": "knowledge/10_network_and_security/13_firewalls_and_fmc/blocked-threat-ips.md",
+      "fqdns": [],
+      "id": "MNE-SEC-BLOCKED-IPS",
+      "ips": [
+        "172.23.70.4"
+      ],
+      "last_verified": "2026-07-27",
+      "related_entities": [],
+      "services": [],
+      "site": "Branch",
+      "trust_tier": 3,
+      "type": "security_reference",
+      "vlans": []
+    },
+    "MNE-SITE-BRANCH-BETHLEHEM": {
+      "aliases": [
+        "MNE-SITE-BRANCH-BETHLEHEM",
+        "site-bethlehem"
+      ],
+      "canonical_note": "knowledge/10_network_and_security/11_sites/site-bethlehem.md",
+      "fqdns": [],
+      "id": "MNE-SITE-BRANCH-BETHLEHEM",
+      "ips": [
+        "10.60.18.0",
+        "10.60.18.1",
+        "10.60.18.3",
+        "172.23.13.201"
+      ],
+      "last_verified": "2026-07-27",
+      "related_entities": [],
+      "services": [],
+      "site": "Branch",
+      "trust_tier": 3,
+      "type": "site_branch",
+      "vlans": []
+    },
+    "MNE-SITE-BRANCH-HEBRON": {
+      "aliases": [
+        "MNE-SITE-BRANCH-HEBRON",
+        "site-hebron"
+      ],
+      "canonical_note": "knowledge/10_network_and_security/11_sites/site-hebron.md",
+      "fqdns": [],
+      "id": "MNE-SITE-BRANCH-HEBRON",
+      "ips": [
+        "10.40.18.0",
+        "10.40.18.1",
+        "10.40.18.3",
+        "172.23.13.201"
+      ],
+      "last_verified": "2026-07-27",
+      "related_entities": [],
+      "services": [],
+      "site": "Branch",
+      "trust_tier": 3,
+      "type": "site_branch",
+      "vlans": []
+    },
+    "MNE-SITE-BRANCH-HEBRON-GOLD": {
+      "aliases": [
+        "MNE-SITE-BRANCH-HEBRON-GOLD",
+        "site-hebron-gold"
+      ],
+      "canonical_note": "knowledge/10_network_and_security/11_sites/site-hebron-gold.md",
+      "fqdns": [],
+      "id": "MNE-SITE-BRANCH-HEBRON-GOLD",
+      "ips": [
+        "10.40.19.0",
+        "10.40.19.1",
+        "10.40.19.3",
+        "172.23.13.201"
+      ],
+      "last_verified": "2026-07-27",
+      "related_entities": [],
+      "services": [],
+      "site": "Branch",
+      "trust_tier": 3,
+      "type": "site_branch",
+      "vlans": []
+    },
+    "MNE-SITE-BRANCH-JENIN": {
+      "aliases": [
+        "MNE-SITE-BRANCH-JENIN",
+        "site-jenin"
+      ],
+      "canonical_note": "knowledge/10_network_and_security/11_sites/site-jenin.md",
+      "fqdns": [],
+      "id": "MNE-SITE-BRANCH-JENIN",
+      "ips": [
+        "10.201.18.0",
+        "10.201.18.1",
+        "10.201.18.3",
+        "172.23.13.201"
+      ],
+      "last_verified": "2026-07-27",
+      "related_entities": [],
+      "services": [],
+      "site": "Branch",
+      "trust_tier": 3,
+      "type": "site_branch",
+      "vlans": []
+    },
+    "MNE-SITE-BRANCH-JERICHO": {
+      "aliases": [
+        "MNE-SITE-BRANCH-JERICHO",
+        "site-jericho"
+      ],
+      "canonical_note": "knowledge/10_network_and_security/11_sites/site-jericho.md",
+      "fqdns": [],
+      "id": "MNE-SITE-BRANCH-JERICHO",
+      "ips": [
+        "10.211.18.0",
+        "10.211.18.1",
+        "10.211.18.3",
+        "172.23.13.201"
+      ],
+      "last_verified": "2026-07-27",
+      "related_entities": [],
+      "services": [],
+      "site": "Branch",
+      "trust_tier": 3,
+      "type": "site_branch",
+      "vlans": []
+    },
+    "MNE-SITE-BRANCH-JERUSALEM": {
+      "aliases": [
+        "MNE-SITE-BRANCH-JERUSALEM",
+        "site-jerusalem"
+      ],
+      "canonical_note": "knowledge/10_network_and_security/11_sites/site-jerusalem.md",
+      "fqdns": [],
+      "id": "MNE-SITE-BRANCH-JERUSALEM",
+      "ips": [
+        "10.70.18.0",
+        "10.70.18.1",
+        "10.70.18.3",
+        "172.23.13.201"
+      ],
+      "last_verified": "2026-07-27",
+      "related_entities": [],
+      "services": [],
+      "site": "Branch",
+      "trust_tier": 3,
+      "type": "site_branch",
+      "vlans": []
+    },
+    "MNE-SITE-BRANCH-NORTH": {
+      "aliases": [
+        "MNE-SITE-BRANCH-NORTH",
+        "site-branch-north"
+      ],
+      "canonical_note": "knowledge/10_network_and_security/11_sites/site-branch-north.md",
+      "fqdns": [],
+      "id": "MNE-SITE-BRANCH-NORTH",
+      "ips": [],
+      "last_verified": "2026-07-27",
+      "related_entities": [],
+      "services": [],
+      "site": "Branch",
+      "trust_tier": 3,
+      "type": "site_branch",
+      "vlans": []
+    },
+    "MNE-SITE-BRANCH-QALQILYA": {
+      "aliases": [
+        "MNE-SITE-BRANCH-QALQILYA",
+        "site-qalqilya"
+      ],
+      "canonical_note": "knowledge/10_network_and_security/11_sites/site-qalqilya.md",
+      "fqdns": [],
+      "id": "MNE-SITE-BRANCH-QALQILYA",
+      "ips": [
+        "10.180.18.0",
+        "10.180.18.1",
+        "10.180.18.3",
+        "172.23.13.201"
+      ],
+      "last_verified": "2026-07-27",
+      "related_entities": [],
+      "services": [],
+      "site": "Branch",
+      "trust_tier": 3,
+      "type": "site_branch",
+      "vlans": []
+    },
+    "MNE-SITE-BRANCH-RAMALLAH-GOLD": {
+      "aliases": [
+        "MNE-SITE-BRANCH-RAMALLAH-GOLD",
+        "site-ramallah-gold"
+      ],
+      "canonical_note": "knowledge/10_network_and_security/11_sites/site-ramallah-gold.md",
+      "fqdns": [],
+      "id": "MNE-SITE-BRANCH-RAMALLAH-GOLD",
+      "ips": [
+        "10.110.19.0",
+        "10.110.19.1",
+        "10.110.19.3",
+        "172.23.13.201"
+      ],
+      "last_verified": "2026-07-27",
+      "related_entities": [],
+      "services": [],
+      "site": "Branch",
+      "trust_tier": 3,
+      "type": "site_branch",
+      "vlans": []
+    },
+    "MNE-SITE-BRANCH-SALFEET": {
+      "aliases": [
+        "MNE-SITE-BRANCH-SALFEET",
+        "site-salfeet"
+      ],
+      "canonical_note": "knowledge/10_network_and_security/11_sites/site-salfeet.md",
+      "fqdns": [],
+      "id": "MNE-SITE-BRANCH-SALFEET",
+      "ips": [
+        "10.235.18.0",
+        "10.235.18.1",
+        "10.235.18.3",
+        "172.23.13.201"
+      ],
+      "last_verified": "2026-07-27",
+      "related_entities": [],
+      "services": [],
+      "site": "Branch",
+      "trust_tier": 3,
+      "type": "site_branch",
+      "vlans": []
+    },
+    "MNE-SITE-BRANCH-TUBAS": {
+      "aliases": [
+        "MNE-SITE-BRANCH-TUBAS",
+        "site-tubas"
+      ],
+      "canonical_note": "knowledge/10_network_and_security/11_sites/site-tubas.md",
+      "fqdns": [],
+      "id": "MNE-SITE-BRANCH-TUBAS",
+      "ips": [
+        "10.230.18.0",
+        "10.230.18.1",
+        "10.230.18.3",
+        "172.23.13.201"
+      ],
+      "last_verified": "2026-07-27",
+      "related_entities": [],
+      "services": [],
+      "site": "Branch",
+      "trust_tier": 3,
+      "type": "site_branch",
+      "vlans": []
+    },
+    "MNE-SITE-BRANCH-TULKARM": {
+      "aliases": [
+        "MNE-SITE-BRANCH-TULKARM",
+        "site-tulkarm"
+      ],
+      "canonical_note": "knowledge/10_network_and_security/11_sites/site-tulkarm.md",
+      "fqdns": [],
+      "id": "MNE-SITE-BRANCH-TULKARM",
+      "ips": [
+        "10.165.18.0",
+        "10.165.18.1",
+        "10.165.18.3",
+        "172.23.13.201"
+      ],
+      "last_verified": "2026-07-27",
+      "related_entities": [],
+      "services": [],
+      "site": "Branch",
+      "trust_tier": 3,
+      "type": "site_branch",
+      "vlans": []
+    },
+    "MNE-SITE-HQ": {
+      "aliases": [
+        "MNE-SITE-HQ",
+        "site-hq"
+      ],
+      "canonical_note": "knowledge/10_network_and_security/11_sites/site-hq.md",
+      "fqdns": [],
+      "id": "MNE-SITE-HQ",
+      "ips": [],
+      "last_verified": "2026-07-27",
+      "related_entities": [],
+      "services": [],
+      "site": "HQ",
+      "trust_tier": 3,
+      "type": "site",
+      "vlans": []
+    },
+    "MNE-SRV-LINUX-ABRS-01": {
+      "aliases": [
+        "MNE-SRV-LINUX-ABRS-01",
+        "srv-linux-abrs-01"
+      ],
+      "canonical_note": "knowledge/20_compute_and_virtualization/23_linux_servers/srv-linux-abrs-01.md",
+      "fqdns": [],
+      "id": "MNE-SRV-LINUX-ABRS-01",
+      "ips": [
+        "172.23.79.200"
+      ],
+      "last_verified": "2026-07-27",
+      "related_entities": [],
+      "services": [],
+      "site": "HQ",
+      "trust_tier": 3,
+      "type": "abrs_server",
+      "vlans": []
+    },
+    "MNE-SRV-WIN-BASE-01": {
+      "aliases": [
+        "MNE-SRV-WIN-BASE-01",
+        "srv-win-base-01"
+      ],
+      "canonical_note": "knowledge/20_compute_and_virtualization/22_windows_servers/srv-win-base-01.md",
+      "fqdns": [],
+      "id": "MNE-SRV-WIN-BASE-01",
+      "ips": [
+        "172.23.71.10"
+      ],
+      "last_verified": "2026-07-27",
+      "related_entities": [],
+      "services": [],
+      "site": "HQ",
+      "trust_tier": 3,
+      "type": "windows_server",
+      "vlans": []
+    },
+    "MNE-SW-CISCO-ACC-01": {
+      "aliases": [
+        "MNE-SW-CISCO-ACC-01",
+        "sw-cisco-access-01"
+      ],
+      "canonical_note": "knowledge/10_network_and_security/12_routing_and_switching/sw-cisco-access-01.md",
+      "fqdns": [],
+      "id": "MNE-SW-CISCO-ACC-01",
+      "ips": [
+        "172.23.70.10"
+      ],
+      "last_verified": "2026-07-27",
+      "related_entities": [],
+      "services": [],
+      "site": "HQ",
+      "trust_tier": 3,
+      "type": "cisco_access_switch",
+      "vlans": []
+    },
+    "MNE-SW-CISCO-CORE-01": {
+      "aliases": [
+        "MNE-SW-CISCO-CORE-01",
+        "sw-cisco-core-01"
+      ],
+      "canonical_note": "knowledge/10_network_and_security/12_routing_and_switching/sw-cisco-core-01.md",
+      "fqdns": [],
+      "id": "MNE-SW-CISCO-CORE-01",
+      "ips": [
+        "172.23.19.0",
+        "172.23.21.0",
+        "172.23.23.0",
+        "172.23.42.0",
+        "172.23.70.254"
+      ],
+      "last_verified": "2026-07-27",
+      "related_entities": [],
+      "services": [],
+      "site": "HQ",
+      "trust_tier": 3,
+      "type": "cisco_core_switch",
+      "vlans": [
+        19,
+        21,
+        23,
+        42
+      ]
+    },
+    "MNE-SW-FUJ-CORE-02": {
+      "aliases": [
+        "MNE-SW-FUJ-CORE-02",
+        "sw-fujitsu-core-02"
+      ],
+      "canonical_note": "knowledge/10_network_and_security/12_routing_and_switching/sw-fujitsu-core-02.md",
+      "fqdns": [],
+      "id": "MNE-SW-FUJ-CORE-02",
+      "ips": [
+        "172.23.70.71"
+      ],
+      "last_verified": "2026-07-27",
+      "related_entities": [],
+      "services": [],
+      "site": "HQ",
+      "trust_tier": 3,
+      "type": "fujitsu_core_switch",
+      "vlans": [
+        200
+      ]
+    },
+    "MNE-VCENTER-MAIN": {
+      "aliases": [
+        "MNE-VCENTER-MAIN",
+        "vcenter-main"
+      ],
+      "canonical_note": "knowledge/20_compute_and_virtualization/21_vcenter_and_hosts/vcenter-main.md",
+      "fqdns": [
+        "vcenter.mne.gov.ps"
+      ],
+      "id": "MNE-VCENTER-MAIN",
+      "ips": [
+        "172.23.69.38"
+      ],
+      "last_verified": "2026-07-27",
+      "related_entities": [],
+      "services": [],
+      "site": "HQ",
+      "trust_tier": 3,
+      "type": "vcenter_server",
+      "vlans": []
+    },
+    "MNE-VPN-SSL-HQ": {
+      "aliases": [
+        "MNE-VPN-SSL-HQ",
+        "vpn-ssl-hq"
+      ],
+      "canonical_note": "knowledge/10_network_and_security/15_remote_access/vpn-ssl-hq.md",
+      "fqdns": [
+        "vpn.mne.gov.ps"
+      ],
+      "id": "MNE-VPN-SSL-HQ",
+      "ips": [],
+      "last_verified": "2026-07-27",
+      "related_entities": [],
+      "services": [],
+      "site": "HQ",
+      "trust_tier": 3,
+      "type": "vpn_ssl_tunnel",
+      "vlans": []
+    },
+    "README": {
+      "aliases": [
+        "README"
+      ],
+      "canonical_note": "knowledge/10_network_and_security/README.md",
+      "fqdns": [],
+      "id": "README",
+      "ips": [],
+      "last_verified": "2026-07-27",
+      "related_entities": [],
+      "services": [],
+      "site": "Branch",
+      "trust_tier": 3,
+      "type": "standard",
+      "vlans": []
+    }
+  },
+  "generated_at": "2026-07-27T10:58:51.335779",
+  "sub_indices": {
+    "branches": {
+      "branch": [
+        "README",
+        "MNE-SITE-BRANCH-BETHLEHEM",
+        "MNE-SITE-BRANCH-NORTH",
+        "MNE-SITE-BRANCH-HEBRON-GOLD",
+        "MNE-SITE-BRANCH-HEBRON",
+        "MNE-SITE-BRANCH-JENIN",
+        "MNE-SITE-BRANCH-JERICHO",
+        "MNE-SITE-BRANCH-JERUSALEM",
+        "MNE-SITE-BRANCH-QALQILYA",
+        "MNE-SITE-BRANCH-RAMALLAH-GOLD",
+        "MNE-SITE-BRANCH-SALFEET",
+        "MNE-SITE-BRANCH-TUBAS",
+        "MNE-SITE-BRANCH-TULKARM",
+        "MNE-SEC-BLOCKED-IPS"
+      ],
+      "hq": [
+        "MNE-SITE-HQ",
+        "MNE-RTR-CISCO-WAN-01",
+        "MNE-SW-CISCO-ACC-01",
+        "MNE-SW-CISCO-CORE-01",
+        "MNE-SW-FUJ-CORE-02",
+        "MNE-CISCO-FMC-01",
+        "MNE-CISCO-FTD-01",
+        "MNE-FW-FG-HQ-01",
+        "MNE-F5-VIP-PUB-98",
+        "MNE-VPN-SSL-HQ",
+        "MNE-ESXI-HOST-01",
+        "MNE-VCENTER-MAIN",
+        "MNE-SRV-WIN-BASE-01",
+        "MNE-SRV-LINUX-ABRS-01",
+        "MNE-FC-SW-FUJ-01",
+        "MNE-SAN-FUJ-ETERNUS-01",
+        "MNE-AD-DC-01",
+        "MNE-AD-DC-02",
+        "MNE-DHCP-SCOPE-USERS",
+        "MNE-DNS-ZONE-GOV",
+        "MNE-EXCH-SRV-01",
+        "MNE-EXCH-SRV-02",
+        "MNE-SCCM-SRV-01"
+      ]
+    },
+    "hostnames": {
+      "ad-dc-01": [
+        "MNE-AD-DC-01"
+      ],
+      "ad-dc-02": [
+        "MNE-AD-DC-02"
+      ],
+      "blocked-threat-ips": [
+        "MNE-SEC-BLOCKED-IPS"
+      ],
+      "cisco-fmc-01": [
+        "MNE-CISCO-FMC-01"
+      ],
+      "cisco-ftd-01": [
+        "MNE-CISCO-FTD-01"
+      ],
+      "dhcp-scope-user-lan": [
+        "MNE-DHCP-SCOPE-USERS"
+      ],
+      "dns-zone-mne-gov-ps": [
+        "MNE-DNS-ZONE-GOV"
+      ],
+      "esxi-host-01": [
+        "MNE-ESXI-HOST-01"
+      ],
+      "exch-srv-01": [
+        "MNE-EXCH-SRV-01"
+      ],
+      "exch-srv-02": [
+        "MNE-EXCH-SRV-02"
+      ],
+      "f5-vip-public-98": [
+        "MNE-F5-VIP-PUB-98"
+      ],
+      "fc-sw-fujitsu-01": [
+        "MNE-FC-SW-FUJ-01"
+      ],
+      "fw-fortigate-hq-01": [
+        "MNE-FW-FG-HQ-01"
+      ],
+      "mne-ad-dc-01": [
+        "MNE-AD-DC-01"
+      ],
+      "mne-ad-dc-02": [
+        "MNE-AD-DC-02"
+      ],
+      "mne-cisco-fmc-01": [
+        "MNE-CISCO-FMC-01"
+      ],
+      "mne-cisco-ftd-01": [
+        "MNE-CISCO-FTD-01"
+      ],
+      "mne-dhcp-scope-users": [
+        "MNE-DHCP-SCOPE-USERS"
+      ],
+      "mne-dns-zone-gov": [
+        "MNE-DNS-ZONE-GOV"
+      ],
+      "mne-esxi-host-01": [
+        "MNE-ESXI-HOST-01"
+      ],
+      "mne-exch-srv-01": [
+        "MNE-EXCH-SRV-01"
+      ],
+      "mne-exch-srv-02": [
+        "MNE-EXCH-SRV-02"
+      ],
+      "mne-f5-vip-pub-98": [
+        "MNE-F5-VIP-PUB-98"
+      ],
+      "mne-fc-sw-fuj-01": [
+        "MNE-FC-SW-FUJ-01"
+      ],
+      "mne-fw-fg-hq-01": [
+        "MNE-FW-FG-HQ-01"
+      ],
+      "mne-rtr-cisco-wan-01": [
+        "MNE-RTR-CISCO-WAN-01"
+      ],
+      "mne-san-fuj-eternus-01": [
+        "MNE-SAN-FUJ-ETERNUS-01"
+      ],
+      "mne-sccm-srv-01": [
+        "MNE-SCCM-SRV-01"
+      ],
+      "mne-sec-blocked-ips": [
+        "MNE-SEC-BLOCKED-IPS"
+      ],
+      "mne-site-branch-bethlehem": [
+        "MNE-SITE-BRANCH-BETHLEHEM"
+      ],
+      "mne-site-branch-hebron": [
+        "MNE-SITE-BRANCH-HEBRON"
+      ],
+      "mne-site-branch-hebron-gold": [
+        "MNE-SITE-BRANCH-HEBRON-GOLD"
+      ],
+      "mne-site-branch-jenin": [
+        "MNE-SITE-BRANCH-JENIN"
+      ],
+      "mne-site-branch-jericho": [
+        "MNE-SITE-BRANCH-JERICHO"
+      ],
+      "mne-site-branch-jerusalem": [
+        "MNE-SITE-BRANCH-JERUSALEM"
+      ],
+      "mne-site-branch-north": [
+        "MNE-SITE-BRANCH-NORTH"
+      ],
+      "mne-site-branch-qalqilya": [
+        "MNE-SITE-BRANCH-QALQILYA"
+      ],
+      "mne-site-branch-ramallah-gold": [
+        "MNE-SITE-BRANCH-RAMALLAH-GOLD"
+      ],
+      "mne-site-branch-salfeet": [
+        "MNE-SITE-BRANCH-SALFEET"
+      ],
+      "mne-site-branch-tubas": [
+        "MNE-SITE-BRANCH-TUBAS"
+      ],
+      "mne-site-branch-tulkarm": [
+        "MNE-SITE-BRANCH-TULKARM"
+      ],
+      "mne-site-hq": [
+        "MNE-SITE-HQ"
+      ],
+      "mne-srv-linux-abrs-01": [
+        "MNE-SRV-LINUX-ABRS-01"
+      ],
+      "mne-srv-win-base-01": [
+        "MNE-SRV-WIN-BASE-01"
+      ],
+      "mne-sw-cisco-acc-01": [
+        "MNE-SW-CISCO-ACC-01"
+      ],
+      "mne-sw-cisco-core-01": [
+        "MNE-SW-CISCO-CORE-01"
+      ],
+      "mne-sw-fuj-core-02": [
+        "MNE-SW-FUJ-CORE-02"
+      ],
+      "mne-vcenter-main": [
+        "MNE-VCENTER-MAIN"
+      ],
+      "mne-vpn-ssl-hq": [
+        "MNE-VPN-SSL-HQ"
+      ],
+      "readme": [
+        "README"
+      ],
+      "rtr-cisco-wan-01": [
+        "MNE-RTR-CISCO-WAN-01"
+      ],
+      "san-fujitsu-eternus-01": [
+        "MNE-SAN-FUJ-ETERNUS-01"
+      ],
+      "sccm-srv-01": [
+        "MNE-SCCM-SRV-01"
+      ],
+      "site-bethlehem": [
+        "MNE-SITE-BRANCH-BETHLEHEM"
+      ],
+      "site-branch-north": [
+        "MNE-SITE-BRANCH-NORTH"
+      ],
+      "site-hebron": [
+        "MNE-SITE-BRANCH-HEBRON"
+      ],
+      "site-hebron-gold": [
+        "MNE-SITE-BRANCH-HEBRON-GOLD"
+      ],
+      "site-hq": [
+        "MNE-SITE-HQ"
+      ],
+      "site-jenin": [
+        "MNE-SITE-BRANCH-JENIN"
+      ],
+      "site-jericho": [
+        "MNE-SITE-BRANCH-JERICHO"
+      ],
+      "site-jerusalem": [
+        "MNE-SITE-BRANCH-JERUSALEM"
+      ],
+      "site-qalqilya": [
+        "MNE-SITE-BRANCH-QALQILYA"
+      ],
+      "site-ramallah-gold": [
+        "MNE-SITE-BRANCH-RAMALLAH-GOLD"
+      ],
+      "site-salfeet": [
+        "MNE-SITE-BRANCH-SALFEET"
+      ],
+      "site-tubas": [
+        "MNE-SITE-BRANCH-TUBAS"
+      ],
+      "site-tulkarm": [
+        "MNE-SITE-BRANCH-TULKARM"
+      ],
+      "srv-linux-abrs-01": [
+        "MNE-SRV-LINUX-ABRS-01"
+      ],
+      "srv-win-base-01": [
+        "MNE-SRV-WIN-BASE-01"
+      ],
+      "sw-cisco-access-01": [
+        "MNE-SW-CISCO-ACC-01"
+      ],
+      "sw-cisco-core-01": [
+        "MNE-SW-CISCO-CORE-01"
+      ],
+      "sw-fujitsu-core-02": [
+        "MNE-SW-FUJ-CORE-02"
+      ],
+      "vcenter-main": [
+        "MNE-VCENTER-MAIN"
+      ],
+      "vcenter.mne.gov.ps": [
+        "MNE-VCENTER-MAIN"
+      ],
+      "vpn-ssl-hq": [
+        "MNE-VPN-SSL-HQ"
+      ],
+      "vpn.mne.gov.ps": [
+        "MNE-FW-FG-HQ-01",
+        "MNE-VPN-SSL-HQ"
+      ]
+    },
+    "ips": {
+      "10.11.12.1": [
+        "MNE-FW-FG-HQ-01"
+      ],
+      "10.110.19.0": [
+        "MNE-SITE-BRANCH-RAMALLAH-GOLD"
+      ],
+      "10.110.19.1": [
+        "MNE-SITE-BRANCH-RAMALLAH-GOLD"
+      ],
+      "10.110.19.3": [
+        "MNE-SITE-BRANCH-RAMALLAH-GOLD"
+      ],
+      "10.165.18.0": [
+        "MNE-SITE-BRANCH-TULKARM"
+      ],
+      "10.165.18.1": [
+        "MNE-SITE-BRANCH-TULKARM"
+      ],
+      "10.165.18.3": [
+        "MNE-SITE-BRANCH-TULKARM"
+      ],
+      "10.180.18.0": [
+        "MNE-SITE-BRANCH-QALQILYA"
+      ],
+      "10.180.18.1": [
+        "MNE-SITE-BRANCH-QALQILYA"
+      ],
+      "10.180.18.3": [
+        "MNE-SITE-BRANCH-QALQILYA"
+      ],
+      "10.201.18.0": [
+        "MNE-SITE-BRANCH-JENIN"
+      ],
+      "10.201.18.1": [
+        "MNE-SITE-BRANCH-JENIN"
+      ],
+      "10.201.18.3": [
+        "MNE-SITE-BRANCH-JENIN"
+      ],
+      "10.211.18.0": [
+        "MNE-SITE-BRANCH-JERICHO"
+      ],
+      "10.211.18.1": [
+        "MNE-SITE-BRANCH-JERICHO"
+      ],
+      "10.211.18.3": [
+        "MNE-SITE-BRANCH-JERICHO"
+      ],
+      "10.230.18.0": [
+        "MNE-SITE-BRANCH-TUBAS"
+      ],
+      "10.230.18.1": [
+        "MNE-SITE-BRANCH-TUBAS"
+      ],
+      "10.230.18.3": [
+        "MNE-SITE-BRANCH-TUBAS"
+      ],
+      "10.235.18.0": [
+        "MNE-SITE-BRANCH-SALFEET"
+      ],
+      "10.235.18.1": [
+        "MNE-SITE-BRANCH-SALFEET"
+      ],
+      "10.235.18.3": [
+        "MNE-SITE-BRANCH-SALFEET"
+      ],
+      "10.40.18.0": [
+        "MNE-SITE-BRANCH-HEBRON"
+      ],
+      "10.40.18.1": [
+        "MNE-SITE-BRANCH-HEBRON"
+      ],
+      "10.40.18.3": [
+        "MNE-SITE-BRANCH-HEBRON"
+      ],
+      "10.40.19.0": [
+        "MNE-SITE-BRANCH-HEBRON-GOLD"
+      ],
+      "10.40.19.1": [
+        "MNE-SITE-BRANCH-HEBRON-GOLD"
+      ],
+      "10.40.19.3": [
+        "MNE-SITE-BRANCH-HEBRON-GOLD"
+      ],
+      "10.60.18.0": [
+        "MNE-SITE-BRANCH-BETHLEHEM"
+      ],
+      "10.60.18.1": [
+        "MNE-SITE-BRANCH-BETHLEHEM"
+      ],
+      "10.60.18.3": [
+        "MNE-SITE-BRANCH-BETHLEHEM"
+      ],
+      "10.70.18.0": [
+        "MNE-SITE-BRANCH-JERUSALEM"
+      ],
+      "10.70.18.1": [
+        "MNE-SITE-BRANCH-JERUSALEM"
+      ],
+      "10.70.18.3": [
+        "MNE-SITE-BRANCH-JERUSALEM"
+      ],
+      "172.23.13.201": [
+        "MNE-SITE-BRANCH-BETHLEHEM",
+        "MNE-SITE-BRANCH-HEBRON-GOLD",
+        "MNE-SITE-BRANCH-HEBRON",
+        "MNE-SITE-BRANCH-JENIN",
+        "MNE-SITE-BRANCH-JERICHO",
+        "MNE-SITE-BRANCH-JERUSALEM",
+        "MNE-SITE-BRANCH-QALQILYA",
+        "MNE-SITE-BRANCH-RAMALLAH-GOLD",
+        "MNE-SITE-BRANCH-SALFEET",
+        "MNE-SITE-BRANCH-TUBAS",
+        "MNE-SITE-BRANCH-TULKARM"
+      ],
+      "172.23.19.0": [
+        "MNE-SW-CISCO-CORE-01",
+        "MNE-FW-FG-HQ-01"
+      ],
+      "172.23.21.0": [
+        "MNE-SW-CISCO-CORE-01",
+        "MNE-FW-FG-HQ-01"
+      ],
+      "172.23.23.0": [
+        "MNE-SW-CISCO-CORE-01",
+        "MNE-FW-FG-HQ-01"
+      ],
+      "172.23.42.0": [
+        "MNE-SW-CISCO-CORE-01"
+      ],
+      "172.23.68.10": [
+        "MNE-FC-SW-FUJ-01"
+      ],
+      "172.23.68.20": [
+        "MNE-SAN-FUJ-ETERNUS-01"
+      ],
+      "172.23.69.38": [
+        "MNE-VCENTER-MAIN"
+      ],
+      "172.23.69.41": [
+        "MNE-ESXI-HOST-01"
+      ],
+      "172.23.70.10": [
+        "MNE-SW-CISCO-ACC-01"
+      ],
+      "172.23.70.254": [
+        "MNE-RTR-CISCO-WAN-01",
+        "MNE-SW-CISCO-CORE-01"
+      ],
+      "172.23.70.4": [
+        "MNE-SEC-BLOCKED-IPS",
+        "MNE-FW-FG-HQ-01"
+      ],
+      "172.23.70.71": [
+        "MNE-SW-FUJ-CORE-02"
+      ],
+      "172.23.70.77": [
+        "MNE-CISCO-FMC-01",
+        "MNE-CISCO-FTD-01"
+      ],
+      "172.23.70.78": [
+        "MNE-CISCO-FMC-01",
+        "MNE-CISCO-FTD-01"
+      ],
+      "172.23.70.89": [
+        "MNE-F5-VIP-PUB-98"
+      ],
+      "172.23.71.10": [
+        "MNE-SRV-WIN-BASE-01"
+      ],
+      "172.23.71.27": [
+        "MNE-AD-DC-01",
+        "MNE-AD-DC-02"
+      ],
+      "172.23.71.28": [
+        "MNE-AD-DC-01",
+        "MNE-AD-DC-02"
+      ],
+      "172.23.71.35": [
+        "MNE-F5-VIP-PUB-98",
+        "MNE-EXCH-SRV-01",
+        "MNE-EXCH-SRV-02"
+      ],
+      "172.23.71.36": [
+        "MNE-F5-VIP-PUB-98",
+        "MNE-EXCH-SRV-01",
+        "MNE-EXCH-SRV-02"
+      ],
+      "172.23.71.80": [
+        "MNE-SCCM-SRV-01"
+      ],
+      "172.23.79.200": [
+        "MNE-F5-VIP-PUB-98",
+        "MNE-SRV-LINUX-ABRS-01"
+      ],
+      "172.23.80.0": [
+        "MNE-DHCP-SCOPE-USERS"
+      ]
+    },
+    "services": {},
+    "vlans": {
+      "19": [
+        "MNE-SW-CISCO-CORE-01",
+        "MNE-FW-FG-HQ-01"
+      ],
+      "200": [
+        "MNE-SW-FUJ-CORE-02",
+        "MNE-FW-FG-HQ-01"
+      ],
+      "21": [
+        "MNE-SW-CISCO-CORE-01",
+        "MNE-FW-FG-HQ-01"
+      ],
+      "23": [
+        "MNE-SW-CISCO-CORE-01",
+        "MNE-FW-FG-HQ-01"
+      ],
+      "42": [
+        "MNE-SW-CISCO-CORE-01"
+      ],
+      "71": [
+        "MNE-CISCO-FTD-01"
+      ],
+      "75": [
+        "MNE-CISCO-FTD-01"
+      ],
+      "79": [
+        "MNE-CISCO-FTD-01"
+      ]
+    }
+  },
+  "total_entities": 37,
+  "version": "2.0"
+}

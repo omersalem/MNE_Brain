@@ -4,7 +4,7 @@
 - **Orchestration Model:** Task ➔ Discovery Profile ➔ Agent ➔ Infrastructure
 - **Self-Hosted Runner:** `172.23.50.62`
 - **Profiles Executed:** vmware.yaml
-- **Status:** COMPLETED (VERIFIED Read-Only Telemetry)
+- **Status:** COMPLETED (not_run - Static Audit)
 
 ## 📋 Discovery Profiles Executed
 - `profiles/vmware.yaml`

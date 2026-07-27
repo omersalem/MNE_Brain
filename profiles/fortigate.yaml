@@ -3,7 +3,6 @@ platform: "fortigate"
 vendor: "Fortinet"
 purpose: "Read-only discovery of FortiGate HQ & Branch edge firewalls, policies, and VDOMs."
 discovery_frequency: "Daily @ 02:00 AM"
-trust_level: "★★★★☆ (Vendor API)"
 trust_tier: 4
 read_commands:
   - "get system status"

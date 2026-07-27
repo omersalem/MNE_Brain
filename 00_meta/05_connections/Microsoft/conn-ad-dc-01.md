@@ -26,7 +26,7 @@ Context: [[master-dashboard]] | Related Asset: [[ad-dc-01]]
 - **Protocol:** WinRM / WMI
 - **Authentication Method:** Domain Account (WinRM NTLM)
 - **Username:** `MNEdmin`
-- **Password:** `omersalem570-6127`
+- **Password:** `LOADED_FROM_ENV`
 - **API Token:** N/A
 - **Domain:** `mne.gov` / `mne.gov.ps`
 

@@ -73,11 +73,11 @@ Search-ADAccount -LockedOut | Unlock-ADAccount
 # ── PASSWORD ──
 # Reset password
 Set-ADAccountPassword -Identity "jsmith" -Reset `
-  -NewPassword (ConvertTo-SecureString "NewP@ss123!" -AsPlainText -Force)
+  -NewPassword (ConvertTo-SecureString $env:MNE_READONLY_SECRET -AsPlainText -Force)
 
 # Reset password + force change at next logon
 Set-ADAccountPassword -Identity "jsmith" -Reset `
-  -NewPassword (ConvertTo-SecureString "NewP@ss123!" -AsPlainText -Force)
+  -NewPassword (ConvertTo-SecureString $env:MNE_READONLY_SECRET -AsPlainText -Force)
 Set-ADUser -Identity "jsmith" -ChangePasswordAtLogon $true
 
 # Set password never expires
@@ -96,7 +96,7 @@ New-ADUser `
   -UserPrincipalName "jsmith@domain.com" `
   -EmailAddress     "jsmith@domain.com" `
   -Path             "OU=Users,OU=IT,DC=domain,DC=com" `
-  -AccountPassword  (ConvertTo-SecureString "P@ssword123!" -AsPlainText -Force) `
+  -AccountPassword  (ConvertTo-SecureString $env:MNE_READONLY_SECRET -AsPlainText -Force) `
   -Enabled          $true `
   -Department       "IT" `
   -Title            "Engineer" `

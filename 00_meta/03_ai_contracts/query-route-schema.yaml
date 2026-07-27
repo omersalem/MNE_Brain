@@ -1,0 +1,34 @@
+# Query Route Output Schema
+# 00_meta/03_ai_contracts/query-route-schema.yaml
+
+schema:
+  type: object
+  required:
+    - route
+    - requires_entity_resolution
+    - evidence_requirements
+    - live_check_allowed
+    - remediation_gate_required
+  properties:
+    route:
+      type: string
+      enum:
+        - asset_lookup
+        - topology
+        - explanation
+        - incident
+        - troubleshooting
+        - health_check
+        - documentation
+        - review
+        - remediation
+    requires_entity_resolution:
+      type: boolean
+    evidence_requirements:
+      type: array
+      items:
+        type: string
+    live_check_allowed:
+      type: boolean
+    remediation_gate_required:
+      type: boolean

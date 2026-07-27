@@ -1,16 +1,21 @@
 ---
-id: "MNE-SITE-HQ"
-title: "Ministry Headquarters (HQ)"
-type: "site"
-status: "active"
-owner: "Network-Team"
-criticality: "critical"
-environment: "production"
-last_review: "2026-07-24"
+id: MNE-SITE-HQ
+title: Ministry Headquarters (HQ)
+type: site
+status: active
+owner: Network-Team
+criticality: critical
+environment: production
+last_review: '2026-07-24'
 tags:
-  - ministry/site/hq
+- ministry/site/hq
+aliases:
+- MNE-SITE-HQ
+source: Canonical Audit
+trust_tier: 3
+last_verified: '2026-07-27'
+related_entities: []
 ---
-
 # Ministry Headquarters (HQ)
 
 Context: [[master-dashboard]] | Parent: [[index-network-and-security]]

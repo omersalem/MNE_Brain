@@ -1,18 +1,23 @@
 ---
-id: "MNE-DNS-ZONE-GOV"
-title: "dns-zone-mne-gov-ps"
-type: "dns_zone"
-status: "active"
-vendor: "Microsoft"
-site: "HQ"
-owner: "SysAdmin-Team"
-criticality: "critical"
-environment: "production"
-last_review: "2026-07-24"
+id: MNE-DNS-ZONE-GOV
+title: dns-zone-mne-gov-ps
+type: dns_zone
+status: active
+vendor: Microsoft
+site: HQ
+owner: SysAdmin-Team
+criticality: critical
+environment: production
+last_review: '2026-07-24'
 tags:
-  - ministry/microsoft/dns
+- ministry/microsoft/dns
+aliases:
+- MNE-DNS-ZONE-GOV
+source: Canonical Audit
+trust_tier: 3
+last_verified: '2026-07-27'
+related_entities: []
 ---
-
 # dns-zone-mne-gov-ps
 
 Context: [[index-microsoft]] | Primary DC: [[ad-dc-01]]

@@ -1,19 +1,24 @@
 ---
-id: "MNE-SAN-FUJ-ETERNUS-01"
-title: "san-fujitsu-eternus-01"
-type: "fujitsu_san"
-status: "active"
-vendor: "Fujitsu"
-model: "ETERNUS DX200"
-site: "HQ"
-owner: "SysAdmin-Team"
-criticality: "critical"
-environment: "production"
-last_review: "2026-07-24"
+id: MNE-SAN-FUJ-ETERNUS-01
+title: san-fujitsu-eternus-01
+type: fujitsu_san
+status: active
+vendor: Fujitsu
+model: ETERNUS DX200
+site: HQ
+owner: SysAdmin-Team
+criticality: critical
+environment: production
+last_review: '2026-07-24'
 tags:
-  - ministry/storage/fujitsu-san
+- ministry/storage/fujitsu-san
+aliases:
+- MNE-SAN-FUJ-ETERNUS-01
+source: Canonical Audit
+trust_tier: 3
+last_verified: '2026-07-27'
+related_entities: []
 ---
-
 # san-fujitsu-eternus-01
 
 Context: [[index-storage]] | Site: [[site-hq]]

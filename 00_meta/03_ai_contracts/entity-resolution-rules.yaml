@@ -1,0 +1,32 @@
+# Entity Resolution Rules & Future Scalability Modular Architecture
+# 00_meta/03_ai_contracts/entity-resolution-rules.yaml
+
+lookup_fields:
+  - id
+  - ip
+  - hostname
+  - fqdn
+  - alias
+  - device_id
+  - service
+  - application
+  - branch
+  - vlan
+
+ambiguity_handling:
+  exact_match: "return_single"
+  multiple_matches: "return_candidates_max_3"
+  zero_matches: "return_unknown"
+
+# Modular sub-index targets (Future Scalability Refinement interface)
+sub_indices_config:
+  single_file_mode: true
+  primary_index: "00_meta/04_indices/entity-index.json"
+  future_target_dir: "00_meta/04_indices/indices/"
+  sub_indices:
+    ip: "ip-index.json"
+    hostname: "hostname-index.json"
+    service: "service-index.json"
+    application: "application-index.json"
+    branch: "branch-index.json"
+    vlan: "vlan-index.json"

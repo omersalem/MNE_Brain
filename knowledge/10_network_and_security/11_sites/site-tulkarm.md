@@ -1,20 +1,25 @@
 ---
-id: "MNE-SITE-BRANCH-TULKARM"
-title: "Tulkarm Branch Office"
-type: "site_branch"
-status: "active"
-site_code: "BR-TULKARM"
-subnet: "10.165.18.0/24"
-fw_ip: "10.165.18.1"
-sw_ip: "10.165.18.3"
-owner: "Network-Team"
-criticality: "high"
-environment: "production"
-last_review: "2026-07-24"
+id: MNE-SITE-BRANCH-TULKARM
+title: Tulkarm Branch Office
+type: site_branch
+status: active
+site_code: BR-TULKARM
+subnet: 10.165.18.0/24
+fw_ip: 10.165.18.1
+sw_ip: 10.165.18.3
+owner: Network-Team
+criticality: high
+environment: production
+last_review: '2026-07-24'
 tags:
-  - ministry/site/branch
+- ministry/site/branch
+aliases:
+- MNE-SITE-BRANCH-TULKARM
+source: Canonical Audit
+trust_tier: 3
+last_verified: '2026-07-27'
+related_entities: []
 ---
-
 # Tulkarm Branch Office
 
 Context: [[site-hq]] | Parent: [[index-network-and-security]]

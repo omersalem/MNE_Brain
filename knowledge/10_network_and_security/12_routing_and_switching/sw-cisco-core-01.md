@@ -1,20 +1,25 @@
 ---
-id: "MNE-SW-CISCO-CORE-01"
-title: "CoreSwitch1 (Cisco 9500 Stack)"
-type: "cisco_core_switch"
-status: "active"
-vendor: "Cisco"
-model: "Catalyst 9500 Stack"
-mgmt_ip: "172.23.70.254"
-site: "HQ"
-owner: "Network-Team"
-criticality: "critical"
-environment: "production"
-last_review: "2026-07-24"
+id: MNE-SW-CISCO-CORE-01
+title: CoreSwitch1 (Cisco 9500 Stack)
+type: cisco_core_switch
+status: active
+vendor: Cisco
+model: Catalyst 9500 Stack
+mgmt_ip: 172.23.70.254
+site: HQ
+owner: Network-Team
+criticality: critical
+environment: production
+last_review: '2026-07-24'
 tags:
-  - ministry/cisco/core-switch
+- ministry/cisco/core-switch
+aliases:
+- MNE-SW-CISCO-CORE-01
+source: Canonical Audit
+trust_tier: 3
+last_verified: '2026-07-27'
+related_entities: []
 ---
-
 # CoreSwitch1 (Cisco Catalyst 9500 Stack)
 
 Context: [[master-dashboard]] | Parent: [[index-network-and-security]]

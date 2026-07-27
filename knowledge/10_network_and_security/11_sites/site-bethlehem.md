@@ -1,20 +1,25 @@
 ---
-id: "MNE-SITE-BRANCH-BETHLEHEM"
-title: "Bethlehem Branch Office"
-type: "site_branch"
-status: "active"
-site_code: "BR-BETHLEHEM"
-subnet: "10.60.18.0/24"
-fw_ip: "10.60.18.1"
-sw_ip: "10.60.18.3"
-owner: "Network-Team"
-criticality: "high"
-environment: "production"
-last_review: "2026-07-24"
+id: MNE-SITE-BRANCH-BETHLEHEM
+title: Bethlehem Branch Office
+type: site_branch
+status: active
+site_code: BR-BETHLEHEM
+subnet: 10.60.18.0/24
+fw_ip: 10.60.18.1
+sw_ip: 10.60.18.3
+owner: Network-Team
+criticality: high
+environment: production
+last_review: '2026-07-24'
 tags:
-  - ministry/site/branch
+- ministry/site/branch
+aliases:
+- MNE-SITE-BRANCH-BETHLEHEM
+source: Canonical Audit
+trust_tier: 3
+last_verified: '2026-07-27'
+related_entities: []
 ---
-
 # Bethlehem Branch Office
 
 Context: [[site-hq]] | Parent: [[index-network-and-security]]

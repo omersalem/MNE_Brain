@@ -1,0 +1,22 @@
+{
+  "question": "Troubleshoot fw-fortigate-hq-01 interface down",
+  "query_route": "troubleshooting",
+  "resolved_entities": [
+    {
+      "id": "MNE-FW-FG-HQ-01",
+      "type": "fortigate_device",
+      "canonical_note": "knowledge/10_network_and_security/13_firewalls_and_fmc/fw-fortigate-hq-01.md"
+    }
+  ],
+  "evidence_items": [
+    {
+      "id": "MNE-FW-FG-HQ-01",
+      "source": "canonical_note: knowledge/10_network_and_security/13_firewalls_and_fmc/fw-fortigate-hq-01.md",
+      "trust_tier": 3,
+      "freshness": "documented",
+      "summary": "FortiGate HQ Edge Firewall 172.23.70.4",
+      "content_snippet": "# FortiGate HQ Edge Firewall..."
+    }
+  ],
+  "unknowns": []
+}

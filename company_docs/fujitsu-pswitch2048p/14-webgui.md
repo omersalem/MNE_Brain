@@ -7,7 +7,7 @@
 
 ```
 URL:      http://<management-IP>   OR   https://<management-IP>
-Default:  Username: admin  |  Password: (blank)
+Default:  Username: admin  |  password = secret_ref("MNE_PLATFORM_READONLY_CREDENTIAL")MNE_DEVICE_READONLY_PASSWORD")
 Browser:  Chrome, Firefox, Edge (modern versions)
 ```
 

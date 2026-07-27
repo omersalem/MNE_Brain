@@ -29,26 +29,26 @@
 
 | # | Device | IP | Auth Method | Username | Password |
 |---|--------|----|-------------|----------|----------|
-| 1 | **FortiGate** (FGT) | 172.23.70.4 | SSH (port 22) | adminread | omersalem570-6127 |
-| 2 | **FMC** (Cisco FMC) | 172.23.70.77 | SSH → `expert` bash | admin | Cisco@2024 |
-| 3 | **FTD** (Cisco FTD) | 172.23.70.78 | SSH (port 22) | admin | Cisco@2024 |
-| 4 | **F5 BIG-IP** | 172.23.70.89 | SSH (port 22) | admin | Cisco@2024 |
-| 5 | **Active Directory** (MNE-DC1) | 172.23.71.27 | WinRM (port 5985) | MNE\admin | omersalem570-6127 |
-| 6 | **DNS** (MNE-DC1) | 172.23.71.27 | WinRM (port 5985) | MNE\admin | omersalem570-6127 |
-| 7 | **Exchange 2019** (EXCHAMGESRV2) | 172.23.71.36 | WinRM + Exchange PS | MNE\admin | omersalem570-6127 |
-| 8 | **Fujitsu SW1** | 172.23.70.70 | SSH (port 22) | admin | Abcd@1234 |
-| 9 | **Fujitsu SW2** | 172.23.70.71 | SSH (port 22) | admin | Abcd@1234 |
-| 10 | **Cisco Core** (CoreSwitch1) | 172.23.70.254 | SSH (user exec only) | admin | Axizo@1234 |
-| 11 | **vCenter** (VCSA 7.0.3) | 172.23.69.38 | SSH → `shell` bash | root | Kh@fud$2021 |
-| 12 | **Flr-B1** (F_-1_acc_Sw1) | 172.23.70.220 | SSH (port 22) | admin | Axizo@1234 |
-| 13 | **Flr-GND** (F0_acc_Sw1) | 172.23.70.221 | SSH (port 22) | admin | Axizo@1234 |
-| 14 | **Flr-1** (F1_acc_Main) | 172.23.70.222 | SSH (port 22) | admin | Axizo@1234 |
-| 15 | **Flr-2** (f2_acc_sw1) | 172.23.70.223 | SSH (port 22) | admin | Axizo@1234 |
-| 16 | **Flr-3** (f3_acc_sw1) | 172.23.70.224 | SSH (port 22) | admin | Axizo@1234 |
-| 17 | **Flr-4** (F4_acc_sw1) | 172.23.70.225 | SSH (port 22) | admin | Axizo@1234 |
-| 18 | **Flr-5** (Floor_5_main) | 172.23.70.226 | SSH (port 22) | admin | Axizo@1234 |
-| 19 | **Flr-6** (F6_acc_Sw1) | 172.23.70.227 | SSH (port 22) | admin | Axizo@1234 |
-| 20 | **Flr-Svc** (Khadamat) | 172.23.70.219 | SSH (port 22) | admin | Axizo@1234 |
+| 1 | **FortiGate** (FGT) | 172.23.70.4 | SSH (port 22) | adminread | secret_ref("MNE_FORTIGATE_READONLY_CREDENTIAL") |
+| 2 | **FMC** (Cisco FMC) | 172.23.70.77 | SSH → `expert` bash | admin | secret_ref("MNE_FMC_READONLY_CREDENTIAL") |
+| 3 | **FTD** (Cisco FTD) | 172.23.70.78 | SSH (port 22) | admin | secret_ref("MNE_FTD_READONLY_CREDENTIAL") |
+| 4 | **F5 BIG-IP** | 172.23.70.89 | SSH (port 22) | admin | secret_ref("MNE_F5_READONLY_CREDENTIAL") |
+| 5 | **Active Directory** (MNE-DC1) | 172.23.71.27 | WinRM (port 5985) | MNE\admin | secret_ref("MNE_WINRM_READONLY_CREDENTIAL") |
+| 6 | **DNS** (MNE-DC1) | 172.23.71.27 | WinRM (port 5985) | MNE\admin | secret_ref("MNE_WINRM_READONLY_CREDENTIAL") |
+| 7 | **Exchange 2019** (EXCHAMGESRV2) | 172.23.71.36 | WinRM + Exchange PS | MNE\admin | secret_ref("MNE_WINRM_READONLY_CREDENTIAL") |
+| 8 | **Fujitsu SW1** | 172.23.70.70 | SSH (port 22) | admin | secret_ref("MNE_FUJITSU_READONLY_CREDENTIAL") |
+| 9 | **Fujitsu SW2** | 172.23.70.71 | SSH (port 22) | admin | secret_ref("MNE_FUJITSU_READONLY_CREDENTIAL") |
+| 10 | **Cisco Core** (CoreSwitch1) | 172.23.70.254 | SSH (user exec only) | admin | secret_ref("MNE_CISCO_READONLY_CREDENTIAL") |
+| 11 | **vCenter** (VCSA 7.0.3) | 172.23.69.38 | SSH → `shell` bash | root | secret_ref("MNE_VCENTER_READONLY_CREDENTIAL") |
+| 12 | **Flr-B1** (F_-1_acc_Sw1) | 172.23.70.220 | SSH (port 22) | admin | secret_ref("MNE_CISCO_READONLY_CREDENTIAL") |
+| 13 | **Flr-GND** (F0_acc_Sw1) | 172.23.70.221 | SSH (port 22) | admin | secret_ref("MNE_CISCO_READONLY_CREDENTIAL") |
+| 14 | **Flr-1** (F1_acc_Main) | 172.23.70.222 | SSH (port 22) | admin | secret_ref("MNE_CISCO_READONLY_CREDENTIAL") |
+| 15 | **Flr-2** (f2_acc_sw1) | 172.23.70.223 | SSH (port 22) | admin | secret_ref("MNE_CISCO_READONLY_CREDENTIAL") |
+| 16 | **Flr-3** (f3_acc_sw1) | 172.23.70.224 | SSH (port 22) | admin | secret_ref("MNE_CISCO_READONLY_CREDENTIAL") |
+| 17 | **Flr-4** (F4_acc_sw1) | 172.23.70.225 | SSH (port 22) | admin | secret_ref("MNE_CISCO_READONLY_CREDENTIAL") |
+| 18 | **Flr-5** (Floor_5_main) | 172.23.70.226 | SSH (port 22) | admin | secret_ref("MNE_CISCO_READONLY_CREDENTIAL") |
+| 19 | **Flr-6** (F6_acc_Sw1) | 172.23.70.227 | SSH (port 22) | admin | secret_ref("MNE_CISCO_READONLY_CREDENTIAL") |
+| 20 | **Flr-Svc** (Khadamat) | 172.23.70.219 | SSH (port 22) | admin | secret_ref("MNE_CISCO_READONLY_CREDENTIAL") |
 
 ---
 
@@ -67,7 +67,7 @@ Restart-Service WinRM
 ### 2.2 Create Credential Object
 
 ```powershell
-$pw = ConvertTo-SecureString "omersalem570-6127" -AsPlainText -Force
+$pw = ConvertTo-SecureString $env:MNE_READONLY_SECRET -AsPlainText -Force
 $cred = New-Object System.Management.Automation.PSCredential("MNE\admin", $pw)
 ```
 
@@ -238,7 +238,7 @@ import netmiko
 conn = netmiko.ConnectHandler(
     host='172.23.70.4',
     username='adminread',
-    password='omersalem570-6127',
+    password = secret_ref("MNE_PLATFORM_READONLY_CREDENTIAL"),
     device_type='fortinet'
 )
 conn.enable()  # FGT may prompt for enable
@@ -295,7 +295,7 @@ execute nslookup google.com
 
 **SSH Access (requires `expert` mode for bash):**
 ```bash
-# Login with admin/Cisco@2024
+# Login with admin/LOADED_FROM_ENV
 # Shell prompt shows ">"
 > expert
 # Now in bash shell (prompt: admin@FMC:~$)
@@ -318,7 +318,7 @@ ctx = ssl.create_default_context()
 ctx.check_hostname = False
 ctx.verify_mode = ssl.CERT_NONE
 
-auth = base64.b64encode(b'admin:Cisco@2024').decode()
+auth = base64.b64encode(secret_ref("MNE_FMC_BASIC_AUTH")).decode()
 url = 'https://172.23.70.77/api/fmc_platform/v1/auth/generatetoken'
 req = urllib.request.Request(url, data=b'', method='POST')
 req.add_header('Authorization', f'Basic {auth}')
@@ -382,7 +382,7 @@ import netmiko
 conn = netmiko.ConnectHandler(
     host='172.23.70.78',
     username='admin',
-    password='Cisco@2024',
+    password = secret_ref("MNE_PLATFORM_READONLY_CREDENTIAL"),
     device_type='cisco_ftd'
 )
 conn.enable()
@@ -454,7 +454,7 @@ import netmiko
 conn = netmiko.ConnectHandler(
     host='172.23.70.89',
     username='admin',
-    password='Cisco@2024',
+    password = secret_ref("MNE_PLATFORM_READONLY_CREDENTIAL"),
     device_type='f5_ltm'
 )
 ```
@@ -519,7 +519,7 @@ import netmiko
 conn = netmiko.ConnectHandler(
     host='172.23.70.254',
     username='admin',
-    password='Axizo@1234',
+    password = secret_ref("MNE_PLATFORM_READONLY_CREDENTIAL"),
     device_type='cisco_ios',
     fast_cli=False
 )
@@ -532,7 +532,7 @@ conn = netmiko.ConnectHandler(
 import paramiko, time
 client = paramiko.SSHClient()
 client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-client.connect('172.23.70.254', username='admin', password='Axizo@1234', timeout=15, look_for_keys=False, allow_agent=False)
+client.connect('172.23.70.254', username='admin', password = secret_ref("MNE_PLATFORM_READONLY_CREDENTIAL"), timeout=15, look_for_keys=False, allow_agent=False)
 channel = client.invoke_shell(width=200, height=50)
 time.sleep(2)
 channel.recv(4096)
@@ -579,7 +579,7 @@ import netmiko
 conn = netmiko.ConnectHandler(
     host='172.23.70.70',  # or 172.23.70.71 for SW2
     username='admin',
-    password='Abcd@1234',
+    password = secret_ref("MNE_PLATFORM_READONLY_CREDENTIAL"),
     device_type='cisco_ios'  # Fujitsu uses Cisco-like CLI
 )
 conn.enable()
@@ -643,7 +643,7 @@ show running-config
 import paramiko, time
 client = paramiko.SSHClient()
 client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-client.connect('172.23.69.38', username='root', password='Kh@fud$2021', timeout=15, look_for_keys=False, allow_agent=False)
+client.connect('172.23.69.38', username='root', password = secret_ref("MNE_PLATFORM_READONLY_CREDENTIAL"), timeout=15, look_for_keys=False, allow_agent=False)
 channel = client.invoke_shell(width=200, height=50)
 time.sleep(2)
 channel.recv(4096)
@@ -726,7 +726,7 @@ import netmiko
 conn = netmiko.ConnectHandler(
     host='172.23.70.220',  # change IP per switch
     username='admin',
-    password='Axizo@1234',
+    password = secret_ref("MNE_PLATFORM_READONLY_CREDENTIAL"),
     device_type='cisco_ios',
     fast_cli=False
 )
@@ -739,7 +739,7 @@ conn = netmiko.ConnectHandler(
 import paramiko, time
 client = paramiko.SSHClient()
 client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-client.connect('172.23.70.220', username='admin', password='Axizo@1234', timeout=10, look_for_keys=False, allow_agent=False)
+client.connect('172.23.70.220', username='admin', password = secret_ref("MNE_PLATFORM_READONLY_CREDENTIAL"), timeout=10, look_for_keys=False, allow_agent=False)
 channel = client.invoke_shell(width=200, height=50)
 time.sleep(2)
 channel.recv(4096)
@@ -789,7 +789,7 @@ ctx = ssl.create_default_context()
 ctx.check_hostname = False
 ctx.verify_mode = ssl.CERT_NONE
 
-auth = base64.b64encode(b'admin:Cisco@2024').decode()
+auth = base64.b64encode(secret_ref("MNE_FMC_BASIC_AUTH")).decode()
 url = 'https://172.23.70.77/api/fmc_platform/v1/auth/generatetoken'
 req = urllib.request.Request(url, data=b'', method='POST')
 req.add_header('Authorization', f'Basic {auth}')

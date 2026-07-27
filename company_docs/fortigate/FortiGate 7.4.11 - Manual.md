@@ -120,5 +120,5 @@ Web GUI:  https://192.168.1.99 (port1 / internal / mgmt)
 CLI SSH:  ssh admin@192.168.1.99
 Console:  9600 baud, 8-N-1, no flow control
 Username: admin
-Password: (blank on factory default)
+password = secret_ref("MNE_PLATFORM_READONLY_CREDENTIAL")MNE_DEVICE_READONLY_PASSWORD") on factory default)
 ```

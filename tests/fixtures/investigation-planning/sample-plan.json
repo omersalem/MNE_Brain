@@ -1,0 +1,32 @@
+{
+  "is_live_verification_required": true,
+  "is_kb_sufficient": false,
+  "active_hypotheses": [
+    {
+      "id": "H1",
+      "hypothesis": "FortiGate HQ WAN interface link down",
+      "verification_evidence": "Interface status state = DOWN",
+      "falsification_evidence": "Interface status state = UP",
+      "confidence": "Medium"
+    }
+  ],
+  "unknown_variables": [
+    "Physical link state of port1"
+  ],
+  "highest_information_gain_check": {
+    "target_device": "fw-fortigate-hq-01",
+    "check_id": "get_system_interface_physical",
+    "rationale": "Single CLI command provides physical link status for all interfaces, immediately confirming or ruling out Layer 1 issue."
+  },
+  "minimum_devices_required": [
+    "fw-fortigate-hq-01"
+  ],
+  "command_sequence": [
+    "get system interface physical"
+  ],
+  "expected_confidence_gain": "Medium -> High",
+  "stop_conditions": [
+    "Link status returned for port1"
+  ],
+  "operational_cost_estimate": "low"
+}

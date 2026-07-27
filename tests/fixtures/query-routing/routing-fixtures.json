@@ -1,0 +1,27 @@
+[
+  {
+    "question": "Explain Exchange DAG",
+    "expected_route": "explanation",
+    "expected_requires_entity_resolution": false
+  },
+  {
+    "question": "How does OSPF work?",
+    "expected_route": "explanation",
+    "expected_requires_entity_resolution": false
+  },
+  {
+    "question": "Check health of fw-fortigate-hq-01",
+    "expected_route": "health_check",
+    "expected_requires_entity_resolution": true
+  },
+  {
+    "question": "Troubleshoot F5 pool member down",
+    "expected_route": "troubleshooting",
+    "expected_requires_entity_resolution": true
+  },
+  {
+    "question": "Fix firewall policy rule 10",
+    "expected_route": "remediation",
+    "expected_requires_entity_resolution": true
+  }
+]

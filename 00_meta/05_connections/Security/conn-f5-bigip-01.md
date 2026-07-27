@@ -26,7 +26,7 @@ Context: [[master-dashboard]] | Related Asset: [[f5-vip-public-98]]
 - **Protocol:** SSH / HTTPS
 - **Authentication Method:** Password
 - **Username:** `admin`
-- **Password:** `Cisco@2024`
+- **Password:** `LOADED_FROM_ENV`
 - **API Token:** N/A
 - **Domain:** N/A
 

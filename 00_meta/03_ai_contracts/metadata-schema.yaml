@@ -1,0 +1,44 @@
+# Required Frontmatter Metadata Schema for Canonical Knowledge Notes
+# 00_meta/03_ai_contracts/metadata-schema.yaml
+
+required_fields:
+  id:
+    type: string
+    description: "Unique canonical entity or document identifier."
+  type:
+    type: string
+    description: "Entity type (e.g., firewall, switch, vm, service, runbook, standard)."
+  aliases:
+    type: list
+    description: "Case-insensitive alternate names or aliases for entity resolution."
+  owner:
+    type: string
+    description: "Responsible team or component owner (e.g., NetOps, SysOps, SecOps)."
+  source:
+    type: string
+    description: "Origin source of the document."
+  trust_tier:
+    type: integer
+    description: "Trust score from 1 (unverified claim) to 5 (live verified telemetry)."
+  last_verified:
+    type: string
+    description: "ISO date format (YYYY-MM-DD) when document facts were last checked."
+  related_entities:
+    type: list
+    description: "List of related entity IDs or canonical note links."
+
+allowed_types:
+  - firewall
+  - switch
+  - router
+  - vm
+  - host
+  - service
+  - application
+  - storage_lun
+  - vlan
+  - subnet
+  - site
+  - runbook
+  - incident
+  - standard

@@ -26,7 +26,7 @@ Context: [[master-dashboard]] | Related Asset: [[sw-cisco-core-01]]
 - **Protocol:** SSH
 - **Authentication Method:** Password (User EXEC)
 - **Username:** `admin`
-- **Password:** `Axizo@1234`
+- **Password:** `LOADED_FROM_ENV`
 - **API Token:** N/A
 - **Domain:** N/A
 

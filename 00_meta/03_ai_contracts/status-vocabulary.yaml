@@ -1,0 +1,28 @@
+# Status Vocabulary Definition for MNE Brain
+# 00_meta/03_ai_contracts/status-vocabulary.yaml
+
+status_levels:
+  documented:
+    meaning: "Supported by canonical repository knowledge."
+    trust_tier: 3
+    is_live: false
+  live_verified:
+    meaning: "Supported by successful read-only evidence with timestamp."
+    trust_tier: 5
+    is_live: true
+  stale:
+    meaning: "Known information is older than its freshness policy."
+    trust_tier: 2
+    is_live: false
+  unverified:
+    meaning: "Claim exists but has no accepted evidence."
+    trust_tier: 1
+    is_live: false
+  failed:
+    meaning: "A requested check failed; no conclusion is permitted."
+    trust_tier: 0
+    is_live: false
+  not_run:
+    meaning: "No live check was performed."
+    trust_tier: 0
+    is_live: false

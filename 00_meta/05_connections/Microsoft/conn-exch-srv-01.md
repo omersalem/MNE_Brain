@@ -26,7 +26,7 @@ Context: [[master-dashboard]] | Related Asset: [[exch-srv-01]]
 - **Protocol:** WinRM + Exchange Management Shell PowerShell
 - **Authentication Method:** Domain Account
 - **Username:** `MNEdmin`
-- **Password:** `omersalem570-6127`
+- **Password:** `LOADED_FROM_ENV`
 - **API Token:** N/A
 - **Domain:** `mne.gov`
 

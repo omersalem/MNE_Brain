@@ -1,19 +1,24 @@
 ---
-id: "MNE-SRV-LINUX-ABRS-01"
-title: "srv-linux-abrs-01"
-type: "abrs_server"
-status: "active"
-vendor: "Canonical"
-os: "Ubuntu 22.04 LTS"
-site: "HQ"
-owner: "AppDev-Team"
-criticality: "critical"
-environment: "production"
-last_review: "2026-07-24"
+id: MNE-SRV-LINUX-ABRS-01
+title: srv-linux-abrs-01
+type: abrs_server
+status: active
+vendor: Canonical
+os: Ubuntu 22.04 LTS
+site: HQ
+owner: AppDev-Team
+criticality: critical
+environment: production
+last_review: '2026-07-24'
 tags:
-  - ministry/compute/abrs
+- ministry/compute/abrs
+aliases:
+- MNE-SRV-LINUX-ABRS-01
+source: Canonical Audit
+trust_tier: 3
+last_verified: '2026-07-27'
+related_entities: []
 ---
-
 # srv-linux-abrs-01
 
 Context: [[index-linux]] | Site: [[site-hq]]

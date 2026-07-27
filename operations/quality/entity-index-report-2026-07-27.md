@@ -1,0 +1,46 @@
+# Entity Index Build Report — 2026-07-27
+
+- **Total Entities Indexed:** 37
+- **Indexed IPs:** 58
+- **Indexed Hostnames/Aliases:** 75
+- **Indexed Services:** 0
+- **Conflicts Detected:** 3
+
+## 📋 Entity Inventory Summary
+- `MNE-AD-DC-01` (ad_domain_controller) ➔ `knowledge/40_identity_and_core_services/41_active_directory/ad-dc-01.md` [IPs: 172.23.71.27, 172.23.71.28]
+- `MNE-AD-DC-02` (ad_domain_controller) ➔ `knowledge/40_identity_and_core_services/41_active_directory/ad-dc-02.md` [IPs: 172.23.71.27, 172.23.71.28]
+- `MNE-CISCO-FMC-01` (cisco_fmc) ➔ `knowledge/10_network_and_security/13_firewalls_and_fmc/cisco-fmc-01.md` [IPs: 172.23.70.77, 172.23.70.78]
+- `MNE-CISCO-FTD-01` (cisco_ftd) ➔ `knowledge/10_network_and_security/13_firewalls_and_fmc/cisco-ftd-01.md` [IPs: 172.23.70.77, 172.23.70.78]
+- `MNE-DHCP-SCOPE-USERS` (dhcp_scope) ➔ `knowledge/40_identity_and_core_services/42_dns_and_dhcp/dhcp-scope-user-lan.md` [IPs: 172.23.80.0]
+- `MNE-DNS-ZONE-GOV` (dns_zone) ➔ `knowledge/40_identity_and_core_services/42_dns_and_dhcp/dns-zone-mne-gov-ps.md` [IPs: None]
+- `MNE-ESXI-HOST-01` (esxi_host) ➔ `knowledge/20_compute_and_virtualization/21_vcenter_and_hosts/esxi-host-01.md` [IPs: 172.23.69.41]
+- `MNE-EXCH-SRV-01` (exchange_server) ➔ `knowledge/40_identity_and_core_services/43_messaging_and_mgmt/exch-srv-01.md` [IPs: 172.23.71.35, 172.23.71.36]
+- `MNE-EXCH-SRV-02` (exchange_server) ➔ `knowledge/40_identity_and_core_services/43_messaging_and_mgmt/exch-srv-02.md` [IPs: 172.23.71.35, 172.23.71.36]
+- `MNE-F5-VIP-PUB-98` (f5_object) ➔ `knowledge/10_network_and_security/14_f5_waf_publishing/f5-vip-public-98.md` [IPs: 172.23.70.89, 172.23.71.35, 172.23.71.36, 172.23.79.200]
+- `MNE-FC-SW-FUJ-01` (fc_switch) ➔ `knowledge/30_storage/31_fc_switches/fc-sw-fujitsu-01.md` [IPs: 172.23.68.10]
+- `MNE-FW-FG-HQ-01` (fortigate_device) ➔ `knowledge/10_network_and_security/13_firewalls_and_fmc/fw-fortigate-hq-01.md` [IPs: 10.11.12.1, 172.23.19.0, 172.23.21.0, 172.23.23.0, 172.23.70.4]
+- `MNE-RTR-CISCO-WAN-01` (cisco_router) ➔ `knowledge/10_network_and_security/12_routing_and_switching/rtr-cisco-wan-01.md` [IPs: 172.23.70.254]
+- `MNE-SAN-FUJ-ETERNUS-01` (fujitsu_san) ➔ `knowledge/30_storage/32_san_storage/san-fujitsu-eternus-01.md` [IPs: 172.23.68.20]
+- `MNE-SCCM-SRV-01` (sccm_server) ➔ `knowledge/40_identity_and_core_services/43_messaging_and_mgmt/sccm-srv-01.md` [IPs: 172.23.71.80]
+- `MNE-SEC-BLOCKED-IPS` (security_reference) ➔ `knowledge/10_network_and_security/13_firewalls_and_fmc/blocked-threat-ips.md` [IPs: 172.23.70.4]
+- `MNE-SITE-BRANCH-BETHLEHEM` (site_branch) ➔ `knowledge/10_network_and_security/11_sites/site-bethlehem.md` [IPs: 10.60.18.0, 10.60.18.1, 10.60.18.3, 172.23.13.201]
+- `MNE-SITE-BRANCH-HEBRON` (site_branch) ➔ `knowledge/10_network_and_security/11_sites/site-hebron.md` [IPs: 10.40.18.0, 10.40.18.1, 10.40.18.3, 172.23.13.201]
+- `MNE-SITE-BRANCH-HEBRON-GOLD` (site_branch) ➔ `knowledge/10_network_and_security/11_sites/site-hebron-gold.md` [IPs: 10.40.19.0, 10.40.19.1, 10.40.19.3, 172.23.13.201]
+- `MNE-SITE-BRANCH-JENIN` (site_branch) ➔ `knowledge/10_network_and_security/11_sites/site-jenin.md` [IPs: 10.201.18.0, 10.201.18.1, 10.201.18.3, 172.23.13.201]
+- `MNE-SITE-BRANCH-JERICHO` (site_branch) ➔ `knowledge/10_network_and_security/11_sites/site-jericho.md` [IPs: 10.211.18.0, 10.211.18.1, 10.211.18.3, 172.23.13.201]
+- `MNE-SITE-BRANCH-JERUSALEM` (site_branch) ➔ `knowledge/10_network_and_security/11_sites/site-jerusalem.md` [IPs: 10.70.18.0, 10.70.18.1, 10.70.18.3, 172.23.13.201]
+- `MNE-SITE-BRANCH-NORTH` (site_branch) ➔ `knowledge/10_network_and_security/11_sites/site-branch-north.md` [IPs: None]
+- `MNE-SITE-BRANCH-QALQILYA` (site_branch) ➔ `knowledge/10_network_and_security/11_sites/site-qalqilya.md` [IPs: 10.180.18.0, 10.180.18.1, 10.180.18.3, 172.23.13.201]
+- `MNE-SITE-BRANCH-RAMALLAH-GOLD` (site_branch) ➔ `knowledge/10_network_and_security/11_sites/site-ramallah-gold.md` [IPs: 10.110.19.0, 10.110.19.1, 10.110.19.3, 172.23.13.201]
+- `MNE-SITE-BRANCH-SALFEET` (site_branch) ➔ `knowledge/10_network_and_security/11_sites/site-salfeet.md` [IPs: 10.235.18.0, 10.235.18.1, 10.235.18.3, 172.23.13.201]
+- `MNE-SITE-BRANCH-TUBAS` (site_branch) ➔ `knowledge/10_network_and_security/11_sites/site-tubas.md` [IPs: 10.230.18.0, 10.230.18.1, 10.230.18.3, 172.23.13.201]
+- `MNE-SITE-BRANCH-TULKARM` (site_branch) ➔ `knowledge/10_network_and_security/11_sites/site-tulkarm.md` [IPs: 10.165.18.0, 10.165.18.1, 10.165.18.3, 172.23.13.201]
+- `MNE-SITE-HQ` (site) ➔ `knowledge/10_network_and_security/11_sites/site-hq.md` [IPs: None]
+- `MNE-SRV-LINUX-ABRS-01` (abrs_server) ➔ `knowledge/20_compute_and_virtualization/23_linux_servers/srv-linux-abrs-01.md` [IPs: 172.23.79.200]
+- `MNE-SRV-WIN-BASE-01` (windows_server) ➔ `knowledge/20_compute_and_virtualization/22_windows_servers/srv-win-base-01.md` [IPs: 172.23.71.10]
+- `MNE-SW-CISCO-ACC-01` (cisco_access_switch) ➔ `knowledge/10_network_and_security/12_routing_and_switching/sw-cisco-access-01.md` [IPs: 172.23.70.10]
+- `MNE-SW-CISCO-CORE-01` (cisco_core_switch) ➔ `knowledge/10_network_and_security/12_routing_and_switching/sw-cisco-core-01.md` [IPs: 172.23.19.0, 172.23.21.0, 172.23.23.0, 172.23.42.0, 172.23.70.254]
+- `MNE-SW-FUJ-CORE-02` (fujitsu_core_switch) ➔ `knowledge/10_network_and_security/12_routing_and_switching/sw-fujitsu-core-02.md` [IPs: 172.23.70.71]
+- `MNE-VCENTER-MAIN` (vcenter_server) ➔ `knowledge/20_compute_and_virtualization/21_vcenter_and_hosts/vcenter-main.md` [IPs: 172.23.69.38]
+- `MNE-VPN-SSL-HQ` (vpn_ssl_tunnel) ➔ `knowledge/10_network_and_security/15_remote_access/vpn-ssl-hq.md` [IPs: None]
+- `README` (standard) ➔ `knowledge/10_network_and_security/README.md` [IPs: None]

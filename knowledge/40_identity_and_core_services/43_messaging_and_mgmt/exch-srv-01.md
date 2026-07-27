@@ -1,21 +1,26 @@
 ---
-id: "MNE-EXCH-SRV-01"
-title: "EXCHANGESRV1 (Primary Mailbox Server)"
-type: "exchange_server"
-status: "active"
-vendor: "Microsoft"
-os: "Windows Server 2022"
-version: "Exchange Server 2019"
-mgmt_ip: "172.23.71.35"
-site: "HQ"
-owner: "SysAdmin-Team"
-criticality: "critical"
-environment: "production"
-last_review: "2026-07-24"
+id: MNE-EXCH-SRV-01
+title: EXCHANGESRV1 (Primary Mailbox Server)
+type: exchange_server
+status: active
+vendor: Microsoft
+os: Windows Server 2022
+version: Exchange Server 2019
+mgmt_ip: 172.23.71.35
+site: HQ
+owner: SysAdmin-Team
+criticality: critical
+environment: production
+last_review: '2026-07-24'
 tags:
-  - ministry/microsoft/exchange
+- ministry/microsoft/exchange
+aliases:
+- MNE-EXCH-SRV-01
+source: Canonical Audit
+trust_tier: 3
+last_verified: '2026-07-27'
+related_entities: []
 ---
-
 # EXCHANGESRV1 (Primary Exchange Server)
 
 Context: [[index-microsoft]] | DAG Group: `EXCH-DAG-MNE`

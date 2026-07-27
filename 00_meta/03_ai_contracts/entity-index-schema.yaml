@@ -1,0 +1,43 @@
+# Entity Index Schema Definition
+# 00_meta/03_ai_contracts/entity-index-schema.yaml
+
+entity_record_schema:
+  type: object
+  required:
+    - id
+    - type
+    - canonical_note
+    - aliases
+    - ips
+    - fqdns
+    - services
+    - site
+    - vlans
+    - related_entities
+    - trust_tier
+    - last_verified
+  properties:
+    id:
+      type: string
+    type:
+      type: string
+    canonical_note:
+      type: string
+    aliases:
+      type: list
+    ips:
+      type: list
+    fqdns:
+      type: list
+    services:
+      type: list
+    site:
+      type: string
+    vlans:
+      type: list
+    related_entities:
+      type: list
+    trust_tier:
+      type: integer
+    last_verified:
+      type: string

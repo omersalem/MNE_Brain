@@ -1,20 +1,25 @@
 ---
-id: "MNE-CISCO-FTD-01"
-title: "FTD-01 (Cisco Firepower 3105)"
-type: "cisco_ftd"
-status: "active"
-vendor: "Cisco"
-model: "Firepower 3105"
-mgmt_ip: "172.23.70.78"
-site: "HQ"
-owner: "SecOps-Team"
-criticality: "critical"
-environment: "production"
-last_review: "2026-07-24"
+id: MNE-CISCO-FTD-01
+title: FTD-01 (Cisco Firepower 3105)
+type: cisco_ftd
+status: active
+vendor: Cisco
+model: Firepower 3105
+mgmt_ip: 172.23.70.78
+site: HQ
+owner: SecOps-Team
+criticality: critical
+environment: production
+last_review: '2026-07-24'
 tags:
-  - ministry/security/cisco-ftd
+- ministry/security/cisco-ftd
+aliases:
+- MNE-CISCO-FTD-01
+source: Canonical Audit
+trust_tier: 3
+last_verified: '2026-07-27'
+related_entities: []
 ---
-
 # FTD-01 (Cisco Firepower 3105)
 
 Context: [[index-network-and-security]] | Managed By: [[cisco-fmc-01]]

@@ -1,20 +1,25 @@
 ---
-id: "MNE-SITE-BRANCH-HEBRON-GOLD"
-title: "Hebron Gold Branch Office"
-type: "site_branch"
-status: "active"
-site_code: "BR-HEBRON-GOLD"
-subnet: "10.40.19.0/24"
-fw_ip: "10.40.19.1"
-sw_ip: "10.40.19.3"
-owner: "Network-Team"
-criticality: "high"
-environment: "production"
-last_review: "2026-07-24"
+id: MNE-SITE-BRANCH-HEBRON-GOLD
+title: Hebron Gold Branch Office
+type: site_branch
+status: active
+site_code: BR-HEBRON-GOLD
+subnet: 10.40.19.0/24
+fw_ip: 10.40.19.1
+sw_ip: 10.40.19.3
+owner: Network-Team
+criticality: high
+environment: production
+last_review: '2026-07-24'
 tags:
-  - ministry/site/branch
+- ministry/site/branch
+aliases:
+- MNE-SITE-BRANCH-HEBRON-GOLD
+source: Canonical Audit
+trust_tier: 3
+last_verified: '2026-07-27'
+related_entities: []
 ---
-
 # Hebron Gold Branch Office
 
 Context: [[site-hq]] | Parent: [[index-network-and-security]]

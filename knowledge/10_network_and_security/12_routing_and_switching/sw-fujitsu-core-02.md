@@ -1,20 +1,25 @@
 ---
-id: "MNE-SW-FUJ-CORE-02"
-title: "MNE-CoreSw2 (Fujitsu Core)"
-type: "fujitsu_core_switch"
-status: "active"
-vendor: "Fujitsu"
-model: "PSWITCH 2048P"
-mgmt_ip: "172.23.70.71"
-site: "HQ"
-owner: "Network-Team"
-criticality: "critical"
-environment: "production"
-last_review: "2026-07-24"
+id: MNE-SW-FUJ-CORE-02
+title: MNE-CoreSw2 (Fujitsu Core)
+type: fujitsu_core_switch
+status: active
+vendor: Fujitsu
+model: PSWITCH 2048P
+mgmt_ip: 172.23.70.71
+site: HQ
+owner: Network-Team
+criticality: critical
+environment: production
+last_review: '2026-07-24'
 tags:
-  - ministry/fujitsu/core-switch
+- ministry/fujitsu/core-switch
+aliases:
+- MNE-SW-FUJ-CORE-02
+source: Canonical Audit
+trust_tier: 3
+last_verified: '2026-07-27'
+related_entities: []
 ---
-
 # MNE-CoreSw2 (Fujitsu Core Switch)
 
 Context: [[master-dashboard]] | Parent: [[index-network-and-security]]

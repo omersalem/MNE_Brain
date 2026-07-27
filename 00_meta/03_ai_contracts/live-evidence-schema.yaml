@@ -1,0 +1,33 @@
+# Live Evidence Schema Definition
+# 00_meta/03_ai_contracts/live-evidence-schema.yaml
+
+schema:
+  type: object
+  required:
+    - evidence_id
+    - target_entity
+    - check_id
+    - timestamp
+    - trust_tier
+    - status
+    - raw_output_path
+    - normalized_output
+  properties:
+    evidence_id:
+      type: string
+    target_entity:
+      type: string
+    check_id:
+      type: string
+    timestamp:
+      type: string
+    trust_tier:
+      type: integer
+      enum: [5]
+    status:
+      type: string
+      enum: ["success", "failed", "timeout", "auth_error"]
+    raw_output_path:
+      type: string
+    normalized_output:
+      type: object
