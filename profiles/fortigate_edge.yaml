@@ -1,0 +1,30 @@
+profile:
+  name: fortigate-edge-firewall
+  platform: fortinet_fortios
+  trust_level: 5
+  description: "Read-only pilot contract for the FortiGate edge and SSL-VPN firewall"
+
+connection:
+  protocol: ssh
+  adapter_id: fortigate_ssh_readonly
+  entity_ref: fw-fortigate-edge-01
+  port_env: FORTIGATE_SSH_PORT
+  credential_ref_env: FORTIGATE_CREDENTIAL_REF
+  auth_method: secret_reference
+  timeout_seconds: 10
+  max_output_bytes: 65536
+
+read_commands:
+  - id: system_status
+    command: "get system status"
+    target: "in_memory_evidence"
+    trust: 5
+  - id: interface_stats
+    command: "get system interface physical"
+    target: "in_memory_evidence"
+    trust: 5
+
+normalization:
+  target_file: "knowledge/topology/fortigate-edge-canonical.md"
+  promote_policy: "two_stage_verification"
+  freshness_ttl_seconds: 900

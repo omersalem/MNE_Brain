@@ -1,0 +1,11 @@
+action_id: "clear-vpn-tunnel"
+title: "Reset FortiGate IPsec VPN Session"
+template_status: "unreviewed"
+risk_level: 2
+platform: "fortinet_fortios"
+pre_checks:
+  - "verify_ike_gateway_status"
+command: "diagnose vpn ike gateway clear name VPN_Jenin_HQ"
+rollback_command: "diagnose vpn ike gateway list name VPN_Jenin_HQ"
+post_checks:
+  - "verify_ike_sa_established"

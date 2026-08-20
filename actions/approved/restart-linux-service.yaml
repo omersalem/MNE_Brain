@@ -1,0 +1,11 @@
+action_id: "restart-linux-service"
+title: "Restart Linux Systemd Daemon"
+template_status: "unreviewed"
+risk_level: 1
+platform: "linux_bash"
+pre_checks:
+  - "verify_systemctl_service"
+command: "systemctl restart target.service"
+rollback_command: "systemctl stop target.service"
+post_checks:
+  - "verify_systemctl_active"

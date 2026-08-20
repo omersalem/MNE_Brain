@@ -1,0 +1,67 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://mne-brain.local/schemas/investigation.schema.json",
+  "title": "MNE_Brain P3 Offline Investigation Result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "investigation_id",
+    "mode",
+    "status",
+    "question",
+    "route",
+    "target",
+    "dependency_context",
+    "evidence_pack",
+    "reasoning",
+    "policy",
+    "next_checks",
+    "ai_handoff",
+    "clarification_request",
+    "metrics",
+    "safety"
+  ],
+  "properties": {
+    "investigation_id": {"type": "string", "pattern": "^inv-p3-[a-f0-9]{12}$"},
+    "mode": {"const": "OFFLINE_NON_EXECUTING"},
+    "status": {
+      "type": "string",
+      "enum": ["CLARIFICATION_REQUIRED", "CONTEXT_ONLY", "EVIDENCE_REQUIRED", "EVIDENCE_SUPPORTED", "CONFLICTING_EVIDENCE"]
+    },
+    "question": {"type": "string", "minLength": 1, "maxLength": 1000},
+    "route": {"type": "object"},
+    "target": {"type": ["object", "null"]},
+    "dependency_context": {"type": "array", "maxItems": 6, "items": {"type": "object"}},
+    "evidence_pack": {"type": "object"},
+    "reasoning": {"type": "object"},
+    "policy": {"type": "object"},
+    "next_checks": {"type": "array", "maxItems": 5, "items": {"type": "object"}},
+    "ai_handoff": {"type": "object"},
+    "clarification_request": {"type": ["object", "null"]},
+    "metrics": {
+      "type": "object",
+      "required": ["duration_ms", "evidence_tokens", "accepted_evidence", "unknowns", "dependencies", "next_checks", "handoff_chars"],
+      "properties": {
+        "duration_ms": {"type": "number", "minimum": 0},
+        "evidence_tokens": {"type": "integer", "minimum": 0, "maximum": 1500},
+        "accepted_evidence": {"type": "integer", "minimum": 0},
+        "unknowns": {"type": "integer", "minimum": 0},
+        "dependencies": {"type": "integer", "minimum": 0, "maximum": 6},
+        "next_checks": {"type": "integer", "minimum": 0, "maximum": 5},
+        "handoff_chars": {"type": "integer", "minimum": 0, "maximum": 6000}
+      },
+      "additionalProperties": false
+    },
+    "safety": {
+      "type": "object",
+      "required": ["live_connection_attempted", "external_ai_call_attempted", "persistence_attempted", "remediation_attempted"],
+      "properties": {
+        "live_connection_attempted": {"const": false},
+        "external_ai_call_attempted": {"const": false},
+        "persistence_attempted": {"const": false},
+        "remediation_attempted": {"const": false}
+      },
+      "additionalProperties": false
+    }
+  }
+}

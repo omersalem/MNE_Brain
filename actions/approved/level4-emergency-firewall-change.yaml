@@ -1,0 +1,11 @@
+action_id: "level4-emergency-firewall-change"
+title: "Emergency Core Firewall Rule Purge"
+template_status: "unreviewed"
+risk_level: 4
+platform: "fortinet_fortios"
+pre_checks:
+  - "verify_emergency_state"
+command: "purge firewall policy all"
+rollback_command: "restore firewall policy"
+post_checks:
+  - "verify_firewall_status"

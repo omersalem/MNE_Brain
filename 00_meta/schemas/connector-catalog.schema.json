@@ -1,0 +1,67 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://mne-brain.local/schemas/connector-catalog.schema.json",
+  "title": "MNE_Brain P6 Read-Only Connector Catalog",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "mode", "owner_reference", "connectors"],
+  "properties": {
+    "version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+$"},
+    "mode": {"const": "OFFLINE_MULTI_PLATFORM_CONNECTOR_READINESS"},
+    "owner_reference": {"const": "MNE-BRAIN-OWNER"},
+    "connectors": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 32,
+      "items": {"$ref": "#/definitions/connector"}
+    }
+  },
+  "definitions": {
+    "connector": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["connector_id", "title", "platform", "protocol", "adapter_id", "implementation_status", "live_transport_status", "entity_ids", "port_env", "credential_ref_env", "timeout_seconds", "max_output_bytes", "checks", "review_sources", "safety"],
+      "properties": {
+        "connector_id": {"type": "string", "pattern": "^p6-[a-z0-9][a-z0-9-]{2,63}$"},
+        "title": {"type": "string", "minLength": 3, "maxLength": 160},
+        "platform": {"type": "string", "pattern": "^[a-z][a-z0-9_]{2,63}$"},
+        "protocol": {"enum": ["ssh", "rest", "powershell", "winrm", "vmware", "snmp"]},
+        "adapter_id": {"type": "string", "pattern": "^[a-z][a-z0-9_]{2,63}$"},
+        "implementation_status": {"const": "offline_validated"},
+        "live_transport_status": {"enum": ["OWNER_GATED_AVAILABLE", "NOT_REGISTERED"]},
+        "entity_ids": {"type": "array", "minItems": 1, "maxItems": 46, "uniqueItems": true, "items": {"type": "string", "pattern": "^[a-z0-9][a-z0-9-]{2,127}$"}},
+        "port_env": {"type": "string", "pattern": "^[A-Z][A-Z0-9_]{2,127}$"},
+        "credential_ref_env": {"type": "string", "pattern": "^[A-Z][A-Z0-9_]{2,127}$"},
+        "timeout_seconds": {"type": "integer", "minimum": 1, "maximum": 30},
+        "max_output_bytes": {"type": "integer", "minimum": 256, "maximum": 262144},
+        "checks": {"type": "array", "minItems": 2, "maxItems": 6, "uniqueItems": true, "items": {"$ref": "#/definitions/check"}},
+        "review_sources": {"type": "array", "minItems": 1, "maxItems": 5, "uniqueItems": true, "items": {"type": "string", "minLength": 3, "maxLength": 160}},
+        "safety": {"$ref": "#/definitions/safety"}
+      }
+    },
+    "check": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "operation", "evidence_objective"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^[a-z][a-z0-9_]{2,63}$"},
+        "operation": {"type": "string", "minLength": 2, "maxLength": 512},
+        "evidence_objective": {"type": "string", "pattern": "^[a-z0-9][a-z0-9-]{2,79}$"}
+      }
+    },
+    "safety": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["requires_exact_target", "requires_owner_proceed", "read_only", "live_enabled", "persistence_enabled", "notifications_enabled", "remediation_enabled"],
+      "properties": {
+        "requires_exact_target": {"const": true},
+        "requires_owner_proceed": {"const": true},
+        "read_only": {"const": true},
+        "live_enabled": {"const": false},
+        "persistence_enabled": {"const": false},
+        "notifications_enabled": {"const": false},
+        "remediation_enabled": {"const": false}
+      }
+    }
+  }
+}

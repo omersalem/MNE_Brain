@@ -1,0 +1,20 @@
+# Truthful evidence and knowledge status vocabulary
+statuses:
+  documented:
+    meaning: Canonical knowledge with a named source, but without current live verification.
+  live_verified:
+    meaning: A successful owner-authorized read-only check with target, check ID, timestamp, and evidence reference.
+  stale:
+    meaning: Previously accepted information that exceeded its defined freshness period.
+  unverified:
+    meaning: A claim or imported record that lacks accepted supporting evidence.
+  failed:
+    meaning: A requested check failed; no conclusion may be drawn from it.
+  not_run:
+    meaning: No live check was requested or performed.
+
+rules:
+  - A document must never claim live_verified without evidence_refs and last_verified.
+  - A documentation source must never be relabeled as live evidence.
+  - A failed or not_run check cannot support a verified conclusion.
+  - Canonical knowledge is promoted only after sole-owner review of stable, attributable evidence.

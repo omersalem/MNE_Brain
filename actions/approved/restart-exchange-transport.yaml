@@ -1,0 +1,11 @@
+action_id: "restart-exchange-transport"
+title: "Restart Exchange Transport Service"
+template_status: "unreviewed"
+risk_level: 2
+platform: "windows_powershell"
+pre_checks:
+  - "verify_exchange_queue_length"
+command: "Restart-Service MSExchangeTransport -Force"
+rollback_command: "Start-Service MSExchangeTransport"
+post_checks:
+  - "verify_transport_service_running"

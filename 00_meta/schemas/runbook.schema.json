@@ -1,0 +1,87 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://mne-brain.local/schemas/runbook.schema.json",
+  "title": "MNE_Brain Governed Troubleshooting Runbook",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "runbook_id",
+    "title",
+    "version",
+    "status",
+    "runbook_type",
+    "scope_categories",
+    "scope_services",
+    "scope_entity_ids",
+    "category_fallback_allowed",
+    "owner_team",
+    "requires_exact_target",
+    "live_access_allowed",
+    "remediation_allowed",
+    "evidence_objectives",
+    "stop_conditions",
+    "source_basis",
+    "review_sources",
+    "operational_boundary",
+    "last_reviewed"
+  ],
+  "properties": {
+    "runbook_id": {"type": "string", "pattern": "^p[0-9]+-[a-z0-9][a-z0-9-]{2,79}$"},
+    "title": {"type": "string", "minLength": 3, "maxLength": 160},
+    "version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
+    "status": {"enum": ["draft_unvalidated", "offline_validated", "operationally_reviewed"]},
+    "runbook_type": {"enum": ["domain_troubleshooting", "incident_process", "verification_pilot", "handoff"]},
+    "scope_categories": {
+      "type": "array",
+      "items": {"enum": ["network", "compute", "storage", "identity", "messaging", "application"]},
+      "uniqueItems": true
+    },
+    "scope_services": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+    "scope_entity_ids": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+    "category_fallback_allowed": {"type": "boolean"},
+    "owner_team": {"const": "MNE-BRAIN-OWNER"},
+    "requires_exact_target": {"const": true},
+    "live_access_allowed": {"const": false},
+    "remediation_allowed": {"const": false},
+    "evidence_objectives": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 8,
+      "items": {"type": "string", "pattern": "^[a-z0-9][a-z0-9-]{2,79}$"},
+      "uniqueItems": true
+    },
+    "stop_conditions": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 10,
+      "items": {"type": "string", "minLength": 3, "maxLength": 240},
+      "uniqueItems": true
+    },
+    "source_basis": {"enum": ["repository_contract", "exported_documentation", "owner_review"]},
+    "review_sources": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 6,
+      "items": {"type": "string", "minLength": 3, "maxLength": 160},
+      "uniqueItems": true
+    },
+    "operational_boundary": {"const": "PROCEDURE_REVIEWED_LIVE_STATE_UNVERIFIED"},
+    "last_reviewed": {"type": "string", "format": "date"}
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {"status": {"const": "operationally_reviewed"}},
+        "required": ["status"]
+      },
+      "then": {
+        "properties": {
+          "owner_team": {"const": "MNE-BRAIN-OWNER"},
+          "source_basis": {"const": "owner_review"},
+          "live_access_allowed": {"const": false},
+          "remediation_allowed": {"const": false}
+        }
+      }
+    }
+  ]
+}

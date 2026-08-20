@@ -1,0 +1,44 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://mne-brain.local/schemas/p7-transport-catalog.schema.json",
+  "title": "MNE_Brain P7 Live Transport Catalog",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "mode", "owner_reference", "audit_mode", "retention", "drivers", "target_reconciliations"],
+  "properties": {
+    "version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+$"},
+    "mode": {"const": "OWNER_GATED_LIVE_TRANSPORT_READINESS"},
+    "owner_reference": {"const": "MNE-BRAIN-OWNER"},
+    "audit_mode": {"const": "IN_MEMORY_ONLY"},
+    "retention": {"const": "NONE"},
+    "drivers": {
+      "type": "array", "minItems": 7, "maxItems": 7, "uniqueItems": true,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["protocol", "implementation", "identity_gate", "credential_gate", "read_only", "default_enabled"],
+        "properties": {
+          "protocol": {"enum": ["ssh", "rest", "powershell", "winrm", "vmware", "snmp", "tcp"]},
+          "implementation": {"enum": ["IMPLEMENTED", "DEPENDENCY_GATED"]},
+          "identity_gate": {"enum": ["PINNED_HOST_KEY", "VERIFIED_TLS_OR_PIN", "KERBEROS_OR_HTTPS", "SNMP_ENGINE_ID", "EXACT_TARGET_ONLY"]},
+          "credential_gate": {"enum": ["OPAQUE_ENV_REFERENCE", "OPTIONAL", "REQUIRED_NOT_CONFIGURED"]},
+          "read_only": {"const": true},
+          "default_enabled": {"const": false}
+        }
+      }
+    },
+    "target_reconciliations": {
+      "type": "array", "uniqueItems": true,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["entity_id", "canonical_target", "documented_target", "disposition", "source_reference"],
+        "properties": {
+          "entity_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9-]{2,127}$"},
+          "canonical_target": {"type": "string", "format": "ipv4"},
+          "documented_target": {"type": "string", "format": "ipv4"},
+          "disposition": {"enum": ["MATCH", "CONFLICT_REQUIRES_IDENTITY_PROOF", "DOCUMENTED_CANDIDATE_ONLY"]},
+          "source_reference": {"type": "string", "minLength": 3, "maxLength": 160}
+        }
+      }
+    }
+  }
+}

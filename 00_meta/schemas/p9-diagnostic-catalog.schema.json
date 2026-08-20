@@ -1,0 +1,46 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://mne-brain.local/schemas/p9-diagnostic-catalog.schema.json",
+  "title": "MNE_Brain P9 Deep Diagnostic Catalog",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "mode", "owner_reference", "audit_mode", "retention", "scenarios"],
+  "properties": {
+    "version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+$"},
+    "mode": {"const": "OWNER_CONTROLLED_DEEP_DIAGNOSTICS"},
+    "owner_reference": {"const": "MNE-BRAIN-OWNER"},
+    "audit_mode": {"const": "IN_MEMORY_ONLY"},
+    "retention": {"const": "NONE"},
+    "scenarios": {
+      "type": "array", "minItems": 8, "maxItems": 12,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["scenario_id", "title", "family", "primary_bindings", "known_gap", "checks"],
+        "properties": {
+          "scenario_id": {"type": "string", "pattern": "^p9-[a-z0-9-]+$"},
+          "title": {"type": "string", "minLength": 4, "maxLength": 120},
+          "family": {"enum": ["branch_outage", "vpn", "web_publishing", "dns_ad", "exchange", "vmware", "firewall_security", "storage_backup_switching"]},
+          "primary_bindings": {"type": "array", "minItems": 1, "maxItems": 20, "uniqueItems": true, "items": {"type": "string", "pattern": "^p7-[a-z0-9-]+$"}},
+          "known_gap": {"type": ["string", "null"], "maxLength": 240},
+          "checks": {
+            "type": "array", "minItems": 2, "maxItems": 8,
+            "items": {
+              "type": "object", "additionalProperties": false,
+              "required": ["check_id", "binding_id", "operation", "normalizer", "stage", "information_gain", "objective", "read_only"],
+              "properties": {
+                "check_id": {"type": "string", "pattern": "^p9_[a-z0-9_]{3,63}$"},
+                "binding_id": {"type": "string", "pattern": "^(PRIMARY|p7-[a-z0-9-]+)$"},
+                "operation": {"type": "string", "minLength": 3, "maxLength": 1000},
+                "normalizer": {"enum": ["fortigate_interfaces", "fortigate_routes", "fortigate_vpn", "f5_virtuals", "f5_pools", "windows_json", "replication_json", "linux_services", "linux_ports", "linux_resources", "vcenter_health", "rest_inventory", "fmc_json", "network_interfaces", "network_errors", "identity_status"]},
+                "stage": {"type": "integer", "minimum": 1, "maximum": 4},
+                "information_gain": {"type": "number", "minimum": 0.1, "maximum": 1.0},
+                "objective": {"type": "string", "minLength": 8, "maxLength": 200},
+                "read_only": {"const": true}
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

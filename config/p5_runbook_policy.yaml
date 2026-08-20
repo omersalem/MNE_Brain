@@ -1,0 +1,36 @@
+mode: "OWNER_REVIEWED_CONTEXT_SELECTION"
+enabled: true
+owner_reference: "MNE-BRAIN-OWNER"
+
+limits:
+  max_candidates: 3
+  max_evidence_objectives_per_runbook: 8
+  max_stop_conditions_per_runbook: 10
+  max_guidance_chars: 3000
+
+lifecycle:
+  context_statuses: ["draft_unvalidated", "offline_validated", "operationally_reviewed"]
+  operational_status: "operationally_reviewed"
+  promotion_requires_owner_review: true
+  automatic_promotion_enabled: false
+  review_state: "COMPLETE"
+  operational_coverage_target_percent: 100
+
+selection_weights:
+  exact_entity: 100
+  matching_service: 10
+  matching_category: 20
+  domain_runbook: 5
+  offline_validated: 2
+  operationally_reviewed: 4
+
+safety:
+  require_exact_target: true
+  include_runbook_body_in_handoff: false
+  allow_commands: false
+  allow_live_connections: false
+  allow_external_ai_calls: false
+  allow_notifications: false
+  allow_persistence: false
+  allow_remediation: false
+  production_readiness_claimed: false

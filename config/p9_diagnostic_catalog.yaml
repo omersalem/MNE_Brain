@@ -1,0 +1,84 @@
+version: "1.0"
+mode: OWNER_CONTROLLED_DEEP_DIAGNOSTICS
+owner_reference: MNE-BRAIN-OWNER
+audit_mode: IN_MEMORY_ONLY
+retention: NONE
+scenarios:
+  - scenario_id: p9-branch-outage
+    title: Branch WAN and central-path diagnostics
+    family: branch_outage
+    primary_bindings: [p7-fortigate-bethlehem, p7-fortigate-hebron, p7-fortigate-hebron-gold, p7-fortigate-jenin, p7-fortigate-jericho, p7-fortigate-nablus, p7-fortigate-nablus-gold, p7-fortigate-qalqilya, p7-fortigate-quds, p7-fortigate-ramallah-gold, p7-fortigate-salfeet, p7-fortigate-tubas, p7-fortigate-tulkarem]
+    known_gap: "Per-branch local switch ports and provider-side WAN state are not fully mapped."
+    checks:
+      - {check_id: p9_branch_interfaces, binding_id: PRIMARY, operation: "get system interface physical", normalizer: fortigate_interfaces, stage: 1, information_gain: 1.0, objective: "Measure branch physical-interface administrative and link state.", read_only: true}
+      - {check_id: p9_branch_routes, binding_id: PRIMARY, operation: "get router info routing-table all", normalizer: fortigate_routes, stage: 1, information_gain: 0.95, objective: "Confirm branch default and connected routing evidence.", read_only: true}
+      - {check_id: p9_branch_tunnels, binding_id: PRIMARY, operation: "get vpn ipsec tunnel summary", normalizer: fortigate_vpn, stage: 2, information_gain: 0.85, objective: "Measure branch IPsec tunnel summary state without changing sessions.", read_only: true}
+  - scenario_id: p9-vpn-access
+    title: SSL-VPN authentication and path diagnostics
+    family: vpn
+    primary_bindings: [p7-fortigate-edge]
+    known_gap: "A user-specific policy trace requires an exact user, source, destination, and time window."
+    checks:
+      - {check_id: p9_vpn_sessions, binding_id: PRIMARY, operation: "get vpn ssl monitor", normalizer: fortigate_vpn, stage: 1, information_gain: 1.0, objective: "Count current SSL-VPN session and tunnel evidence without exposing usernames.", read_only: true}
+      - {check_id: p9_vpn_settings, binding_id: PRIMARY, operation: "show vpn ssl settings", normalizer: fortigate_vpn, stage: 1, information_gain: 0.9, objective: "Confirm SSL-VPN listener, portal, and address-pool configuration presence.", read_only: true}
+      - {check_id: p9_vpn_routes, binding_id: PRIMARY, operation: "get router info routing-table all", normalizer: fortigate_routes, stage: 2, information_gain: 0.8, objective: "Confirm routing evidence for the VPN-to-internal path.", read_only: true}
+  - scenario_id: p9-web-publishing
+    title: F5 to backend web publishing diagnostics
+    family: web_publishing
+    primary_bindings: [p7-f5]
+    known_gap: "Application-specific VIP, pool, hostname, and backend must be supplied for a conclusive incident trace."
+    checks:
+      - {check_id: p9_f5_virtuals, binding_id: PRIMARY, operation: "tmsh -q -c 'show ltm virtual'", normalizer: f5_virtuals, stage: 1, information_gain: 1.0, objective: "Count enabled, available, and unavailable virtual-server states.", read_only: true}
+      - {check_id: p9_f5_pools, binding_id: PRIMARY, operation: "tmsh -q -c 'show ltm pool members'", normalizer: f5_pools, stage: 1, information_gain: 0.98, objective: "Count pool-member availability states across the publishing tier.", read_only: true}
+      - {check_id: p9_web_services, binding_id: p7-linux-greenunit, operation: "systemctl is-active nginx php8.3-fpm mariadb fail2ban", normalizer: linux_services, stage: 2, information_gain: 0.9, objective: "Confirm the known backend service-stack state independently.", read_only: true}
+      - {check_id: p9_web_ports, binding_id: p7-linux-greenunit, operation: "ss -tuln", normalizer: linux_ports, stage: 2, information_gain: 0.8, objective: "Confirm backend listening-port evidence without returning process details.", read_only: true}
+  - scenario_id: p9-dns-ad
+    title: Active Directory replication and DNS diagnostics
+    family: dns_ad
+    primary_bindings: [p7-ad-primary]
+    known_gap: "Provider-side DNS and directory dependencies remain outside this bounded two-controller check."
+    checks:
+      - {check_id: p9_ad_services, binding_id: PRIMARY, operation: "$s=Get-Service DNS,NTDS,Kdc;[pscustomobject]@{total=@($s).Count;running=@($s|Where-Object Status -eq 'Running').Count;stopped=@($s|Where-Object Status -ne 'Running').Count;stopped_names=@($s|Where-Object Status -ne 'Running'|Select-Object -ExpandProperty Name)}|ConvertTo-Json -Compress", normalizer: windows_json, stage: 1, information_gain: 1.0, objective: "Measure core AD and DNS service state on the exact domain controller.", read_only: true}
+      - {check_id: p9_ad_replication, binding_id: PRIMARY, operation: "$o=repadmin /replsummary;$f=@($o|Where-Object {$_ -match '\\s+[1-9]\\d*\\s*/\\s*\\d+\\s+\\d+'});[pscustomobject]@{exit=$LASTEXITCODE;failure_rows=$f.Count;success=($LASTEXITCODE -eq 0)}|ConvertTo-Json -Compress", normalizer: replication_json, stage: 1, information_gain: 0.98, objective: "Measure current AD replication failures without retaining peer details.", read_only: true}
+      - {check_id: p9_dns_resolution, binding_id: PRIMARY, operation: "$r=Resolve-DnsName mne.gov -Server 127.0.0.1 -ErrorAction Stop;[pscustomobject]@{answers=@($r).Count;success=$true}|ConvertTo-Json -Compress", normalizer: windows_json, stage: 2, information_gain: 0.9, objective: "Confirm local authoritative DNS resolution on the domain controller.", read_only: true}
+      - {check_id: p9_ad_secondary_services, binding_id: p7-ad-secondary, operation: "$s=Get-Service DNS,NTDS,Kdc;[pscustomobject]@{total=@($s).Count;running=@($s|Where-Object Status -eq 'Running').Count;stopped=@($s|Where-Object Status -ne 'Running').Count}|ConvertTo-Json -Compress", normalizer: windows_json, stage: 2, information_gain: 0.88, objective: "Measure core service state independently on DC2 using the shared domain credential.", read_only: true}
+  - scenario_id: p9-exchange
+    title: Exchange service and recent-error diagnostics
+    family: exchange
+    primary_bindings: [p7-exchange-primary]
+    known_gap: "Transport delivery beyond the Exchange organization remains outside this bounded endpoint check."
+    checks:
+      - {check_id: p9_exchange_services, binding_id: PRIMARY, operation: "$s=Get-Service MSExchange*;[pscustomobject]@{total=@($s).Count;running=@($s|Where-Object Status -eq 'Running').Count;stopped=@($s|Where-Object Status -ne 'Running').Count;stopped_names=@($s|Where-Object Status -ne 'Running'|Select-Object -ExpandProperty Name)}|ConvertTo-Json -Compress", normalizer: windows_json, stage: 1, information_gain: 1.0, objective: "Measure Exchange service-state counts on the selected server.", read_only: true}
+      - {check_id: p9_exchange_errors, binding_id: PRIMARY, operation: "$since=(Get-Date).AddHours(-1);$e=Get-EventLog -LogName Application -After $since -EntryType Error -ErrorAction SilentlyContinue;[pscustomobject]@{application_errors_last_hour=@($e).Count}|ConvertTo-Json -Compress", normalizer: windows_json, stage: 1, information_gain: 0.92, objective: "Count recent application errors without retaining messages or event bodies.", read_only: true}
+      - {check_id: p9_exchange_ad_support, binding_id: p7-ad-primary, operation: "$s=Get-Service DNS,NTDS,Kdc;[pscustomobject]@{total=@($s).Count;running=@($s|Where-Object Status -eq 'Running').Count;stopped=@($s|Where-Object Status -ne 'Running').Count;stopped_names=@($s|Where-Object Status -ne 'Running'|Select-Object -ExpandProperty Name)}|ConvertTo-Json -Compress", normalizer: windows_json, stage: 2, information_gain: 0.82, objective: "Measure supporting AD and DNS service state independently.", read_only: true}
+      - {check_id: p9_exchange_org_health, binding_id: p7-exchange-ps, operation: "$q=@(Get-Queue);$c=@(Get-MailboxDatabaseCopyStatus *);$d=@(Get-DatabaseAvailabilityGroup -Status);[pscustomobject]@{dag_count=$d.Count;queue_count=$q.Count;queued_messages=($q|Measure-Object MessageCount -Sum).Sum;copy_count=$c.Count;healthy_copies=@($c|Where-Object Status -in 'Healthy','Mounted').Count;failed_copies=@($c|Where-Object Status -notin 'Healthy','Mounted').Count}|ConvertTo-Json -Compress", normalizer: windows_json, stage: 1, information_gain: 0.99, objective: "Measure DAG, mailbox-copy, and queue health through the dedicated Exchange endpoint.", read_only: true}
+  - scenario_id: p9-vmware
+    title: vCenter appliance and storage health diagnostics
+    family: vmware
+    primary_bindings: [p7-vcenter]
+    known_gap: "Physical storage-array controller identity and ESXi storage-path detail remain outside the current bindings."
+    checks:
+      - {check_id: p9_vcenter_system_health, binding_id: PRIMARY, operation: "com.vmware.appliance.health.system.get", normalizer: vcenter_health, stage: 1, information_gain: 1.0, objective: "Collect vCenter appliance aggregate health state.", read_only: true}
+      - {check_id: p9_vcenter_storage_health, binding_id: PRIMARY, operation: "com.vmware.appliance.health.storage.get", normalizer: vcenter_health, stage: 1, information_gain: 0.95, objective: "Collect vCenter appliance storage-health state.", read_only: true}
+      - {check_id: p9_vcenter_hosts, binding_id: p7-vcenter-rest, operation: "GET /rest/vcenter/host", normalizer: rest_inventory, stage: 1, information_gain: 0.92, objective: "Count vCenter host objects and aggregate connection state through pinned REST.", read_only: true}
+      - {check_id: p9_vcenter_datastores, binding_id: p7-vcenter-rest, operation: "GET /rest/vcenter/datastore", normalizer: rest_inventory, stage: 2, information_gain: 0.82, objective: "Count datastore objects and aggregate accessibility through pinned REST.", read_only: true}
+  - scenario_id: p9-firewall-security
+    title: FTD enforcement and FMC management diagnostics
+    family: firewall_security
+    primary_bindings: [p7-ftd]
+    known_gap: "Packet-level data-plane inspection and full active-rule content remain outside this bounded read-only session."
+    checks:
+      - {check_id: p9_ftd_network, binding_id: PRIMARY, operation: "show network", normalizer: identity_status, stage: 1, information_gain: 1.0, objective: "Confirm FTD management-network state from the supported top-level CLI.", read_only: true}
+      - {check_id: p9_ftd_manager, binding_id: PRIMARY, operation: "show managers", normalizer: identity_status, stage: 1, information_gain: 0.9, objective: "Confirm FTD management relationship state without configuration changes.", read_only: true}
+      - {check_id: p9_fmc_device_state, binding_id: p7-fmc-rest, operation: "GET /api/fmc_config/v1/domain/{domainUUID}/devices/devicerecords?expanded=true", normalizer: fmc_json, stage: 1, information_gain: 0.96, objective: "Count FMC managed-device objects and aggregate deployment state through pinned REST.", read_only: true}
+      - {check_id: p9_fmc_interfaces, binding_id: p7-fmc-rest, operation: "GET /api/fmc_config/v1/domain/{domainUUID}/devices/devicerecords/{deviceUUID}/physicalinterfaces?expanded=true", normalizer: fmc_json, stage: 2, information_gain: 0.84, objective: "Count managed FTD physical interfaces and aggregate state through pinned REST.", read_only: true}
+  - scenario_id: p9-storage-backup-switching
+    title: Core switching, SAN-side, and virtualization storage diagnostics
+    family: storage_backup_switching
+    primary_bindings: [p7-fujitsu-sw1]
+    known_gap: "Veeam is unreachable from this workstation, the actual SAN controller is unmapped, and Fujitsu SW2 lacks a trusted identity pin."
+    checks:
+      - {check_id: p9_storage_identity, binding_id: PRIMARY, operation: "show version", normalizer: identity_status, stage: 1, information_gain: 1.0, objective: "Confirm the documented Fujitsu SW1 identity without treating it as a SAN controller.", read_only: true}
+      - {check_id: p9_core_errors, binding_id: p7-cisco-core, operation: "show interfaces counters errors", normalizer: network_errors, stage: 1, information_gain: 0.95, objective: "Measure core-switch interface error counters without returning the table.", read_only: true}
+      - {check_id: p9_core_channels, binding_id: p7-cisco-core, operation: "show etherchannel summary", normalizer: network_interfaces, stage: 2, information_gain: 0.9, objective: "Measure core port-channel membership and degraded-link indicators.", read_only: true}
+      - {check_id: p9_storage_appliance_health, binding_id: p7-vcenter-rest, operation: "GET /rest/vcenter/datastore", normalizer: rest_inventory, stage: 2, information_gain: 0.75, objective: "Count vCenter datastore objects and aggregate accessibility as supporting evidence.", read_only: true}

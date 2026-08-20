@@ -1,0 +1,287 @@
+version: "1.0"
+mode: "OFFLINE_MULTI_PLATFORM_CONNECTOR_READINESS"
+owner_reference: "MNE-BRAIN-OWNER"
+connectors:
+  - connector_id: "p6-fortigate-edge"
+    title: "FortiGate Edge Read-Only Connector"
+    platform: "fortinet_fortios"
+    protocol: "ssh"
+    adapter_id: "fortigate_ssh_readonly"
+    implementation_status: "offline_validated"
+    live_transport_status: "OWNER_GATED_AVAILABLE"
+    entity_ids: ["fw-fortigate-edge-01"]
+    port_env: "FORTIGATE_SSH_PORT"
+    credential_ref_env: "FORTIGATE_CREDENTIAL_REF"
+    timeout_seconds: 15
+    max_output_bytes: 65536
+    checks:
+      - {id: "system_status", operation: "get system status", evidence_objective: "collect-system-state"}
+      - {id: "interface_stats", operation: "get system interface physical", evidence_objective: "collect-interface-state"}
+    review_sources: ["MNE_INFRASTRUCTURE_MASTER_GUIDE.md", "dns-fortigate-vpn.md"]
+    safety: &offline_safety {requires_exact_target: true, requires_owner_proceed: true, read_only: true, live_enabled: false, persistence_enabled: false, notifications_enabled: false, remediation_enabled: false}
+
+  - connector_id: "p6-fortigate-fleet"
+    title: "FortiGate HQ and Branch Read-Only Connector"
+    platform: "fortinet_fortios"
+    protocol: "ssh"
+    adapter_id: "fortigate_fleet_ssh_readonly"
+    implementation_status: "offline_validated"
+    live_transport_status: "NOT_REGISTERED"
+    entity_ids: ["fw-fortigate-hq-01", "fw-fortigate-bethlehem-01", "fw-fortigate-gaza-01", "fw-fortigate-hebron-01", "fw-fortigate-jenin-01", "fw-fortigate-jericho-01", "fw-fortigate-khanyounis-01", "fw-fortigate-nablus-01", "fw-fortigate-qalqilya-01", "fw-fortigate-rafah-01", "fw-fortigate-ramallah-01", "fw-fortigate-salfit-01", "fw-fortigate-tubas-01", "fw-fortigate-tulkarm-01"]
+    port_env: "FORTIGATE_SSH_PORT"
+    credential_ref_env: "FORTIGATE_CREDENTIAL_REF"
+    timeout_seconds: 15
+    max_output_bytes: 65536
+    checks:
+      - {id: "system_status", operation: "get system status", evidence_objective: "collect-system-state"}
+      - {id: "interface_stats", operation: "get system interface physical", evidence_objective: "collect-interface-state"}
+      - {id: "vpn_summary", operation: "get vpn ipsec tunnel summary", evidence_objective: "collect-tunnel-state"}
+    review_sources: ["BRANCH_CONNECTIVITY_BASELINE.md", "MASTER_ASSET_INVENTORY.md"]
+    safety: *offline_safety
+
+  - connector_id: "p6-cisco-switching"
+    title: "Cisco Switching Read-Only Connector"
+    platform: "cisco_iosxe"
+    protocol: "ssh"
+    adapter_id: "cisco_ssh_readonly"
+    implementation_status: "offline_validated"
+    live_transport_status: "NOT_REGISTERED"
+    entity_ids: ["sw-cisco-core-01", "sw-cisco-floor-1", "sw-cisco-floor-2", "sw-cisco-floor-3", "sw-cisco-floor-4", "sw-cisco-floor-5", "sw-cisco-floor-6", "sw-cisco-floor-b1", "sw-cisco-floor-gnd", "sw-cisco-floor-svc", "sw-cisco-jenin-01"]
+    port_env: "CISCO_SSH_PORT"
+    credential_ref_env: "CISCO_CREDENTIAL_REF"
+    timeout_seconds: 15
+    max_output_bytes: 65536
+    checks:
+      - {id: "version", operation: "show version", evidence_objective: "collect-system-state"}
+      - {id: "ip_interface_brief", operation: "show ip interface brief", evidence_objective: "collect-interface-state"}
+      - {id: "interface_status", operation: "show interfaces status", evidence_objective: "collect-port-state"}
+    review_sources: ["MASTER_ASSET_INVENTORY.md", "MAIN_DEVICE_LINK_PORT_DISCOVERY.md"]
+    safety: *offline_safety
+
+  - connector_id: "p6-cisco-fmc"
+    title: "Cisco FMC Read-Only REST Connector"
+    platform: "cisco_fmc"
+    protocol: "rest"
+    adapter_id: "cisco_fmc_rest_readonly"
+    implementation_status: "offline_validated"
+    live_transport_status: "NOT_REGISTERED"
+    entity_ids: ["fmc-cisco-hq-01"]
+    port_env: "CISCO_FMC_HTTPS_PORT"
+    credential_ref_env: "CISCO_FMC_CREDENTIAL_REF"
+    timeout_seconds: 20
+    max_output_bytes: 131072
+    checks:
+      - {id: "server_version", operation: "GET /api/fmc_platform/v1/info/serverversion", evidence_objective: "collect-management-state"}
+      - {id: "domains", operation: "GET /api/fmc_platform/v1/info/domain", evidence_objective: "collect-domain-state"}
+      - {id: "access_policies", operation: "GET /api/fmc_config/v1/domain/{domainUUID}/policy/accesspolicies", evidence_objective: "collect-policy-state"}
+    review_sources: ["CISCO_FMC_FTD_SECURITY_CATALOG.md", "MAIN_DEVICE_LINK_PORT_DISCOVERY.md"]
+    safety: *offline_safety
+
+  - connector_id: "p6-cisco-ftd"
+    title: "Cisco FTD Read-Only Connector"
+    platform: "cisco_ftd"
+    protocol: "ssh"
+    adapter_id: "cisco_ftd_ssh_readonly"
+    implementation_status: "offline_validated"
+    live_transport_status: "NOT_REGISTERED"
+    entity_ids: ["ftd-cisco-hq-01"]
+    port_env: "CISCO_FTD_SSH_PORT"
+    credential_ref_env: "CISCO_FTD_CREDENTIAL_REF"
+    timeout_seconds: 15
+    max_output_bytes: 65536
+    checks:
+      - {id: "version", operation: "show version", evidence_objective: "collect-system-state"}
+      - {id: "manager_state", operation: "show managers", evidence_objective: "collect-management-state"}
+      - {id: "interface_state", operation: "show interface ip brief", evidence_objective: "collect-interface-state"}
+    review_sources: ["CISCO_FMC_FTD_SECURITY_CATALOG.md", "MAIN_DEVICE_LINK_PORT_DISCOVERY.md"]
+    safety: *offline_safety
+
+  - connector_id: "p6-f5-bigip"
+    title: "F5 BIG-IP and WAF Read-Only REST Connector"
+    platform: "f5_bigip"
+    protocol: "rest"
+    adapter_id: "f5_rest_readonly"
+    implementation_status: "offline_validated"
+    live_transport_status: "NOT_REGISTERED"
+    entity_ids: ["waf-f5-bigip-01"]
+    port_env: "F5_HTTPS_PORT"
+    credential_ref_env: "F5_CREDENTIAL_REF"
+    timeout_seconds: 20
+    max_output_bytes: 131072
+    checks:
+      - {id: "system_version", operation: "GET /mgmt/tm/sys/version", evidence_objective: "collect-system-state"}
+      - {id: "virtual_servers", operation: "GET /mgmt/tm/ltm/virtual", evidence_objective: "collect-virtual-service-state"}
+      - {id: "pool_members", operation: "GET /mgmt/tm/ltm/pool?$expandSubcollections=true", evidence_objective: "collect-pool-member-state"}
+    review_sources: ["MNE_INFRASTRUCTURE_MASTER_GUIDE.md", "f5-bigip-publishing.md"]
+    safety: *offline_safety
+
+  - connector_id: "p6-windows-identity"
+    title: "Windows AD and DNS Read-Only Connector"
+    platform: "windows_identity"
+    protocol: "winrm"
+    adapter_id: "windows_identity_winrm_readonly"
+    implementation_status: "offline_validated"
+    live_transport_status: "NOT_REGISTERED"
+    entity_ids: ["dc-mne-ad-01", "dc-mne-ad-02", "dc-windows-ad-01", "dc-windows-ad-02"]
+    port_env: "WINDOWS_WINRM_PORT"
+    credential_ref_env: "WINDOWS_IDENTITY_CREDENTIAL_REF"
+    timeout_seconds: 25
+    max_output_bytes: 131072
+    checks:
+      - {id: "os_state", operation: "Get-CimInstance Win32_OperatingSystem", evidence_objective: "collect-system-state"}
+      - {id: "identity_services", operation: "Get-Service NTDS,DNS,Kdc", evidence_objective: "collect-directory-service-state"}
+      - {id: "replication_summary", operation: "repadmin /replsummary", evidence_objective: "collect-replication-state"}
+    review_sources: ["MASTER_ASSET_INVENTORY.md", "dns-fortigate-vpn.md"]
+    safety: *offline_safety
+
+  - connector_id: "p6-exchange"
+    title: "Microsoft Exchange Read-Only Connector"
+    platform: "microsoft_exchange"
+    protocol: "powershell"
+    adapter_id: "exchange_powershell_readonly"
+    implementation_status: "offline_validated"
+    live_transport_status: "NOT_REGISTERED"
+    entity_ids: ["ex-windows-mail-01", "ex-windows-mail-02"]
+    port_env: "EXCHANGE_POWERSHELL_PORT"
+    credential_ref_env: "EXCHANGE_CREDENTIAL_REF"
+    timeout_seconds: 25
+    max_output_bytes: 131072
+    checks:
+      - {id: "server_state", operation: "Get-ExchangeServer", evidence_objective: "collect-server-state"}
+      - {id: "service_state", operation: "Get-Service MSExchange*", evidence_objective: "collect-transport-service-state"}
+      - {id: "dag_state", operation: "Get-DatabaseAvailabilityGroup -Status", evidence_objective: "collect-replication-state"}
+    review_sources: ["MASTER_ASSET_INVENTORY.md", "SERVER_FLEET_BASELINE.md"]
+    safety: *offline_safety
+
+  - connector_id: "p6-vmware-vcenter"
+    title: "VMware vCenter Read-Only Connector"
+    platform: "vmware_vsphere"
+    protocol: "vmware"
+    adapter_id: "vmware_api_readonly"
+    implementation_status: "offline_validated"
+    live_transport_status: "NOT_REGISTERED"
+    entity_ids: ["vc-vmware-hq-01"]
+    port_env: "VMWARE_PORT"
+    credential_ref_env: "VMWARE_CREDENTIAL_REF"
+    timeout_seconds: 25
+    max_output_bytes: 262144
+    checks:
+      - {id: "service_instance", operation: "get_service_instance", evidence_objective: "collect-management-state"}
+      - {id: "host_summary", operation: "get_host_summary", evidence_objective: "collect-host-state"}
+      - {id: "datastore_summary", operation: "get_datastore_summary", evidence_objective: "collect-datastore-state"}
+    review_sources: ["MASTER_ASSET_INVENTORY.md", "vmware-build-and-onboard.md"]
+    safety: *offline_safety
+
+  - connector_id: "p6-vmware-esxi"
+    title: "VMware ESXi Read-Only Connector"
+    platform: "vmware_esxi"
+    protocol: "vmware"
+    adapter_id: "vmware_esxi_api_readonly"
+    implementation_status: "offline_validated"
+    live_transport_status: "NOT_REGISTERED"
+    entity_ids: ["esxi-node-hq-01", "esxi-node-hq-02"]
+    port_env: "VMWARE_PORT"
+    credential_ref_env: "VMWARE_CREDENTIAL_REF"
+    timeout_seconds: 25
+    max_output_bytes: 262144
+    checks:
+      - {id: "host_summary", operation: "get_host_summary", evidence_objective: "collect-host-state"}
+      - {id: "network_summary", operation: "get_network_summary", evidence_objective: "collect-virtual-network-state"}
+      - {id: "datastore_summary", operation: "get_datastore_summary", evidence_objective: "collect-datastore-state"}
+    review_sources: ["SERVER_FLEET_BASELINE.md", "MAIN_DEVICE_LINK_PORT_DISCOVERY.md"]
+    safety: *offline_safety
+
+  - connector_id: "p6-storage"
+    title: "Storage Array Read-Only SNMP Connector"
+    platform: "storage_array"
+    protocol: "snmp"
+    adapter_id: "storage_snmp_readonly"
+    implementation_status: "offline_validated"
+    live_transport_status: "NOT_REGISTERED"
+    entity_ids: ["san-fujitsu-01", "san-greenunit-01"]
+    port_env: "SNMP_PORT"
+    credential_ref_env: "STORAGE_SNMP_CREDENTIAL_REF"
+    timeout_seconds: 20
+    max_output_bytes: 131072
+    checks:
+      - {id: "system_description", operation: "SNMP_GET 1.3.6.1.2.1.1.1.0", evidence_objective: "collect-system-state"}
+      - {id: "storage_table", operation: "SNMP_WALK 1.3.6.1.2.1.25.2.3", evidence_objective: "collect-capacity-state"}
+      - {id: "interface_table", operation: "SNMP_WALK 1.3.6.1.2.1.2.2", evidence_objective: "collect-path-state"}
+    review_sources: ["STORAGE_AND_BACKUP_BASELINE.md", "MAIN_DEVICE_LINK_PORT_DISCOVERY.md"]
+    safety: *offline_safety
+
+  - connector_id: "p6-veeam"
+    title: "Veeam Backup Read-Only Connector"
+    platform: "veeam_backup"
+    protocol: "powershell"
+    adapter_id: "veeam_powershell_readonly"
+    implementation_status: "offline_validated"
+    live_transport_status: "NOT_REGISTERED"
+    entity_ids: ["backup-veeam-hq-01"]
+    port_env: "WINDOWS_WINRM_PORT"
+    credential_ref_env: "VEEAM_CREDENTIAL_REF"
+    timeout_seconds: 25
+    max_output_bytes: 131072
+    checks:
+      - {id: "server_state", operation: "Get-VBRServer", evidence_objective: "collect-server-state"}
+      - {id: "job_state", operation: "Get-VBRJob", evidence_objective: "collect-job-state"}
+      - {id: "session_state", operation: "Get-VBRBackupSession", evidence_objective: "collect-session-state"}
+    review_sources: ["VEEAM_BACKUP_PLATFORM_BASELINE.md", "STORAGE_AND_BACKUP_BASELINE.md"]
+    safety: *offline_safety
+
+  - connector_id: "p6-web-applications"
+    title: "Published Web Application Read-Only Connector"
+    platform: "web_application"
+    protocol: "rest"
+    adapter_id: "web_rest_readonly"
+    implementation_status: "offline_validated"
+    live_transport_status: "NOT_REGISTERED"
+    entity_ids: ["app-apdct-web-01", "app-auction-test-01"]
+    port_env: "WEB_APPLICATION_PORT"
+    credential_ref_env: "WEB_APPLICATION_CREDENTIAL_REF"
+    timeout_seconds: 15
+    max_output_bytes: 65536
+    checks:
+      - {id: "head_root", operation: "HEAD /", evidence_objective: "collect-endpoint-state"}
+      - {id: "get_root", operation: "GET /", evidence_objective: "collect-response-state"}
+      - {id: "tls_metadata", operation: "TLS_CERTIFICATE_METADATA", evidence_objective: "collect-certificate-state"}
+    review_sources: ["SERVER_FLEET_BASELINE.md", "f5-bigip-publishing.md"]
+    safety: *offline_safety
+
+  - connector_id: "p6-linux-applications"
+    title: "Linux and Application Host Read-Only Connector"
+    platform: "linux_application"
+    protocol: "ssh"
+    adapter_id: "linux_ssh_readonly"
+    implementation_status: "offline_validated"
+    live_transport_status: "NOT_REGISTERED"
+    entity_ids: ["n8n-automation-server-01", "web-greenunit-ubuntu-01"]
+    port_env: "LINUX_SSH_PORT"
+    credential_ref_env: "LINUX_CREDENTIAL_REF"
+    timeout_seconds: 15
+    max_output_bytes: 65536
+    checks:
+      - {id: "system_state", operation: "uname -a", evidence_objective: "collect-system-state"}
+      - {id: "service_state", operation: "systemctl --no-pager --type=service --state=running", evidence_objective: "collect-service-state"}
+      - {id: "listener_state", operation: "ss -lnt", evidence_objective: "collect-listener-state"}
+    review_sources: ["SERVER_FLEET_BASELINE.md", "server-vm-and-ssh.md"]
+    safety: *offline_safety
+
+  - connector_id: "p6-printer"
+    title: "Network Printer Read-Only SNMP Connector"
+    platform: "network_printer"
+    protocol: "snmp"
+    adapter_id: "printer_snmp_readonly"
+    implementation_status: "offline_validated"
+    live_transport_status: "NOT_REGISTERED"
+    entity_ids: ["prt-jenin-office-01"]
+    port_env: "SNMP_PORT"
+    credential_ref_env: "PRINTER_SNMP_CREDENTIAL_REF"
+    timeout_seconds: 15
+    max_output_bytes: 65536
+    checks:
+      - {id: "system_description", operation: "SNMP_GET 1.3.6.1.2.1.1.1.0", evidence_objective: "collect-system-state"}
+      - {id: "printer_state", operation: "SNMP_WALK 1.3.6.1.2.1.43.5", evidence_objective: "collect-printer-state"}
+      - {id: "supply_state", operation: "SNMP_WALK 1.3.6.1.2.1.43.11", evidence_objective: "collect-supply-state"}
+    review_sources: ["SERVER_FLEET_BASELINE.md", "BRANCH_CONNECTIVITY_BASELINE.md"]
+    safety: *offline_safety

@@ -1,0 +1,67 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://mne-brain.local/schemas/incident-intake.schema.json",
+  "title": "MNE_Brain P4 Incident Intake Request",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "target_reference",
+    "symptom",
+    "affected_service",
+    "affected_scope",
+    "availability",
+    "reported_at"
+  ],
+  "properties": {
+    "target_reference": {
+      "type": "string",
+      "minLength": 2,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{1,127}$"
+    },
+    "symptom": {
+      "type": "string",
+      "minLength": 4,
+      "maxLength": 800,
+      "pattern": "^[^\\r\\n\\u0000-\\u001F\\u007F]+$"
+    },
+    "affected_service": {
+      "type": "string",
+      "minLength": 2,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9 ._:/()&+-]{1,127}$"
+    },
+    "affected_scope": {
+      "enum": ["unknown", "single_user", "multiple_users", "branch", "multiple_branches", "ministry_wide"]
+    },
+    "availability": {
+      "enum": ["unknown", "unavailable", "degraded", "intermittent"]
+    },
+    "branch_references": {
+      "type": "array",
+      "maxItems": 10,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 2,
+        "maxLength": 128,
+        "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{1,127}$"
+      }
+    },
+    "affected_user_count": {
+      "type": ["integer", "null"],
+      "minimum": 0,
+      "maximum": 1000000
+    },
+    "security_impact_reported": {"type": "boolean"},
+    "data_loss_suspected": {"type": "boolean"},
+    "public_service_reported": {"type": "boolean"},
+    "incident_reference": {
+      "type": ["string", "null"],
+      "minLength": 3,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{2,127}$"
+    },
+    "reported_at": {"type": "string", "format": "date-time"}
+  }
+}

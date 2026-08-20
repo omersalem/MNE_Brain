@@ -1,0 +1,11 @@
+action_id: "flush-dns-cache"
+title: "Flush Server DNS Cache"
+template_status: "unreviewed"
+risk_level: 1
+platform: "windows_powershell"
+pre_checks:
+  - "verify_dns_client_service"
+command: "Clear-DnsClientCache"
+rollback_command: "none"
+post_checks:
+  - "verify_dns_lookup"

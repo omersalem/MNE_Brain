@@ -1,0 +1,42 @@
+# Action Policy Configuration — MNE_Brain Release 2
+version: "2.0"
+policy_id: "mne_brain_remediation_policy"
+
+live_verification:
+  enabled: false
+  requires_explicit_authorization: true
+  reason: "Simplified P0 containment is complete; live verification remains disabled until the separate adapter and pilot-authorization gates are complete."
+
+risk_levels:
+  level_0:
+    name: "Read Only"
+    policy: "explicit_owner_proceed"
+    requires_owner_instruction: false
+    examples: ["show", "get", "api_get", "telemetry"]
+    
+  level_1:
+    name: "Low Impact Operational"
+    policy: "explicit_owner_instruction"
+    requires_owner_instruction: true
+    examples: ["clear counters", "refresh status", "rerun health check"]
+    
+  level_2:
+    name: "Controlled Change"
+    policy: "explicit_owner_instruction"
+    requires_owner_instruction: true
+    require_rollback_check: true
+    examples: ["modify address object", "add vlan description", "toggle f5 pool member"]
+    
+  level_3:
+    name: "High Impact Change"
+    policy: "explicit_owner_instruction"
+    requires_owner_instruction: true
+    require_rollback_check: true
+    examples: ["firewall policy change", "routing change", "service restart"]
+    
+  level_4:
+    name: "Emergency Core Change"
+    policy: "strictly_prohibited"
+    requires_owner_instruction: false
+    prohibited: true
+    examples: ["core firewall change", "san lun deletion", "exchange dag change"]

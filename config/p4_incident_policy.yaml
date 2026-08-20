@@ -1,0 +1,58 @@
+mode: "OFFLINE_CASE_MANAGEMENT"
+enabled: true
+
+limits:
+  max_question_chars: 1000
+  max_check_updates: 5
+  max_timeline_events: 20
+  max_handoff_chars: 8000
+  max_note_chars: 300
+
+safety:
+  allow_reported_incident_intake: true
+  priority_is_provisional: true
+  require_owner_priority_confirmation: true
+  allow_live_connections: false
+  allow_external_ai_calls: false
+  allow_notifications: false
+  allow_persistence: false
+  allow_remediation: false
+
+intake:
+  require_exact_target_for_evidence_objectives: true
+  require_assessed_impact_for_evidence_objectives: true
+  preserve_reported_truth_status: true
+
+workflow_governance:
+  approval_state: OWNER_CONTROLLED
+  owner_reference: MNE-BRAIN-OWNER
+  audit_mode: IN_MEMORY_ONLY
+  retention: NONE
+  automatic_assignment_enabled: false
+  ticketing_enabled: false
+  paging_enabled: false
+  notifications_enabled: false
+  automatic_remediation_enabled: false
+  read_only_authorization: EXPLICIT_OWNER_PROCEED
+  configuration_change_authorization: EXPLICIT_OWNER_INSTRUCTION
+  remediation_authorization: EXPLICIT_OWNER_INSTRUCTION
+
+response_targets:
+  configured: false
+  reason: "No Ministry incident response target or SLA is configured in tracked P4 policy."
+
+priority_rules:
+  p1:
+    - "Reported security impact or suspected data loss"
+    - "Reported ministry-wide unavailable or degraded service"
+    - "Reported multi-branch unavailable service"
+  p2:
+    - "Reported branch-wide unavailable service"
+    - "Reported public service unavailable"
+    - "Reported multi-user unavailable service"
+    - "Reported multi-branch degraded or intermittent service"
+  p3:
+    - "Reported multi-user degraded or intermittent service"
+    - "Reported single-user unavailable service"
+  p4:
+    - "Reported single-user degraded, intermittent, or unknown service"

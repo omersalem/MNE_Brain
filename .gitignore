@@ -1,0 +1,31 @@
+# P0 simple containment: local secrets stay outside Git.
+.env
+.env.*
+!.env.example
+config/*token*.json
+config/*key*.json
+config/*credential*.json
+config/*secret*.json
+*.pem
+*.key
+
+# Python environments and generated files
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Transient operational artifacts; retain sanitized fixtures in tests/ instead.
+operations/actions/*.json
+operations/discovery/*.json
+operations/logs/*.jsonl
+operations/verification/*.txt
+
+# Local editor and operating-system files
+.vscode/
+.idea/
+*.swp
+Thumbs.db
+.DS_Store

@@ -1,0 +1,50 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://mne-brain.local/schemas/incident-workflow-governance.schema.json",
+  "title": "MNE_Brain Sole-Owner Governance Status",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["mode", "approval_state", "owner_reference", "audit_mode", "retention", "authorization", "disabled_capabilities", "safety"],
+  "properties": {
+    "mode": {"const": "SOLE_OWNER_GOVERNANCE"},
+    "approval_state": {"const": "OWNER_CONTROLLED"},
+    "owner_reference": {"const": "MNE-BRAIN-OWNER"},
+    "audit_mode": {"const": "IN_MEMORY_ONLY"},
+    "retention": {"const": "NONE"},
+    "authorization": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["read_only_troubleshooting", "configuration_changes", "remediation"],
+      "properties": {
+        "read_only_troubleshooting": {"const": "EXPLICIT_OWNER_PROCEED"},
+        "configuration_changes": {"const": "EXPLICIT_OWNER_INSTRUCTION"},
+        "remediation": {"const": "EXPLICIT_OWNER_INSTRUCTION"}
+      }
+    },
+    "disabled_capabilities": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ticketing_enabled", "paging_enabled", "notifications_enabled", "automatic_assignment_enabled", "automatic_remediation_enabled", "persistent_storage_enabled"],
+      "properties": {
+        "ticketing_enabled": {"const": false},
+        "paging_enabled": {"const": false},
+        "notifications_enabled": {"const": false},
+        "automatic_assignment_enabled": {"const": false},
+        "automatic_remediation_enabled": {"const": false},
+        "persistent_storage_enabled": {"const": false}
+      }
+    },
+    "safety": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["live_connection_attempted", "notification_sent", "persistence_attempted", "assignment_attempted", "remediation_attempted"],
+      "properties": {
+        "live_connection_attempted": {"const": false},
+        "notification_sent": {"const": false},
+        "persistence_attempted": {"const": false},
+        "assignment_attempted": {"const": false},
+        "remediation_attempted": {"const": false}
+      }
+    }
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "http://mne-brain.org/schemas/task.schema.json",
+  "title": "MNE_Brain Task Specification Schema",
+  "type": "object",
+  "required": ["task_id", "title", "objective", "target_profiles", "information_gain_threshold", "exit_conditions"],
+  "properties": {
+    "task_id": { "type": "string" },
+    "title": { "type": "string" },
+    "objective": { "type": "string" },
+    "target_profiles": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "information_gain_threshold": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+    "exit_conditions": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  }
+}

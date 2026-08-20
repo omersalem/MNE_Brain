@@ -1,0 +1,30 @@
+profile:
+  name: cisco-core-switch
+  platform: cisco_iosxe
+  trust_level: 5
+  description: "Declarative read-only discovery contract for Cisco Core Switches"
+
+connection:
+  protocol: ssh
+  adapter_id: cisco_ssh_readonly
+  entity_ref: sw-cisco-core-01
+  port_env: CISCO_SSH_PORT
+  credential_ref_env: CISCO_CREDENTIAL_REF
+  auth_method: secret_reference
+  timeout_seconds: 10
+  max_output_bytes: 65536
+
+read_commands:
+  - id: version
+    command: "show version"
+    target: "in_memory_evidence"
+    trust: 5
+  - id: ip_interface_brief
+    command: "show ip interface brief"
+    target: "in_memory_evidence"
+    trust: 5
+
+normalization:
+  target_file: "knowledge/topology/cisco-core-canonical.md"
+  promote_policy: "two_stage_verification"
+  freshness_ttl_seconds: 900

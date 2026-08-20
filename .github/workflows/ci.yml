@@ -1,0 +1,68 @@
+name: Release 2 Offline Quality Gate
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  offline-quality-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install runtime and test dependencies
+        run: python -m pip install -r requirements.txt
+
+      - name: Install pytest
+        run: python -m pip install "pytest>=8,<9"
+
+      - name: Validate architecture contracts
+        run: python scripts/validate_schemas.py
+
+      - name: Validate simple P0 secret containment
+        run: python -B scripts/validate_p0_containment.py
+
+      - name: Compile Python source
+        run: python -B -c "import pathlib; files = list(pathlib.Path('.').rglob('*.py')); [compile(p.read_bytes(), str(p), 'exec') for p in files]; print(f'Syntax check passed: {len(files)} Python files')"
+
+      - name: Run offline master validation
+        run: python -B scripts/validate_brain.py
+
+      - name: Run offline Ministry-domain benchmarks
+        run: python -B scripts/run_benchmarks.py
+
+      - name: Run P2 offline pilot
+        run: python -B scripts/run_p2_offline_pilot.py
+
+      - name: Run P3 offline troubleshooting pilot
+        run: python -B scripts/run_p3_offline_pilot.py
+
+      - name: Run P4 offline incident-operations pilot
+        run: python -B scripts/run_p4_offline_pilot.py
+
+      - name: Run P4 professional incident-intake pilot
+        run: python -B scripts/run_p4_intake_pilot.py
+
+      - name: Run P4 workflow-governance pilot
+        run: python -B scripts/run_p4_workflow_governance_pilot.py
+
+      - name: Run P5 offline runbook-intelligence pilot
+        run: python -B scripts/run_p5_offline_pilot.py
+
+      - name: Run P6 multi-platform connector pilot
+        run: python -B scripts/run_p6_offline_pilot.py
+
+      - name: Run classified safe test collection
+        env:
+          PYTHONDONTWRITEBYTECODE: "1"
+        run: python -B -m pytest -q -p no:cacheprovider -m "offline or integration"

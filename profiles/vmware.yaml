@@ -1,0 +1,30 @@
+profile:
+  name: vmware-vcenter
+  platform: vmware_vsphere
+  trust_level: 5
+  description: "Declarative read-only discovery contract for VMware vCenter"
+
+connection:
+  protocol: vmware
+  adapter_id: vmware_api_readonly
+  entity_ref: vc-vmware-hq-01
+  port_env: VMWARE_PORT
+  credential_ref_env: VMWARE_CREDENTIAL_REF
+  auth_method: secret_reference
+  timeout_seconds: 15
+  max_output_bytes: 131072
+
+read_commands:
+  - id: datacenter_status
+    command: "get_datacenter_summary"
+    target: "in_memory_evidence"
+    trust: 5
+  - id: vm_list
+    command: "get_vm_list"
+    target: "in_memory_evidence"
+    trust: 5
+
+normalization:
+  target_file: "knowledge/compute/vmware-canonical.md"
+  promote_policy: "two_stage_verification"
+  freshness_ttl_seconds: 900

@@ -1,0 +1,12 @@
+action_id: "level2-toggle-f5-member"
+title: "Toggle F5 Pool Member State"
+template_status: "unreviewed"
+risk_level: 2
+platform: "f5_bigip"
+pre_checks:
+  - "verify_pool_member_status"
+  - "verify_backup_pool_active"
+command: "modify lt m-pool member web_node_01 state user-down"
+rollback_command: "modify lt m-pool member web_node_01 state user-up"
+post_checks:
+  - "verify_pool_health_check"

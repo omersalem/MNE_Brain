@@ -1,0 +1,11 @@
+action_id: "level0-read-telemetry"
+title: "Read Only Telemetry Collection"
+template_status: "unreviewed"
+risk_level: 0
+platform: "fortinet_fortios"
+pre_checks:
+  - "verify_device_reachability"
+command: "get system status"
+rollback_command: "none"
+post_checks:
+  - "verify_telemetry_logged"

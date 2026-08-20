@@ -1,0 +1,59 @@
+{
+  "node": "MNE_Brain_Alert_Review_Submission",
+  "displayName": "MNE_Brain Alert Review Submission",
+  "name": "mneBrainInvestigationTrigger",
+  "icon": "file:mne_brain.svg",
+  "group": ["transform"],
+  "version": 2,
+  "description": "Submits an authenticated monitoring event for MNE_Brain policy review; it does not execute troubleshooting or remediation.",
+  "defaults": {
+    "name": "MNE_Brain Alert Review"
+  },
+  "inputs": ["main"],
+  "outputs": ["main"],
+  "properties": [
+    {
+      "displayName": "Event ID",
+      "name": "eventId",
+      "type": "string",
+      "default": "",
+      "required": true
+    },
+    {
+      "displayName": "Source",
+      "name": "source",
+      "type": "string",
+      "default": "",
+      "required": true
+    },
+    {
+      "displayName": "Target Host or IP",
+      "name": "targetHost",
+      "type": "string",
+      "default": "",
+      "required": true
+    },
+    {
+      "displayName": "Alert Description",
+      "name": "alertDescription",
+      "type": "string",
+      "default": "",
+      "required": true
+    },
+    {
+      "displayName": "Severity",
+      "name": "severity",
+      "type": "options",
+      "options": ["INFO", "WARNING", "HIGH", "CRITICAL"],
+      "default": "WARNING",
+      "required": true
+    },
+    {
+      "displayName": "Occurred At (ISO-8601)",
+      "name": "occurredAt",
+      "type": "string",
+      "default": "",
+      "required": true
+    }
+  ]
+}

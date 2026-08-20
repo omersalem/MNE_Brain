@@ -1,0 +1,65 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "http://mne-brain.org/schemas/action.schema.json",
+  "title": "MNE_Brain Remediation Action Schema",
+  "type": "object",
+  "required": ["action_id", "title", "template_status", "risk_level", "platform", "pre_checks", "command", "rollback_command", "post_checks"],
+  "properties": {
+    "action_id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]{0,127}$" },
+    "title": { "type": "string", "minLength": 1 },
+    "template_status": {
+      "type": "string",
+      "enum": ["unreviewed", "approved", "retired"]
+    },
+    "template_version": { "type": "string", "minLength": 1 },
+    "owner": { "type": "string", "minLength": 1 },
+    "last_reviewed": { "type": "string", "minLength": 1 },
+    "risk_level": { "type": "integer", "minimum": 0, "maximum": 4 },
+    "platform": { "type": "string" },
+    "pre_checks": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "command": { "type": "string" },
+    "rollback_command": { "type": "string" },
+    "post_checks": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "template_status": { "const": "approved" }
+        },
+        "required": ["template_status"]
+      },
+      "then": {
+        "required": ["template_version", "owner", "last_reviewed"],
+        "properties": {
+          "pre_checks": { "minItems": 1 },
+          "post_checks": { "minItems": 1 }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "template_status": { "const": "approved" },
+          "risk_level": { "minimum": 1 }
+        },
+        "required": ["template_status", "risk_level"]
+      },
+      "then": {
+        "properties": {
+          "rollback_command": {
+            "type": "string",
+            "minLength": 1,
+            "not": { "pattern": "^(?i:none)$" }
+          }
+        }
+      }
+    }
+  ]
+}

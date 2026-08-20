@@ -1,0 +1,75 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "http://mne-brain.org/schemas/evidence.schema.json",
+  "title": "MNE_Brain Evidence Pack Schema",
+  "type": "object",
+  "required": ["evidence_id", "question", "total_tokens", "max_token_budget", "sources", "evidence_blocks", "unknowns"],
+  "properties": {
+    "evidence_id": { "type": "string" },
+    "question": { "type": "string" },
+    "total_tokens": { "type": "integer", "maximum": 1500 },
+    "max_token_budget": { "type": "integer", "default": 1500 },
+    "sources": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "unknowns": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "evidence_blocks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["entity_id", "source_file", "source", "trust_level", "evidence_status", "evidence_refs", "heading", "content"],
+        "properties": {
+          "entity_id": { "type": "string", "minLength": 1 },
+          "source_file": { "type": "string" },
+          "source": { "type": "string" },
+          "trust_level": { "type": "integer", "minimum": 1, "maximum": 5 },
+          "evidence_status": { "type": "string", "enum": ["documented", "live_verified"] },
+          "observed_at": { "type": ["string", "null"] },
+          "evidence_refs": {
+            "type": "array",
+            "items": { "type": "string", "minLength": 1 },
+            "uniqueItems": true
+          },
+          "verification_target": { "type": "string" },
+          "verification_check_id": { "type": "string" },
+          "verification_outcome": { "type": "string" },
+          "observed_facts": {
+            "type": "object",
+            "propertyNames": { "minLength": 1 },
+            "additionalProperties": { "type": ["string", "number", "boolean"] }
+          },
+          "heading": { "type": "string" },
+          "content": { "type": "string" }
+        },
+        "allOf": [
+          {
+            "if": {
+              "properties": { "evidence_status": { "const": "live_verified" } },
+              "required": ["evidence_status"]
+            },
+            "then": {
+              "required": [
+                "observed_at",
+                "evidence_refs",
+                "verification_target",
+                "verification_check_id",
+                "verification_outcome"
+              ],
+              "properties": {
+                "observed_at": { "type": "string", "minLength": 1 },
+                "evidence_refs": { "minItems": 1 },
+                "verification_target": { "type": "string", "minLength": 1 },
+                "verification_check_id": { "type": "string", "minLength": 1 },
+                "verification_outcome": { "const": "success" }
+              }
+            }
+          }
+        ]
+      }
+    }
+  }
+}

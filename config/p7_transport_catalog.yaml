@@ -1,0 +1,32 @@
+version: "1.0"
+mode: OWNER_GATED_LIVE_TRANSPORT_READINESS
+owner_reference: MNE-BRAIN-OWNER
+audit_mode: IN_MEMORY_ONLY
+retention: NONE
+drivers:
+  - {protocol: ssh, implementation: IMPLEMENTED, identity_gate: PINNED_HOST_KEY, credential_gate: OPAQUE_ENV_REFERENCE, read_only: true, default_enabled: false}
+  - {protocol: rest, implementation: IMPLEMENTED, identity_gate: VERIFIED_TLS_OR_PIN, credential_gate: OPTIONAL, read_only: true, default_enabled: false}
+  - {protocol: powershell, implementation: IMPLEMENTED, identity_gate: KERBEROS_OR_HTTPS, credential_gate: OPAQUE_ENV_REFERENCE, read_only: true, default_enabled: false}
+  - {protocol: winrm, implementation: IMPLEMENTED, identity_gate: KERBEROS_OR_HTTPS, credential_gate: OPAQUE_ENV_REFERENCE, read_only: true, default_enabled: false}
+  - {protocol: vmware, implementation: IMPLEMENTED, identity_gate: VERIFIED_TLS_OR_PIN, credential_gate: OPAQUE_ENV_REFERENCE, read_only: true, default_enabled: false}
+  - {protocol: snmp, implementation: DEPENDENCY_GATED, identity_gate: SNMP_ENGINE_ID, credential_gate: REQUIRED_NOT_CONFIGURED, read_only: true, default_enabled: false}
+  - {protocol: tcp, implementation: IMPLEMENTED, identity_gate: EXACT_TARGET_ONLY, credential_gate: OPTIONAL, read_only: true, default_enabled: false}
+target_reconciliations:
+  - {entity_id: sw-cisco-core-01, canonical_target: 172.23.19.2, documented_target: 172.23.70.254, disposition: CONFLICT_REQUIRES_IDENTITY_PROOF, source_reference: MAIN_DEVICE_LINK_PORT_DISCOVERY.md}
+  - {entity_id: waf-f5-bigip-01, canonical_target: 172.23.19.5, documented_target: 172.23.70.89, disposition: CONFLICT_REQUIRES_IDENTITY_PROOF, source_reference: MNE_INFRASTRUCTURE_MASTER_GUIDE.md}
+  - {entity_id: vc-vmware-hq-01, canonical_target: 172.23.19.10, documented_target: 172.23.69.38, disposition: CONFLICT_REQUIRES_IDENTITY_PROOF, source_reference: MASTER_ASSET_INVENTORY.md}
+  - {entity_id: esxi-node-hq-01, canonical_target: 172.23.19.11, documented_target: 172.23.69.30, disposition: CONFLICT_REQUIRES_IDENTITY_PROOF, source_reference: SERVER_FLEET_BASELINE.md}
+  - {entity_id: esxi-node-hq-02, canonical_target: 172.23.19.12, documented_target: 172.23.69.31, disposition: CONFLICT_REQUIRES_IDENTITY_PROOF, source_reference: SERVER_FLEET_BASELINE.md}
+  - {entity_id: fw-fortigate-bethlehem-01, canonical_target: 10.70.18.1, documented_target: 10.60.18.1, disposition: CONFLICT_REQUIRES_IDENTITY_PROOF, source_reference: BRANCH_CONNECTIVITY_BASELINE.md}
+  - {entity_id: fw-fortigate-gaza-01, canonical_target: 10.211.18.1, documented_target: 10.211.18.1, disposition: DOCUMENTED_CANDIDATE_ONLY, source_reference: BRANCH_CONNECTIVITY_BASELINE.md}
+  - {entity_id: fw-fortigate-jenin-01, canonical_target: 172.23.20.1, documented_target: 10.201.18.1, disposition: CONFLICT_REQUIRES_IDENTITY_PROOF, source_reference: BRANCH_CONNECTIVITY_BASELINE.md}
+  - {entity_id: fw-fortigate-jericho-01, canonical_target: 10.180.18.1, documented_target: 10.211.18.1, disposition: CONFLICT_REQUIRES_IDENTITY_PROOF, source_reference: BRANCH_CONNECTIVITY_BASELINE.md}
+  - {entity_id: fw-fortigate-khanyounis-01, canonical_target: 10.230.18.1, documented_target: 10.230.18.1, disposition: DOCUMENTED_CANDIDATE_ONLY, source_reference: BRANCH_CONNECTIVITY_BASELINE.md}
+  - {entity_id: fw-fortigate-nablus-01, canonical_target: 10.60.18.1, documented_target: 10.131.18.1, disposition: CONFLICT_REQUIRES_IDENTITY_PROOF, source_reference: BRANCH_CONNECTIVITY_BASELINE.md}
+  - {entity_id: fw-fortigate-qalqilya-01, canonical_target: 10.131.18.1, documented_target: 10.180.18.1, disposition: CONFLICT_REQUIRES_IDENTITY_PROOF, source_reference: BRANCH_CONNECTIVITY_BASELINE.md}
+  - {entity_id: fw-fortigate-ramallah-01, canonical_target: 10.100.25.1, documented_target: 10.110.19.1, disposition: CONFLICT_REQUIRES_IDENTITY_PROOF, source_reference: BRANCH_CONNECTIVITY_BASELINE.md}
+  - {entity_id: fw-fortigate-rafah-01, canonical_target: 10.235.18.1, documented_target: 10.235.18.1, disposition: DOCUMENTED_CANDIDATE_ONLY, source_reference: BRANCH_CONNECTIVITY_BASELINE.md}
+  - {entity_id: fw-fortigate-salfit-01, canonical_target: 10.165.18.1, documented_target: 10.235.18.1, disposition: CONFLICT_REQUIRES_IDENTITY_PROOF, source_reference: BRANCH_CONNECTIVITY_BASELINE.md}
+  - {entity_id: fw-fortigate-tubas-01, canonical_target: 10.201.18.1, documented_target: 10.230.18.1, disposition: CONFLICT_REQUIRES_IDENTITY_PROOF, source_reference: BRANCH_CONNECTIVITY_BASELINE.md}
+  - {entity_id: fw-fortigate-tulkarm-01, canonical_target: 10.110.19.1, documented_target: 10.165.18.1, disposition: CONFLICT_REQUIRES_IDENTITY_PROOF, source_reference: BRANCH_CONNECTIVITY_BASELINE.md}
+  - {entity_id: san-greenunit-01, canonical_target: 172.23.70.70, documented_target: 172.23.70.70, disposition: CONFLICT_REQUIRES_IDENTITY_PROOF, source_reference: MAIN_DEVICE_LINK_PORT_DISCOVERY.md}

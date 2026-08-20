@@ -1,0 +1,11 @@
+action_id: "restart-vmware-vm"
+title: "Restart VMware Virtual Machine"
+template_status: "unreviewed"
+risk_level: 2
+platform: "vmware_vsphere"
+pre_checks:
+  - "verify_vm_power_state"
+command: "Restart-VMGuest -VM $TargetVM -Confirm:$false"
+rollback_command: "Stop-VM -VM $TargetVM -Kill -Confirm:$false"
+post_checks:
+  - "verify_vm_tools_running"

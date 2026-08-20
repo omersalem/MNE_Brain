@@ -1,0 +1,25 @@
+version: "1.0"
+phase: p7_live_transport_validation
+enabled: false
+activation_state: DISABLED_AFTER_EACH_EXACT_IN_MEMORY_SCOPE
+approval_state: OWNER_CONTROLLED
+owner_reference: MNE-BRAIN-OWNER
+owner_authorization: EXPLICIT_OWNER_PROCEED
+audit_mode: IN_MEMORY_ONLY
+retention: NONE
+ticketing_enabled: false
+paging_enabled: false
+notifications_enabled: false
+automatic_assignment_enabled: false
+persistence_enabled: false
+remediation_enabled: false
+owner_excluded_bindings:
+  - p7-switch-ramallah-gold
+require_exact_entity: true
+require_exact_check: true
+require_identity_proof: true
+allow_first_use_trust: false
+maximum_checks_per_scope: 1
+timeout_seconds_maximum: 15
+max_output_bytes_maximum: 131072
+reason: "P7 transports are disabled at rest. The owner may activate one exact read-only entity/check scope in memory by saying proceed."

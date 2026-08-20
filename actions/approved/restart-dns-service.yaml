@@ -1,0 +1,11 @@
+action_id: "restart-dns-service"
+title: "Restart Active Directory DNS Server Service"
+template_status: "unreviewed"
+risk_level: 2
+platform: "windows_powershell"
+pre_checks:
+  - "verify_dns_server_role"
+command: "Restart-Service DNS -Force"
+rollback_command: "Start-Service DNS"
+post_checks:
+  - "verify_dns_service_running"

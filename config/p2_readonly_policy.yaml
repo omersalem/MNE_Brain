@@ -1,0 +1,30 @@
+version: "1.0"
+phase: p2_controlled_readonly
+enabled: false
+activation_state: P3_P4_SESSION_COMPLETE_POLICY_DISABLED
+p0_containment_reference: P0-SIMPLE-ENV-IGNORE-2026-08-16
+target_confirmation_reference: USER-CONFIRMED-EDGE-2026-08-16
+owner_reference: MNE-BRAIN-OWNER
+owner_authorization: EXPLICIT_OWNER_PROCEED
+live_transport_adapter_reference: PINNED-PLINK-FORTIGATE-EDGE-V1
+allowed_profiles:
+  - fortigate_edge
+allowed_adapters:
+  - fortigate_ssh_readonly
+allowed_entities:
+  - fw-fortigate-edge-01
+allowed_checks:
+  fortigate_edge:
+    - system_status
+    - interface_stats
+maximum_checks_per_request: 2
+timeout_seconds_maximum: 15
+max_output_bytes_maximum: 65536
+freshness_ttl_seconds_maximum: 900
+require_scope_reference: true
+require_credential_reference: true
+require_p0_containment_reference: true
+require_owner_proceed: true
+persistence_enabled: false
+remediation_enabled: false
+reason: "The owner-authorized two-check P2 to P3 to P4 session completed successfully. Policy is disabled again; another live session requires the owner to explicitly say proceed."

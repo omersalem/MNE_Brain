@@ -1,0 +1,29 @@
+# LLM Provider Configuration — MNE_Brain Release 2
+default_provider: "local_fallback"
+max_output_tokens: 1024
+temperature: 0.2
+
+external_calls:
+  enabled: false
+  requires_explicit_authorization: true
+  reason: "External LLM transports are deferred until the approved security and adapter gates are complete."
+
+providers:
+  openai:
+    model: "gpt-4o"
+    api_key_env: "OPENAI_API_KEY"
+  anthropic:
+    model: "claude-3-5-sonnet-20241022"
+    api_key_env: "ANTHROPIC_API_KEY"
+  gemini:
+    model: "gemini-1.5-pro"
+    api_key_env: "GEMINI_API_KEY"
+  ollama:
+    model: "llama3:8b"
+    endpoint_env: "OLLAMA_HOST"
+  deepseek:
+    model: "deepseek-chat"
+    api_key_env: "DEEPSEEK_API_KEY"
+  local_fallback:
+    model: "mne-brain-local-deterministic-v2"
+    mode: "evidence_pack_formatter"

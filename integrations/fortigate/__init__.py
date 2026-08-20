@@ -1,0 +1,2 @@
+"""FortiGate integration boundaries."""
+

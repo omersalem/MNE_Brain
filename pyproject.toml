@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mne-brain"
+version = "2.0.0.dev0"
+description = "Ministry infrastructure investigation and evidence platform"
+readme = "README.md"
+requires-python = ">=3.11,<3.13"
+dependencies = [
+  "PyYAML==6.0.3",
+  "jsonschema==4.26.0",
+]
+
+[project.optional-dependencies]
+test = [
+  "pytest>=8,<9",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+addopts = "-ra --strict-markers"
+markers = [
+  "offline: deterministic test with no network or persistent-state mutation",
+  "integration: test that uses local project state",
+  "live: test that can contact an external system",
+  "mutating: test that changes or temporarily removes local state",
+]

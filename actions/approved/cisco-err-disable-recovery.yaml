@@ -1,0 +1,12 @@
+action_id: "cisco-err-disable-recovery"
+title: "Cisco Switch Port Err-Disable Recovery"
+template_status: "unreviewed"
+risk_level: 2
+platform: "cisco_iosxe"
+pre_checks:
+  - "verify_port_err_disabled"
+  - "verify_bpdu_guard_reason"
+command: "interface Gi1/0/12; shutdown; no shutdown"
+rollback_command: "interface Gi1/0/12; shutdown"
+post_checks:
+  - "verify_port_status_up"

@@ -1,0 +1,24 @@
+version: "1.0"
+phase: p8_live_troubleshooting
+enabled: false
+activation_state: DISABLED_AFTER_EACH_EXACT_IN_MEMORY_SCOPE
+approval_state: OWNER_CONTROLLED
+owner_reference: MNE-BRAIN-OWNER
+owner_authorization: EXPLICIT_OWNER_PROCEED
+audit_mode: IN_MEMORY_ONLY
+retention: NONE
+ticketing_enabled: false
+paging_enabled: false
+notifications_enabled: false
+automatic_assignment_enabled: false
+persistence_enabled: false
+remediation_enabled: false
+external_ai_enabled: false
+require_exact_scenario: true
+require_exact_binding: true
+maximum_bindings_per_scope: 3
+maximum_evidence_records: 3
+evidence_freshness_seconds: 900
+evidence_token_budget: 1500
+handoff_character_budget: 6000
+reason: "P8 plans troubleshooting offline. Live read-only collection requires one exact owner-authorized in-memory scope and is disabled again immediately afterward."

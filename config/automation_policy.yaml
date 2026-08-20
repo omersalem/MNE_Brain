@@ -1,0 +1,17 @@
+version: "1.0"
+enabled: false
+requires_authenticated_gateway: true
+max_payload_bytes: 8192
+freshness_seconds: 300
+future_tolerance_seconds: 30
+max_seen_events: 10000
+allowed_sources:
+  - zabbix
+  - prometheus
+  - syslog
+allowed_severities:
+  - INFO
+  - WARNING
+  - HIGH
+  - CRITICAL
+reason: "Webhook ingestion is deferred until an approved authenticated gateway is configured."

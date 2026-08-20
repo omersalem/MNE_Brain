@@ -1,0 +1,116 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://mne-brain.local/schemas/incident-case.schema.json",
+  "title": "MNE_Brain P4 Offline Incident Case",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "case_id",
+    "mode",
+    "case_state",
+    "opened_at",
+    "updated_at",
+    "question",
+    "priority",
+    "impact",
+    "target",
+    "ownership",
+    "runbook_guidance",
+    "investigation",
+    "check_history",
+    "pending_checks",
+    "timeline",
+    "handoff_packet",
+    "response_target",
+    "metrics",
+    "safety"
+  ],
+  "properties": {
+    "case_id": {"type": "string", "pattern": "^case-p4-[a-f0-9]{12}$"},
+    "mode": {"const": "OFFLINE_CASE_MANAGEMENT"},
+    "case_state": {
+      "type": "string",
+      "enum": ["NEEDS_TARGET", "IMPACT_REQUIRED", "AWAITING_EVIDENCE", "EVIDENCE_REVIEW", "CONFLICTING_EVIDENCE", "HANDOFF_READY"]
+    },
+    "opened_at": {"type": "string", "format": "date-time"},
+    "updated_at": {"type": "string", "format": "date-time"},
+    "question": {"type": "string", "minLength": 1, "maxLength": 1000},
+    "priority": {
+      "type": "object",
+      "required": ["classification", "basis", "owner_confirmation_required", "reasons"],
+      "properties": {
+        "classification": {"enum": ["UNASSESSED", "PROVISIONAL_P1", "PROVISIONAL_P2", "PROVISIONAL_P3", "PROVISIONAL_P4"]},
+        "basis": {"const": "REPORTED_IMPACT_ONLY"},
+        "owner_confirmation_required": {"const": true},
+        "reasons": {"type": "array", "items": {"type": "string"}}
+      },
+      "additionalProperties": false
+    },
+    "impact": {
+      "type": "object",
+      "required": ["status", "source", "affected_service", "affected_scope", "availability", "branch_references", "affected_user_count", "security_impact_reported", "data_loss_suspected", "public_service_reported", "owner_reference", "reporter_reference", "reported_at"],
+      "properties": {
+        "status": {"enum": ["NOT_PROVIDED", "REPORTED_NOT_VERIFIED"]},
+        "source": {"const": "operator_report"},
+        "affected_service": {"type": ["string", "null"], "minLength": 2, "maxLength": 128},
+        "affected_scope": {"enum": ["unknown", "single_user", "multiple_users", "branch", "multiple_branches", "ministry_wide"]},
+        "availability": {"enum": ["unknown", "unavailable", "degraded", "intermittent"]},
+        "branch_references": {"type": "array", "maxItems": 10, "uniqueItems": true, "items": {"type": "string"}},
+        "affected_user_count": {"type": ["integer", "null"], "minimum": 0, "maximum": 1000000},
+        "security_impact_reported": {"type": "boolean"},
+        "data_loss_suspected": {"type": "boolean"},
+        "public_service_reported": {"type": "boolean"},
+        "owner_reference": {"type": ["string", "null"]},
+        "reporter_reference": {"type": ["string", "null"]},
+        "reported_at": {"type": ["string", "null"], "format": "date-time"}
+      },
+      "additionalProperties": false
+    },
+    "target": {"type": ["object", "null"]},
+    "ownership": {"type": "object"},
+    "runbook_guidance": {"type": "object"},
+    "investigation": {"type": "object"},
+    "check_history": {"type": "array", "maxItems": 5, "items": {"type": "object"}},
+    "pending_checks": {"type": "array", "maxItems": 5, "items": {"type": "object"}},
+    "timeline": {"type": "array", "maxItems": 20, "items": {"type": "object"}},
+    "handoff_packet": {"type": "object"},
+    "response_target": {
+      "type": "object",
+      "required": ["status", "target_minutes", "reason"],
+      "properties": {
+        "status": {"const": "NO_CONFIGURED_RESPONSE_TARGET"},
+        "target_minutes": {"type": "null"},
+        "reason": {"type": "string", "minLength": 1}
+      },
+      "additionalProperties": false
+    },
+    "metrics": {
+      "type": "object",
+      "required": ["duration_ms", "owner_routes", "runbook_candidates", "history_items", "pending_checks", "timeline_events", "handoff_chars"],
+      "properties": {
+        "duration_ms": {"type": "number", "minimum": 0},
+        "owner_routes": {"type": "integer", "minimum": 0, "maximum": 4},
+        "runbook_candidates": {"type": "integer", "minimum": 0, "maximum": 3},
+        "history_items": {"type": "integer", "minimum": 0, "maximum": 5},
+        "pending_checks": {"type": "integer", "minimum": 0, "maximum": 5},
+        "timeline_events": {"type": "integer", "minimum": 0, "maximum": 20},
+        "handoff_chars": {"type": "integer", "minimum": 0, "maximum": 8000}
+      },
+      "additionalProperties": false
+    },
+    "safety": {
+      "type": "object",
+      "required": ["reported_impact_verified", "priority_confirmed", "live_connection_attempted", "external_ai_call_attempted", "notification_sent", "persistence_attempted", "remediation_attempted"],
+      "properties": {
+        "reported_impact_verified": {"const": false},
+        "priority_confirmed": {"const": false},
+        "live_connection_attempted": {"const": false},
+        "external_ai_call_attempted": {"const": false},
+        "notification_sent": {"const": false},
+        "persistence_attempted": {"const": false},
+        "remediation_attempted": {"const": false}
+      },
+      "additionalProperties": false
+    }
+  }
+}

@@ -1,0 +1,102 @@
+version: "1.0"
+mode: OWNER_CONTROLLED_LIVE_TROUBLESHOOTING
+owner_reference: MNE-BRAIN-OWNER
+audit_mode: IN_MEMORY_ONLY
+retention: NONE
+reconciliations:
+  - {binding_id: p7-ad-primary, disposition: MATCHED_CANONICAL, canonical_entity_id: dc-mne-ad-01, canonical_promotion_allowed: false, note: "Exact operational identity match."}
+  - {binding_id: p7-ad-secondary, disposition: MATCHED_CANONICAL, canonical_entity_id: dc-mne-ad-02, canonical_promotion_allowed: false, note: "Exact Kerberos endpoint for the documented secondary domain controller."}
+  - {binding_id: p7-cisco-core, disposition: CANONICAL_UPDATE_CANDIDATE, canonical_entity_id: sw-cisco-core-01, canonical_promotion_allowed: false, note: "Operational target differs; owner review is required before any canonical update."}
+  - {binding_id: p7-exchange-primary, disposition: MATCHED_CANONICAL, canonical_entity_id: ex-windows-mail-01, canonical_promotion_allowed: false, note: "Exact operational identity match."}
+  - {binding_id: p7-exchange-ps, disposition: MATCHED_CANONICAL, canonical_entity_id: ex-windows-mail-01, canonical_promotion_allowed: false, note: "Dedicated Kerberos Exchange PowerShell endpoint for the same server."}
+  - {binding_id: p7-f5, disposition: CANONICAL_UPDATE_CANDIDATE, canonical_entity_id: waf-f5-bigip-01, canonical_promotion_allowed: false, note: "Operational target differs; do not rewrite canonical knowledge automatically."}
+  - {binding_id: p7-fmc, disposition: MATCHED_CANONICAL, canonical_entity_id: fmc-cisco-hq-01, canonical_promotion_allowed: false, note: "Identity matches; operational SSH differs from the documented connector protocol."}
+  - {binding_id: p7-fmc-rest, disposition: MATCHED_CANONICAL, canonical_entity_id: fmc-cisco-hq-01, canonical_promotion_allowed: false, note: "Pinned REST endpoint for policy, deployment, and managed-device evidence."}
+  - {binding_id: p7-fortigate-edge, disposition: MATCHED_CANONICAL, canonical_entity_id: fw-fortigate-edge-01, canonical_promotion_allowed: false, note: "Exact operational identity match."}
+  - {binding_id: p7-fortigate-bethlehem, disposition: CANONICAL_UPDATE_CANDIDATE, canonical_entity_id: fw-fortigate-bethlehem-01, canonical_promotion_allowed: false, note: "Operational target differs; owner review required."}
+  - {binding_id: p7-fortigate-hebron, disposition: MATCHED_CANONICAL, canonical_entity_id: fw-fortigate-hebron-01, canonical_promotion_allowed: false, note: "Exact operational identity match."}
+  - {binding_id: p7-fortigate-hebron-gold, disposition: ADDITIONAL_OPERATIONAL_ASSET, canonical_entity_id: null, canonical_promotion_allowed: false, note: "Live operational asset without a canonical entity."}
+  - {binding_id: p7-fortigate-jenin, disposition: CANONICAL_UPDATE_CANDIDATE, canonical_entity_id: fw-fortigate-jenin-01, canonical_promotion_allowed: false, note: "Operational target differs; owner review required."}
+  - {binding_id: p7-fortigate-jericho, disposition: CANONICAL_UPDATE_CANDIDATE, canonical_entity_id: fw-fortigate-jericho-01, canonical_promotion_allowed: false, note: "Operational target differs; owner review required."}
+  - {binding_id: p7-fortigate-nablus, disposition: CANONICAL_UPDATE_CANDIDATE, canonical_entity_id: fw-fortigate-nablus-01, canonical_promotion_allowed: false, note: "Operational target differs; owner review required."}
+  - {binding_id: p7-fortigate-nablus-gold, disposition: ADDITIONAL_OPERATIONAL_ASSET, canonical_entity_id: null, canonical_promotion_allowed: false, note: "Live operational asset without a canonical entity."}
+  - {binding_id: p7-fortigate-qalqilya, disposition: CANONICAL_UPDATE_CANDIDATE, canonical_entity_id: fw-fortigate-qalqilya-01, canonical_promotion_allowed: false, note: "Operational target differs; owner review required."}
+  - {binding_id: p7-fortigate-quds, disposition: ADDITIONAL_OPERATIONAL_ASSET, canonical_entity_id: null, canonical_promotion_allowed: false, note: "Live operational asset without a canonical entity."}
+  - {binding_id: p7-fortigate-ramallah-gold, disposition: ADDITIONAL_OPERATIONAL_ASSET, canonical_entity_id: null, canonical_promotion_allowed: false, note: "Live operational asset without a canonical entity."}
+  - {binding_id: p7-fortigate-salfeet, disposition: CANONICAL_UPDATE_CANDIDATE, canonical_entity_id: fw-fortigate-salfit-01, canonical_promotion_allowed: false, note: "Operational target differs; spelling and address need owner review."}
+  - {binding_id: p7-fortigate-tubas, disposition: CANONICAL_UPDATE_CANDIDATE, canonical_entity_id: fw-fortigate-tubas-01, canonical_promotion_allowed: false, note: "Operational target differs; owner review required."}
+  - {binding_id: p7-fortigate-tulkarem, disposition: CANONICAL_UPDATE_CANDIDATE, canonical_entity_id: fw-fortigate-tulkarm-01, canonical_promotion_allowed: false, note: "Operational target and spelling differ; owner review required."}
+  - {binding_id: p7-ftd, disposition: MATCHED_CANONICAL, canonical_entity_id: ftd-cisco-hq-01, canonical_promotion_allowed: false, note: "Exact operational identity match."}
+  - {binding_id: p7-linux-greenunit, disposition: MATCHED_CANONICAL, canonical_entity_id: web-greenunit-ubuntu-01, canonical_promotion_allowed: false, note: "Exact operational identity match."}
+  - {binding_id: p7-router-tulkarm, disposition: ADDITIONAL_OPERATIONAL_ASSET, canonical_entity_id: null, canonical_promotion_allowed: false, note: "Live operational asset without a canonical entity."}
+  - {binding_id: p7-fujitsu-sw1, disposition: ADDITIONAL_OPERATIONAL_ASSET, canonical_entity_id: null, canonical_promotion_allowed: false, note: "Endpoint is explicitly treated as Fujitsu SW1, not as a SAN controller or canonical storage array."}
+  - {binding_id: p7-sophos, disposition: ADDITIONAL_OPERATIONAL_ASSET, canonical_entity_id: null, canonical_promotion_allowed: false, note: "Live operational asset without a canonical entity."}
+  - {binding_id: p7-switch-hebron-gold, disposition: ADDITIONAL_OPERATIONAL_ASSET, canonical_entity_id: null, canonical_promotion_allowed: false, note: "Live operational asset without a canonical entity."}
+  - {binding_id: p7-switch-nablus-gold, disposition: ADDITIONAL_OPERATIONAL_ASSET, canonical_entity_id: null, canonical_promotion_allowed: false, note: "Live operational asset without a canonical entity."}
+  - {binding_id: p7-switch-ramallah-gold, disposition: AMBIGUOUS_DO_NOT_PROMOTE, canonical_entity_id: null, canonical_promotion_allowed: false, note: "Owner-excluded asset; do not retry or promote."}
+  - {binding_id: p7-vcenter, disposition: CANONICAL_UPDATE_CANDIDATE, canonical_entity_id: vc-vmware-hq-01, canonical_promotion_allowed: false, note: "Operational target differs; owner review required."}
+  - {binding_id: p7-vcenter-rest, disposition: CANONICAL_UPDATE_CANDIDATE, canonical_entity_id: vc-vmware-hq-01, canonical_promotion_allowed: false, note: "Pinned REST endpoint shares the operational target; canonical changes remain owner-reviewed."}
+scenarios:
+  - scenario_id: p8-branch-outage
+    title: Branch connectivity outage
+    family: branch_outage
+    symptom_keywords: ["branch down", "unreachable", "internet down", "wan down"]
+    primary_bindings: [p7-fortigate-bethlehem, p7-fortigate-hebron, p7-fortigate-hebron-gold, p7-fortigate-jenin, p7-fortigate-jericho, p7-fortigate-nablus, p7-fortigate-nablus-gold, p7-fortigate-qalqilya, p7-fortigate-quds, p7-fortigate-ramallah-gold, p7-fortigate-salfeet, p7-fortigate-tubas, p7-fortigate-tulkarem]
+    checks:
+      - {binding_id: PRIMARY, check_id: system_status, objective: "Confirm exact firewall identity and authenticated management availability.", read_only: true}
+  - scenario_id: p8-vpn-access
+    title: Remote access VPN failure
+    family: vpn
+    symptom_keywords: ["vpn", "remote access", "login failed", "tunnel down"]
+    primary_bindings: [p7-fortigate-edge]
+    checks:
+      - {binding_id: PRIMARY, check_id: system_status, objective: "Confirm edge firewall identity and management availability before session-specific checks.", read_only: true}
+  - scenario_id: p8-web-publishing
+    title: Published web application unavailable
+    family: web_publishing
+    symptom_keywords: ["website down", "application unavailable", "http error", "publishing"]
+    primary_bindings: [p7-f5, p7-linux-greenunit]
+    checks:
+      - {binding_id: PRIMARY, check_id: baseline, objective: "Confirm the selected publishing component identity and management availability.", read_only: true}
+      - {binding_id: p7-fortigate-edge, check_id: system_status, objective: "Confirm the edge security component is independently reachable.", read_only: true}
+  - scenario_id: p8-dns-ad
+    title: DNS or Active Directory service issue
+    family: dns_ad
+    symptom_keywords: ["dns", "active directory", "domain login", "name resolution"]
+    primary_bindings: [p7-ad-primary]
+    checks:
+      - {binding_id: PRIMARY, check_id: identity_services, objective: "Count core identity services and their running state on the exact domain controller.", read_only: true}
+      - {binding_id: p7-ad-secondary, check_id: identity_services, objective: "Confirm the secondary domain controller independently with the shared domain credential.", read_only: true}
+  - scenario_id: p8-exchange
+    title: Exchange mail service issue
+    family: exchange
+    symptom_keywords: ["email", "exchange", "mail flow", "mailbox"]
+    primary_bindings: [p7-exchange-primary]
+    checks:
+      - {binding_id: PRIMARY, check_id: service_state, objective: "Count Exchange services and their running state on the exact server.", read_only: true}
+      - {binding_id: p7-exchange-ps, check_id: organization_state, objective: "Confirm the Exchange organization endpoint and DAG command availability.", read_only: true}
+      - {binding_id: p7-ad-primary, check_id: identity_services, objective: "Confirm the supporting identity service baseline independently.", read_only: true}
+  - scenario_id: p8-vmware
+    title: VMware platform issue
+    family: vmware
+    symptom_keywords: ["vmware", "vcenter", "virtual machine", "host down"]
+    primary_bindings: [p7-vcenter]
+    checks:
+      - {binding_id: PRIMARY, check_id: appliance_help, objective: "Confirm vCenter appliance identity and management shell availability.", read_only: true}
+      - {binding_id: p7-vcenter-rest, check_id: host_inventory, objective: "Confirm pinned REST access to object-level vCenter inventory.", read_only: true}
+  - scenario_id: p8-firewall-security
+    title: Firewall or managed security path issue
+    family: firewall_security
+    symptom_keywords: ["blocked", "firewall", "security policy", "traffic denied"]
+    primary_bindings: [p7-ftd, p7-fmc, p7-fortigate-edge, p7-sophos]
+    checks:
+      - {binding_id: PRIMARY, check_id: baseline, objective: "Confirm the selected security component identity and management availability.", read_only: true}
+      - {binding_id: p7-fmc-rest, check_id: server_version, objective: "Confirm pinned FMC REST access when it is not already the primary target.", read_only: true}
+  - scenario_id: p8-storage-backup-switching
+    title: Storage, backup, or switching path issue
+    family: storage_backup_switching
+    symptom_keywords: ["storage", "backup", "switch", "san"]
+    primary_bindings: [p7-fujitsu-sw1, p7-cisco-core, p7-switch-hebron-gold, p7-switch-nablus-gold]
+    checks:
+      - {binding_id: PRIMARY, check_id: baseline, objective: "Confirm the exact selected infrastructure endpoint identity and availability.", read_only: true}
+      - {binding_id: p7-vcenter-rest, check_id: host_inventory, objective: "Confirm the dependent virtualization inventory endpoint independently.", read_only: true}

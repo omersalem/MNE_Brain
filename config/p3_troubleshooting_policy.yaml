@@ -1,0 +1,59 @@
+mode: "OFFLINE_NON_EXECUTING"
+enabled: true
+
+limits:
+  max_question_chars: 1000
+  max_related_entities: 6
+  max_next_checks: 5
+  max_handoff_chars: 6000
+  max_evidence_tokens: 1500
+
+safety:
+  require_exact_target: true
+  accept_live_evidence_only_through_evidence_pack: true
+  allow_live_evidence_input: true
+  allowed_live_adapters: ["fortigate_ssh_readonly"]
+  allowed_live_checks: ["system_status", "interface_stats"]
+  max_live_evidence_records: 2
+  allow_live_connections: false
+  allow_external_ai_calls: false
+  allow_persistence: false
+  allow_remediation: false
+
+check_catalog:
+  - check_id: "collect-target-reachability"
+    priority: 10
+    categories: ["network", "compute", "storage", "identity", "messaging", "application"]
+    services: []
+    objective: "Establish whether the exact target is reachable through an approved read-only observation."
+    required_evidence: "Attributable target-specific reachability result with timestamp and outcome."
+  - check_id: "collect-network-path-state"
+    priority: 20
+    categories: ["network"]
+    services: ["firewall", "routing", "load-balancing", "waf-protection", "ipsec-vpn"]
+    objective: "Observe the target-side interface, route, session, or policy state relevant to the reported flow."
+    required_evidence: "Attributable read-only network-path facts scoped to the affected flow."
+  - check_id: "collect-service-state"
+    priority: 30
+    categories: ["compute", "identity", "messaging", "application"]
+    services: ["active-directory", "dns", "exchange", "owa-https", "vcenter"]
+    objective: "Observe the exact service state and its immediately relevant dependencies."
+    required_evidence: "Attributable service-state result and bounded dependency status."
+  - check_id: "collect-virtualization-state"
+    priority: 40
+    categories: ["compute"]
+    services: ["vcenter", "esxi-management", "vsphere"]
+    objective: "Observe guest, host, and datastore state without changing workload placement or power state."
+    required_evidence: "Attributable read-only virtualization inventory and state facts."
+  - check_id: "collect-storage-path-state"
+    priority: 50
+    categories: ["storage"]
+    services: ["san", "san-repository", "veeam-backup", "vm-snapshots"]
+    objective: "Observe storage reachability, capacity, path, or job state relevant to the target."
+    required_evidence: "Attributable read-only storage or backup facts for the exact target."
+  - check_id: "collect-dependency-state"
+    priority: 60
+    categories: ["network", "compute", "storage", "identity", "messaging", "application"]
+    services: []
+    objective: "Observe only the declared adjacent entities needed to separate target failure from dependency failure."
+    required_evidence: "Attributable results for named adjacent entities; documented relationships alone are insufficient."

@@ -1,0 +1,32 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "http://mne-brain.org/schemas/entity.schema.json",
+  "title": "MNE_Brain Entity Index Schema",
+  "type": "object",
+  "required": ["last_updated", "total_entities", "entities"],
+  "properties": {
+    "last_updated": { "type": "string" },
+    "total_entities": { "type": "integer" },
+    "entities": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["entity_id", "name", "category", "aliases", "canonical_file"],
+        "properties": {
+          "entity_id": { "type": "string" },
+          "name": { "type": "string" },
+          "category": { "type": "string", "enum": ["network", "compute", "storage", "identity", "messaging", "application"] },
+          "aliases": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "canonical_file": { "type": "string" },
+          "ip_addresses": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        }
+      }
+    }
+  }
+}

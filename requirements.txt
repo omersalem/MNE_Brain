@@ -1,0 +1,4 @@
+# Runtime dependencies for the Release 2 development baseline.
+# Update deliberately with a tested dependency-refresh change.
+PyYAML==6.0.3
+jsonschema==4.26.0

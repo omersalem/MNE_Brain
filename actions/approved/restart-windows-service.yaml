@@ -1,0 +1,11 @@
+action_id: "restart-windows-service"
+title: "Restart Specified Windows Service"
+template_status: "unreviewed"
+risk_level: 1
+platform: "windows_powershell"
+pre_checks:
+  - "verify_service_exists"
+command: "Restart-Service -Name $TargetService -Force"
+rollback_command: "Start-Service -Name $TargetService"
+post_checks:
+  - "verify_service_status_running"

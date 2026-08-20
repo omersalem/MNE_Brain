@@ -1,0 +1,11 @@
+action_id: "restart-iis-app-pool"
+title: "Restart IIS Application Pool"
+template_status: "unreviewed"
+risk_level: 2
+platform: "windows_powershell"
+pre_checks:
+  - "verify_iis_app_pool_status"
+command: "Restart-WebAppPool MSExchangeOWAAppPool"
+rollback_command: "Stop-WebAppPool MSExchangeOWAAppPool"
+post_checks:
+  - "verify_app_pool_running"

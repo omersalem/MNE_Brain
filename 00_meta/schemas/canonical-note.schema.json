@@ -1,0 +1,87 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://mne-brain.local/schemas/canonical-note.schema.json",
+  "title": "MNE Brain Canonical Knowledge Note",
+  "type": "object",
+  "required": [
+    "id",
+    "name",
+    "category",
+    "aliases",
+    "owner",
+    "related_entities",
+    "knowledge_status",
+    "source",
+    "last_verified",
+    "freshness_ttl_hours"
+  ],
+  "properties": {
+    "id": {"type": "string", "minLength": 1},
+    "name": {"type": "string", "minLength": 1},
+    "category": {
+      "type": "string",
+      "enum": ["network", "compute", "storage", "identity", "messaging", "application"]
+    },
+    "aliases": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1},
+      "uniqueItems": true
+    },
+    "owner": {"type": "string", "minLength": 1},
+    "related_entities": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1},
+      "uniqueItems": true
+    },
+    "knowledge_status": {
+      "type": "string",
+      "enum": ["documented", "live_verified", "stale", "unverified", "failed", "not_run"]
+    },
+    "source": {
+      "oneOf": [
+        {"type": "string", "minLength": 1},
+        {"type": "array", "items": {"type": "string", "minLength": 1}, "minItems": 1}
+      ]
+    },
+    "last_verified": {"type": ["string", "null"]},
+    "freshness_ttl_hours": {"type": "integer", "minimum": 1},
+    "evidence_refs": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1},
+      "uniqueItems": true
+    },
+    "verification_target": {"type": "string", "minLength": 1},
+    "verification_check_id": {"type": "string", "minLength": 1},
+    "verification_outcome": {"type": "string"},
+    "facts": {
+      "type": "object",
+      "propertyNames": {"minLength": 1},
+      "additionalProperties": {"type": ["string", "number", "boolean"]}
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {"knowledge_status": {"const": "live_verified"}},
+        "required": ["knowledge_status"]
+      },
+      "then": {
+        "required": [
+          "evidence_refs",
+          "last_verified",
+          "verification_target",
+          "verification_check_id",
+          "verification_outcome"
+        ],
+        "properties": {
+          "evidence_refs": {"minItems": 1},
+          "last_verified": {"type": "string", "minLength": 1},
+          "verification_target": {"type": "string", "minLength": 1},
+          "verification_check_id": {"type": "string", "minLength": 1},
+          "verification_outcome": {"const": "success"}
+        }
+      }
+    }
+  ],
+  "additionalProperties": true
+}

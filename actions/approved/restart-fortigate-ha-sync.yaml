@@ -1,0 +1,11 @@
+action_id: "restart-fortigate-ha-sync"
+title: "Trigger FortiGate High Availability Session Resynchronization"
+template_status: "unreviewed"
+risk_level: 2
+platform: "fortinet_fortios"
+pre_checks:
+  - "verify_ha_peer_reachability"
+command: "execute ha synchronize"
+rollback_command: "get system ha status"
+post_checks:
+  - "verify_ha_sync_status_in_sync"

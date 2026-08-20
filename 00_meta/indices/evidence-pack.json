@@ -1,0 +1,17 @@
+{
+  "evidence_id": "ev-19a6f4a0",
+  "question": "Check status of APDCT Government Application Server at 172.23.79.79",
+  "total_tokens": 245,
+  "max_token_budget": 1500,
+  "sources": [
+    "knowledge/compute/apdct-app-canonical.md"
+  ],
+  "evidence_blocks": [
+    {
+      "source_file": "knowledge/compute/apdct-app-canonical.md",
+      "trust_level": 3,
+      "heading": "Canonical Facts \u2014 APDCT Government Application Server",
+      "content": "Device Name: APDCT Government Application Server\nCategory: compute\nIP Addresses: 172.23.79.79\nAliases: apdct, apdct-app, 172.23.79.79, apdct-web\n---\nid: \"app-apdct-web-01\"\nname: \"APDCT Government Application Server\"\ncategory: \"compute\"\naliases: [\"apdct\", \"apdct-app\", \"172.23.79.79\", \"apdct-web\"]\nhostname: \"app-apdct-web-01\"\nfqdn: \"apdct.mne.gov.ps\"\nip: \"172.23.79.79\"\nvlan: \"79\"\nservices: [\"http-80\", \"apdct-service\", \"internal-portal\"]\nowner: \"E-Government Applications Team\"\nrelated_entities: [\"waf-f5-bigip-mgmt\", \"vc-vmware-mgmt-01\"]\n---\n\n# Canonical Facts \u2014 APDCT Government Application Server\n\n> **Entity ID:** `app-apdct-web-01`\n> **Trust Level:** Level 3 (Canonical Vault Fact)\n> **Last Verified:** 2026-08-01T12:00:00Z\n\n## \ud83d\udcf1 Application Details\n- **Hostname:** `app-apdct-web-01`\n- **Backend IP:** `172.23.79.79`\n- **Port:** `80/tcp`\n- **F5 VIP Target:** `APDCT_https` (`172.23.10.79:443`)\n- **F5 Pool:** `APDCT_Pool`\n- **WAF Policy:** `asm_auto_l7_policy__APDCT_https`\n"
+    }
+  ]
+}
