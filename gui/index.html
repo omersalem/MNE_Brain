@@ -29,28 +29,36 @@
   <header class="topbar">
     <div class="brand-block" aria-label="MNE Brain Release 2">
       <span class="brand-mark" aria-hidden="true">M</span>
-      <div><strong>MNE_Brain Release 2</strong><span>Infrastructure AI Console</span></div>
+      <div class="brand-info">
+        <strong>MNE_Brain</strong>
+        <span id="conversation-title" class="topbar-thread-title">New conversation</span>
+      </div>
     </div>
     <div class="top-controls">
       <label class="control-field" for="provider-select"><span>AI engine</span><select id="provider-select" aria-describedby="provider-status"></select></label>
       <label class="control-field" for="model-select"><span>Model</span><select id="model-select" aria-describedby="provider-status"></select></label>
       <p id="model-details" class="settings-note" aria-live="polite"></p>
-      <label class="control-field" for="permission-mode"><span>Permission mode</span>
+      <label class="control-field control-mode" for="permission-mode"><span>Mode</span>
         <select id="permission-mode" disabled title="Owner Direct policy is enforced by the server">
           <option value="OWNER_DIRECT">Owner Direct</option>
         </select>
       </label>
+      <button id="toggle-evidence" class="evidence-toggle-btn" type="button" aria-expanded="false" title="Toggle Context & Evidence (sources & live telemetry)">
+        <span class="btn-icon" aria-hidden="true">🛡️</span>
+        <span>Evidence</span>
+        <span id="evidence-count-badge" class="evidence-count-badge">0</span>
+      </button>
+      <button id="cancel-turn" class="danger-quiet" type="button" disabled title="Stop AI response">Stop</button>
       <button id="settings-button" class="icon-button" type="button" aria-controls="settings-panel" title="Settings">Settings</button>
       <button id="logout-button" class="icon-button" type="button" title="End the owner session">Sign out</button>
     </div>
+    <div class="safety-strip sr-only" role="status">
+      <span class="status-pill safe"><i aria-hidden="true"></i>Loopback owner session</span>
+      <span class="status-pill"><i aria-hidden="true"></i>Conversations: memory only</span>
+      <span class="status-pill warning"><i aria-hidden="true"></i>Owner Direct · reads automatic, writes need final confirmation</span>
+      <span class="safety-label">Development console only · ZERO Business Logic in GUI · server policy is authoritative.</span>
+    </div>
   </header>
-
-  <div class="safety-strip" role="status">
-    <span class="status-pill safe"><i aria-hidden="true"></i>Loopback owner session</span>
-    <span class="status-pill"><i aria-hidden="true"></i>Conversations: memory only</span>
-    <span class="status-pill warning"><i aria-hidden="true"></i>Owner Direct · reads automatic, writes need final confirmation</span>
-    <span class="safety-label">Development console only · ZERO Business Logic in GUI · server policy is authoritative.</span>
-  </div>
 
   <main class="workspace">
     <nav class="threads-panel" aria-label="Conversation threads">
@@ -65,20 +73,6 @@
     </nav>
 
     <section id="conversation" class="conversation-panel" aria-labelledby="conversation-title">
-      <header class="conversation-header">
-        <div class="conversation-title-group">
-          <span class="eyebrow">Active conversation</span>
-          <h1 id="conversation-title">New conversation</h1>
-        </div>
-        <div class="conversation-header-actions">
-          <button id="toggle-evidence" class="evidence-toggle-btn" type="button" aria-expanded="false" title="Toggle Context & Evidence (sources & live telemetry)">
-            <span class="btn-icon" aria-hidden="true">🛡️</span>
-            <span>Context & Evidence</span>
-            <span id="evidence-count-badge" class="evidence-count-badge">0</span>
-          </button>
-          <button id="cancel-turn" class="danger-quiet" type="button" disabled>Stop response</button>
-        </div>
-      </header>
       <div id="message-stream" class="message-stream" role="log" aria-live="polite" aria-relevant="additions">
         <section id="empty-state" class="empty-state">
           <div class="empty-mark" aria-hidden="true">M</div>
