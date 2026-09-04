@@ -1498,12 +1498,13 @@ def run_api_server(port: int | None = None, host: str | None = None):
         )
     except OSError as exc:
         raise OSError(f"GUI port {selected_port} on {bind_host} is unavailable; stop the conflicting process or configure MNE_BRAIN_PORT.") from exc
-    selected_port = int(bound_server.server_address[1])
     readiness = _codex_readiness(start_process=True)
     opencode_readiness = _opencode_readiness(start_process=True)
+    antigravity_readiness = _antigravity_readiness(start_process=True)
     print(f"MNE_Brain P11 REST API Server running on http://{bind_host}:{selected_port} (bounded concurrent mode)...")
     print(f"Codex App Server readiness: {readiness['status']} (ChatGPT session, service tier {readiness['service_tier']}).")
     print(f"OpenCode readiness: {opencode_readiness['status']} (protected loopback HTTP/SSE server).")
+    print(f"Antigravity CLI readiness: {antigravity_readiness['status']} (version {antigravity_readiness.get('version')}, default model {antigravity_readiness.get('default_model')}).")
     try:
         bound_server.serve_forever()
     finally:
