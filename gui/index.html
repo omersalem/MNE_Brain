@@ -26,53 +26,62 @@
   <a class="skip-link" href="#conversation">Skip to conversation</a>
   <div id="offline-banner" class="offline-banner" role="status" hidden>Connection lost. Your conversation remains in this browser view while the server reconnects.</div>
 
-  <header class="topbar">
-    <div class="brand-block" aria-label="MNE Brain Release 2">
-      <span class="brand-mark" aria-hidden="true">M</span>
-      <div class="brand-info">
-        <strong>MNE_Brain</strong>
-        <span id="conversation-title" class="topbar-thread-title">New conversation</span>
-      </div>
-    </div>
-    <div class="top-controls">
-      <label class="control-field" for="provider-select"><span>AI engine</span><select id="provider-select" aria-describedby="provider-status"></select></label>
-      <label class="control-field" for="model-select"><span>Model</span><select id="model-select" aria-describedby="provider-status"></select></label>
-      <p id="model-details" class="settings-note" aria-live="polite"></p>
-      <label class="control-field control-mode" for="permission-mode"><span>Mode</span>
-        <select id="permission-mode" disabled title="Owner Direct policy is enforced by the server">
-          <option value="OWNER_DIRECT">Owner Direct</option>
-        </select>
-      </label>
-      <button id="toggle-evidence" class="evidence-toggle-btn" type="button" aria-expanded="false" title="Toggle Context & Evidence (sources & live telemetry)">
-        <span class="btn-icon" aria-hidden="true">🛡️</span>
-        <span>Evidence</span>
-        <span id="evidence-count-badge" class="evidence-count-badge">0</span>
-      </button>
-      <button id="cancel-turn" class="danger-quiet" type="button" disabled title="Stop AI response">Stop</button>
-      <button id="settings-button" class="icon-button" type="button" aria-controls="settings-panel" title="Settings">Settings</button>
-      <button id="logout-button" class="icon-button" type="button" title="End the owner session">Sign out</button>
-    </div>
-    <div class="safety-strip sr-only" role="status">
-      <span class="status-pill safe"><i aria-hidden="true"></i>Loopback owner session</span>
-      <span class="status-pill"><i aria-hidden="true"></i>Conversations: memory only</span>
-      <span class="status-pill warning"><i aria-hidden="true"></i>Owner Direct · reads automatic, writes need final confirmation</span>
-      <span class="safety-label">Development console only · ZERO Business Logic in GUI · server policy is authoritative.</span>
-    </div>
-  </header>
+  <div class="safety-strip sr-only" role="status">
+    <span class="status-pill safe"><i aria-hidden="true"></i>Loopback owner session</span>
+    <span class="status-pill"><i aria-hidden="true"></i>Conversations: memory only</span>
+    <span class="status-pill warning"><i aria-hidden="true"></i>Owner Direct · reads automatic, writes need final confirmation</span>
+    <span class="safety-label">Development console only · ZERO Business Logic in GUI · server policy is authoritative.</span>
+  </div>
 
   <main class="workspace">
     <nav class="threads-panel" aria-label="Conversation threads">
-      <div class="panel-heading"><span>Conversations</span><button id="new-thread" class="primary compact" type="button">+ New</button></div>
+      <div class="sidebar-header">
+        <div class="brand-block" aria-label="MNE_Brain Release 2">
+          <span class="brand-mark" aria-hidden="true">M</span>
+          <strong>MNE_Brain</strong>
+        </div>
+        <button id="new-thread" class="primary compact" type="button" title="New conversation">+ New</button>
+      </div>
       <label class="search-field" for="thread-search"><span class="sr-only">Search conversations</span><input id="thread-search" type="search" autocomplete="off" placeholder="Search conversations" aria-label="Search conversations"></label>
       <ul id="thread-list" class="thread-list"></ul>
-      <div class="thread-actions">
-        <button id="export-thread" type="button">Export</button>
-        <button id="import-thread" type="button">Import</button>
-        <input id="import-thread-file" type="file" accept="application/json,.json" hidden>
+      <div class="sidebar-bottom">
+        <div class="thread-actions">
+          <button id="export-thread" type="button">Export</button>
+          <button id="import-thread" type="button">Import</button>
+          <input id="import-thread-file" type="file" accept="application/json,.json" hidden>
+        </div>
+        <div class="sidebar-user-controls">
+          <button id="settings-button" class="sidebar-action-btn" type="button" aria-controls="settings-panel" title="Settings">
+            <span class="btn-icon" aria-hidden="true">⚙️</span>
+            <span>Settings</span>
+          </button>
+          <button id="logout-button" class="sidebar-action-btn" type="button" title="End the owner session">
+            <span class="btn-icon" aria-hidden="true">🚪</span>
+            <span>Sign out</span>
+          </button>
+        </div>
       </div>
     </nav>
 
     <section id="conversation" class="conversation-panel" aria-labelledby="conversation-title">
+      <header class="conversation-header">
+        <div class="conversation-header-info">
+          <h1 id="conversation-title" class="conversation-title">New conversation</h1>
+          <label class="control-field control-mode" for="permission-mode"><span>Mode</span>
+            <select id="permission-mode" disabled title="Owner Direct policy is enforced by the server">
+              <option value="OWNER_DIRECT">Owner Direct</option>
+            </select>
+          </label>
+        </div>
+        <div class="conversation-header-actions">
+          <button id="toggle-evidence" class="evidence-toggle-btn" type="button" aria-expanded="false" title="Toggle Context & Evidence (sources & live telemetry)">
+            <span class="btn-icon" aria-hidden="true">🛡️</span>
+            <span>Evidence</span>
+            <span id="evidence-count-badge" class="evidence-count-badge">0</span>
+          </button>
+        </div>
+      </header>
+
       <div id="message-stream" class="message-stream" role="log" aria-live="polite" aria-relevant="additions">
         <section id="empty-state" class="empty-state">
           <div class="empty-mark" aria-hidden="true">M</div>
@@ -99,8 +108,19 @@
         <label for="composer-input"><span class="sr-only">Message</span></label>
         <textarea id="composer-input" rows="2" maxlength="200000" required placeholder="Ask with an exact target and evidence need…" aria-describedby="composer-hint turn-status"></textarea>
         <div class="composer-footer">
-          <div><span id="turn-status" role="status">Ready</span><span id="composer-hint">Enter to send · Shift+Enter for a new line</span></div>
-          <button id="send-turn" class="primary send-button" type="submit">Send <span aria-hidden="true">↑</span></button>
+          <div class="composer-engine-bar">
+            <label class="control-field" for="provider-select"><span>Engine</span><select id="provider-select" aria-describedby="provider-status" title="Select AI Engine"></select></label>
+            <label class="control-field" for="model-select"><span>Model</span><select id="model-select" aria-describedby="provider-status" title="Select Model"></select></label>
+            <p id="model-details" class="settings-note" aria-live="polite"></p>
+          </div>
+          <div class="composer-actions">
+            <div class="composer-status-group">
+              <span id="turn-status" role="status">Ready</span>
+              <span id="composer-hint">Enter to send · Shift+Enter for a new line</span>
+            </div>
+            <button id="cancel-turn" class="danger-quiet" type="button" disabled title="Stop AI response">Stop</button>
+            <button id="send-turn" class="primary send-button" type="submit">Send <span aria-hidden="true">↑</span></button>
+          </div>
         </div>
       </form>
     </section>

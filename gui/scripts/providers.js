@@ -20,9 +20,6 @@ function renderModels(selected){
   if(engine?.engine_id==='opencode'){const placeholder=document.createElement('option');placeholder.value='select-model';placeholder.textContent='Choose an OpenCode provider model';placeholder.disabled=true;modelSelect.append(placeholder);}
   for(const model of engine?.models||[]){const option=document.createElement('option');option.value=model.id;if(engine?.engine_id==='opencode')option.textContent=`${model.display_name} · ${model.provider_id} · ${model.cost_classification} · ctx ${model.context_limit||'unknown'} · out ${model.output_limit||'unknown'} · tools ${model.tool_support?'yes':'no'} · reasoning ${model.reasoning?'yes':'no'} · ${model.availability} · ${model.connection_status}`;else option.textContent=model.label;modelSelect.append(option);}
   modelSelect.value=selected||engine?.default_model||'select-model';
-  const pinned=Boolean(appState().currentThread?.turn_ids?.length);
-  const selectedAvailable=[...modelSelect.options].some(option=>option.value===appState().currentThread?.model_id&&!option.disabled);
-  modelSelect.disabled=pinned&&!(appState().currentThread?.engine_id==='opencode'&&!selectedAvailable);
   renderModelDetails();
 }
 function renderModelDetails(){const engine=activeEngine();const model=(engine?.models||[]).find(item=>item.id===modelSelect.value);const root=document.querySelector('#model-details');if(!model){root.textContent=engine?.engine_id==='opencode'?'Select an exact connected OpenCode model; no automatic fallback will occur.':'';return;}if(engine?.engine_id==='opencode')root.textContent=`${model.provider_id}/${model.model_id} · ${model.cost_classification} · context ${model.context_limit||'unknown'} · output ${model.output_limit||'unknown'} · tools ${model.tool_support?'supported':'not reported'} · reasoning ${model.reasoning?'reported':'not reported'} · ${model.availability} · ${model.connection_status}${model.warnings?.length?' · '+model.warnings.join(' · '):''}`;else if(engine?.engine_id==='antigravity')root.textContent=`${engine.label} · ${model.label}${model.effort?' · effort: '+model.effort:''} · Unrestricted Read & Governed Write Review`;else root.textContent=`${engine.label} · ${model.label}`;}
@@ -30,7 +27,7 @@ function renderEngines(){
   engineSelect.replaceChildren();
   for(const engine of appState().engines){const option=document.createElement('option');option.value=engine.engine_id;option.textContent=`${engine.label} · ${engine.authentication} · ${engine.status}`;option.disabled=engine.status!=='READY';engineSelect.append(option);}
   engineSelect.value=appState().currentThread?.engine_id||appState().engines.find(item=>item.status==='READY')?.engine_id||'codex';
-  engineSelect.disabled=Boolean(appState().currentThread?.turn_ids?.length);renderModels(appState().currentThread?.model_id);
+  renderModels(appState().currentThread?.model_id);
 }
 function addText(parent,tag,text,className=''){const node=document.createElement(tag);node.textContent=text;if(className)node.className=className;parent.append(node);return node;}
 function renderOAuthMethods(){
@@ -98,6 +95,11 @@ export async function loadProviders(){
 async function pinSelection(){
   const thread=appState().currentThread;if(!thread)return;
   if(engineSelect.value==='opencode'&&(!modelSelect.value||modelSelect.value==='select-model')){setStatus('Choose an available OpenCode model.');return;}
+  if(thread.engine_id===engineSelect.value&&thread.model_id===modelSelect.value)return;
+  if(thread.turn_ids?.length||thread.turns?.length){
+    document.dispatchEvent(new CustomEvent('new-thread-engine',{detail:{engine_id:engineSelect.value,model_id:modelSelect.value}}));
+    return;
+  }
   try{const updated=await mutateJSON(`/api/v2/threads/${thread.thread_id}/engine`,{engine_id:engineSelect.value,model_id:modelSelect.value});appState().currentThread={...thread,...updated};status.textContent=`${activeEngine()?.label} · ${updated.model_id} · pinned to this conversation`;renderEngines();}
   catch(error){setStatus(error.message);engineSelect.value=thread.engine_id;renderModels(thread.model_id);}
 }
