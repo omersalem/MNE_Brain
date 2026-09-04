@@ -58,7 +58,7 @@ function formatMarkdownInto(container,text){
     const numMatch=line.match(/^(\d+)\.\s+(.+)$/);
     if(numMatch){
       if(listType!=='ol'){flushList();currentList=document.createElement('ol');currentList.className='chat-list chat-ol';listType='ol';}
-      const li=document.createElement('li');renderInlineMarkdown(li,numMatch[2]);currentList.append(li);continue;
+      const li=document.createElement('li');li.value=parseInt(numMatch[1],10);renderInlineMarkdown(li,numMatch[2]);currentList.append(li);continue;
     }
     const bulletMatch=line.match(/^[-*•]\s+(.+)$/);
     if(bulletMatch){
