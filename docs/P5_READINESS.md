@@ -7,8 +7,8 @@
 | Governed registry | Complete | 12 unique schema-valid runbooks |
 | Domain procedures | Owner reviewed | Nine domain procedures, including dedicated FMC/FTD security triage |
 | Process procedures | Owner reviewed | P2 verification, P3 triage, and P4 handoff |
-| Canonical context coverage | Complete | 46/46 entities, 100% |
-| Owner-reviewed procedure coverage | Complete | 46/46 entities, 100% |
+| Canonical context coverage | Complete | 48/48 entities, 100% |
+| Owner-reviewed procedure coverage | Complete | 48/48 entities, 100% |
 | Selection and minimization | Complete | Deterministic maximum-three candidates; bodies excluded |
 | API and GUI visibility | Complete | Read-only coverage and review metadata only |
 | Live Ministry state | Unverified | No P5 live connection or collection occurred |

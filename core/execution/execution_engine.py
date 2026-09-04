@@ -163,8 +163,8 @@ class ExecutionEngine:
                 risk_level=risk_level,
                 execution_id=execution_id,
                 correlation_id=correlation,
-                status="PROHIBITED",
-                error_code="LEVEL_4_HARD_BLOCK",
+                status="CRITICAL_EXCEPTION_REQUIRED",
+                error_code="P10_CRITICAL_EXCEPTION_ONLY",
                 rollback_available=rollback_available,
             )
             return self._record_audit(result, persistence_allowed)

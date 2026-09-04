@@ -6,7 +6,7 @@ status: "operationally_reviewed"
 runbook_type: "domain_troubleshooting"
 scope_categories: ["network"]
 scope_services: ["branch-routing", "ipsec-vpn", "firewall", "sd-wan"]
-scope_entity_ids: ["fw-fortigate-bethlehem-01", "fw-fortigate-gaza-01", "fw-fortigate-hebron-01", "fw-fortigate-jenin-01", "fw-fortigate-jericho-01", "fw-fortigate-khanyounis-01", "fw-fortigate-nablus-01", "fw-fortigate-qalqilya-01", "fw-fortigate-rafah-01", "fw-fortigate-ramallah-01", "fw-fortigate-salfit-01", "fw-fortigate-tubas-01", "fw-fortigate-tulkarm-01", "sw-cisco-jenin-01"]
+scope_entity_ids: ["fw-fortigate-bethlehem-01", "fw-fortigate-gaza-01", "fw-fortigate-hebron-01", "fw-fortigate-jenin-01", "fw-fortigate-jericho-01", "fw-fortigate-khanyounis-01", "fw-fortigate-nablus-01", "fw-fortigate-qalqilya-01", "fw-fortigate-rafah-01", "fw-fortigate-ramallah-01", "fw-fortigate-salfit-01", "fw-fortigate-tubas-01", "fw-fortigate-tulkarm-01", "rtr-tulkarm-01", "sw-cisco-jenin-01", "sw-cisco-tulkarm-01"]
 category_fallback_allowed: false
 owner_team: "MNE-BRAIN-OWNER"
 requires_exact_target: true

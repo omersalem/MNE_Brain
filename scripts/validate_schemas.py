@@ -54,6 +54,28 @@ def validate_schemas():
         "p7-device-bindings.schema.json",
         "p8-diagnostic-catalog.schema.json",
         "p9-diagnostic-catalog.schema.json",
+        "p10-operation-catalog.schema.json",
+        "p10-operation-parameters.schema.json",
+        "p10-prepared-plan.schema.json",
+        "p10-approval-request.schema.json",
+        "p10-execution-result.schema.json",
+        "p10-rollback-plan.schema.json",
+        "p10-critical-warning.schema.json",
+        "p10-platform-transaction.schema.json",
+        "p10-check-result.schema.json",
+        "owner-direct-risk-warning.schema.json",
+        "owner-direct-identity-audit.schema.json",
+        "conversation-thread.schema.json",
+        "conversation-turn.schema.json",
+        "conversation-message.schema.json",
+        "provider-profile.schema.json",
+        "provider-capabilities.schema.json",
+        "tool-call.schema.json",
+        "tool-approval.schema.json",
+        "stream-event.schema.json",
+        "external-ai-authorization.schema.json",
+        "workspace-change-plan.schema.json",
+        "workspace-rollback-plan.schema.json",
     ]
     for s_name in required_schemas:
         s_path = schemas_dir / s_name
@@ -87,6 +109,8 @@ def validate_schemas():
         "ADR-014-P7-Owner-Gated-Live-Transports.md",
         "ADR-015-P8-Live-Troubleshooting-Orchestration.md",
         "ADR-016-P9-Deep-Diagnostics-and-Reasoning.md",
+        "ADR-017-P10-Owner-Controlled-Write-Execution.md",
+        "ADR-018-P11-Conversation-Provider-Tool-Control-Plane.md",
     ]
     for adr_name in required_adrs:
         adr_path = adr_dir / adr_name

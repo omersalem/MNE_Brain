@@ -19,11 +19,11 @@ def test_router_bounds_unknown_target_options() -> None:
     assert unknown["clarification_request"]["requires_clarification"] is True
     assert unknown["clarification_request"]["options"] == []
 
-    exact = router.classify_query("Why is 172.23.19.1 unreachable?")
+    exact = router.classify_query("Why is 172.23.70.4 unreachable?")
     assert exact["route_type"] == "troubleshoot"
     assert exact["resolution_status"] == "exact"
     assert exact["clarification_request"] is None
-    assert exact["resolved_entity_ids"] == ["fw-fortigate-hq-01"]
+    assert exact["resolved_entity_ids"] == ["fw-fortigate-edge-01"]
 
     concept = router.classify_query("Explain network topology")
     assert concept["route_type"] == "concept"

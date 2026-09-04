@@ -54,7 +54,7 @@ def run_p6_offline_pilot() -> dict[str, Any]:
     def complete_coverage() -> tuple[bool, str, dict[str, Any]]:
         coverage = registry.coverage_report()
         passed = (
-            coverage["total_entities"] == coverage["planned_entities"] == coverage["offline_validated_entities"] == 46
+            coverage["total_entities"] == coverage["planned_entities"] == coverage["offline_validated_entities"] == 48
             and coverage["planning_coverage_percent"] == 100.0
             and coverage["offline_validation_coverage_percent"] == 100.0
             and coverage["coverage_gaps"] == []
@@ -62,7 +62,7 @@ def run_p6_offline_pilot() -> dict[str, Any]:
             and coverage["live_collection_enabled"] is False
             and coverage["production_readiness_claimed"] is False
         )
-        return passed, "all 46 canonical entities have an exact offline-validated connector", coverage
+        return passed, "all 48 canonical entities have an exact offline-validated connector", coverage
 
     scenario("p6-02", complete_coverage)
 
@@ -70,21 +70,21 @@ def run_p6_offline_pilot() -> dict[str, Any]:
         plans = [registry.build_plan(item["entity_id"]) for item in entities]
         serialized = json.dumps(plans, sort_keys=True).casefold()
         passed = (
-            len(plans) == 46
+            len(plans) == 48
             and all(item["status"] == "PLANNED_READ_ONLY" for item in plans)
             and all(item["entity_id"] == entity["entity_id"] for item, entity in zip(plans, entities))
             and all(item["execution_permitted"] is False for item in plans)
             and all(item["raw_operations_included"] is False for item in plans)
             and not any(marker in serialized for marker in ("password", "credential_reference", "raw_output"))
         )
-        return passed, "46 exact plans are deterministic, fingerprinted, and operation-minimized", {"plans": len(plans)}
+        return passed, "48 exact plans are deterministic, fingerprinted, and operation-minimized", {"plans": len(plans)}
 
     scenario("p6-03", all_entity_plans)
 
     def all_entity_fixtures() -> tuple[bool, str, dict[str, Any]]:
         fixtures = [engine.validate_offline_fixture(item["entity_id"]) for item in entities]
         passed = (
-            len(fixtures) == 46
+            len(fixtures) == 48
             and all(item["status"] == "SIMULATED_NOT_ACCEPTED" for item in fixtures)
             and all(item["trust_level"] == 0 for item in fixtures)
             and all(item["checks_succeeded"] >= 2 for item in fixtures)
@@ -93,7 +93,7 @@ def run_p6_offline_pilot() -> dict[str, Any]:
             and all(item["notification_sent"] is False for item in fixtures)
             and all(item["remediation_attempted"] is False for item in fixtures)
         )
-        return passed, "all 46 entity routes pass trust-zero injected transport validation", {"fixtures": len(fixtures)}
+        return passed, "all 48 entity routes pass trust-zero injected transport validation", {"fixtures": len(fixtures)}
 
     scenario("p6-04", all_entity_fixtures)
 

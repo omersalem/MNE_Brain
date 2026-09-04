@@ -62,6 +62,30 @@ jobs:
       - name: Run P6 multi-platform connector pilot
         run: python -B scripts/run_p6_offline_pilot.py
 
+      - name: Validate GUI JavaScript syntax
+        run: python -B scripts/validate_gui_javascript.py
+
+      - name: Run P10 focused safety tests
+        env:
+          PYTHONDONTWRITEBYTECODE: "1"
+        run: python -B -m pytest -q -p no:cacheprovider tests/test_p10_phase.py
+
+      - name: Run P10 offline multi-platform pilot
+        run: python -B scripts/run_p10_offline_pilot.py
+
+      - name: Run P11 focused control-plane tests
+        env:
+          PYTHONDONTWRITEBYTECODE: "1"
+        run: python -B -m pytest -q -p no:cacheprovider tests/test_p11_phase.py
+
+      - name: Run OpenCode secondary-engine tests
+        env:
+          PYTHONDONTWRITEBYTECODE: "1"
+        run: python -B -m pytest -q -p no:cacheprovider tests/test_p11_opencode_runtime.py
+
+      - name: Run P11 offline control-plane pilot
+        run: python -B scripts/run_p11_offline_pilot.py
+
       - name: Run classified safe test collection
         env:
           PYTHONDONTWRITEBYTECODE: "1"

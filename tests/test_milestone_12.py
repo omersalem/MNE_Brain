@@ -25,21 +25,7 @@ def test_milestone_12() -> bool:
     html_text = html_file.read_text(encoding="utf-8") if html_file.exists() else ""
     server_text = server_file.read_text(encoding="utf-8") if server_file.exists() else ""
 
-    required_views = {
-        "view-overview",
-        "view-incident-intake",
-        "view-assistant",
-        "view-p8",
-        "view-p9",
-        "view-inventory",
-        "view-runbooks",
-        "view-connectors",
-        "view-knowledge",
-        "view-investigations",
-        "view-actions",
-        "view-automation",
-        "view-logs",
-    }
+    required_views = {"thread-list", "message-stream", "composer", "evidence-sources", "tool-drawer", "settings-panel", "provider-select", "permission-mode"}
     if (
         "MNE_Brain Release 2" in html_text
         and "ZERO Business Logic in GUI" in html_text
@@ -51,32 +37,23 @@ def test_milestone_12() -> bool:
     else:
         errors.append("GUI structure or required presentation views are incomplete")
 
-    forbidden_gui_capabilities = {
-        "/actions/execute": "remediation execution",
-        "/knowledge/promote": "knowledge promotion",
-        "/automation/trigger": "alert injection",
-        "/settings": "runtime configuration mutation",
-        "/oauth/": "OAuth or token registration",
-        "accessToken": "session-token handling",
-        "executeAction": "action execution function",
-        "promoteProposal": "knowledge mutation function",
-        "triggerTestWebhookAlert": "simulated alert function",
-        "innerHTML": "unsafe dynamic HTML insertion",
-    }
-    found_capabilities = [label for marker, label in forbidden_gui_capabilities.items() if marker in html_text]
-    post_methods = re.findall(r"method\s*:\s*['\"]POST['\"]", html_text)
+    scripts = "\n".join(path.read_text(encoding="utf-8") for path in sorted((gui_dir / "scripts").glob("*.js")))
+    forbidden_gui_capabilities = {"innerHTML": "unsafe dynamic HTML insertion", "command_hash": "command hash calculation", "expected_approval_phrase": "approval phrase calculation", "sha256": "approval digest calculation"}
+    found_capabilities = [label for marker, label in forbidden_gui_capabilities.items() if marker in scripts]
+    required_modules = {"api.js", "auth.js", "threads.js", "composer.js", "streaming.js", "activity.js", "evidence.js", "tool_calls.js", "approvals.js", "providers.js", "p10.js"}
     if (
         not found_capabilities
-        and len(post_methods) == 4
-        and "fetchJSON('/chat'" in html_text
-        and "fetchJSON('/incidents/intake'" in html_text
-        and "fetchJSON('/troubleshooting/p8/plan'" in html_text
-        and "fetchJSON('/troubleshooting/p9/plan'" in html_text
+        and {path.name for path in (gui_dir / "scripts").glob("*.js")} == required_modules
+        and "type=\"module\"" in html_text
+        and "X-CSRF-Token" in scripts
+        and "textContent" in scripts
+        and "crypto.randomUUID" in scripts
+        and "unsafe-inline" not in html_text
     ):
-        print(" [PASS] GUI submits only delegated troubleshooting, P8/P9 planning, and incident-intake queries")
+        print(" [PASS] Modular GUI presents server-built risk and approval state without calculating hashes, phrases, or commands")
         passed += 1
     else:
-        errors.append(f"GUI mutation boundary failed: found={found_capabilities}, post_count={len(post_methods)}")
+        errors.append(f"GUI presentation boundary failed: found={found_capabilities}")
 
     misleading_claims = [
         "LEVEL 5 TRUST",
@@ -138,7 +115,7 @@ def test_milestone_12() -> bool:
         and dashboard["connector_families"] == 15
         and dashboard["offline_connector_coverage_percent"] == 100.0
         and dashboard["offline_connector_readiness"] is True
-        and dashboard["live_transport_coverage_percent"] == 2.17
+        and dashboard["live_transport_coverage_percent"] == 2.08
         and set(dashboard["driver_statuses"].values()) == {"PLANNING_ONLY_NOT_CONFIGURED"}
         and "execute_command" not in dashboard_source
         and "DriverFactory" not in dashboard_source

@@ -1,0 +1,104 @@
+permission_modes:
+  OWNER_DIRECT:
+    - workspace.list
+    - workspace.search
+    - workspace.read
+    - workspace.status
+    - workspace.diff
+    - mne.build_evidence
+    - mne.plan_investigation
+    - owner_direct.discover
+    - owner_direct.prepare_write
+    - owner_direct.identity_audit
+  OWNER_FULL_CONTROL:
+    - workspace.list
+    - workspace.search
+    - workspace.read
+    - workspace.status
+    - workspace.diff
+    - workspace.prepare_patch
+    - workspace.apply_approved_patch
+    - workspace.run_validator
+    - workspace.prepare_rollback
+    - workspace.apply_approved_rollback
+    - mne.build_evidence
+    - mne.plan_investigation
+    - mne.prepare_live_read
+    - mne.execute_approved_live_read
+    - p10.prepare
+    - p10.prepare_critical
+    - p10.approve
+    - p10.execute
+    - p10.rollback_prepare
+  OWNER_AUTONOMOUS:
+    - workspace.list
+    - workspace.search
+    - workspace.read
+    - workspace.status
+    - workspace.diff
+    - workspace.prepare_patch
+    - workspace.run_validator
+    - workspace.prepare_rollback
+    - mne.build_evidence
+    - mne.plan_investigation
+    - mne.prepare_live_read
+    - p10.prepare
+    - p10.prepare_critical
+  ANSWER_ONLY: []
+  WORKSPACE_READ:
+    - workspace.list
+    - workspace.search
+    - workspace.read
+    - workspace.status
+    - workspace.diff
+    - mne.build_evidence
+    - mne.plan_investigation
+  WORKSPACE_WRITE:
+    - workspace.list
+    - workspace.search
+    - workspace.read
+    - workspace.status
+    - workspace.diff
+    - workspace.prepare_patch
+    - workspace.apply_approved_patch
+    - workspace.run_validator
+    - workspace.prepare_rollback
+    - workspace.apply_approved_rollback
+    - mne.build_evidence
+    - mne.plan_investigation
+  LIVE_READ:
+    - workspace.list
+    - workspace.search
+    - workspace.read
+    - workspace.status
+    - workspace.diff
+    - mne.build_evidence
+    - mne.plan_investigation
+    - mne.prepare_live_read
+    - mne.execute_approved_live_read
+  INFRASTRUCTURE_WRITE:
+    - workspace.list
+    - workspace.search
+    - workspace.read
+    - workspace.status
+    - workspace.diff
+    - mne.build_evidence
+    - mne.plan_investigation
+    - mne.prepare_live_read
+    - mne.execute_approved_live_read
+    - p10.prepare
+    - p10.prepare_critical
+    - p10.approve
+    - p10.execute
+    - p10.rollback_prepare
+protected_workspace_paths:
+  - .git
+  - .env
+  - config/api_keys_storage.json
+  - config/chatgpt_oauth_tokens.json
+  - operations/actions/audit_log.jsonl
+validators:
+  pytest: [python, -m, pytest]
+  schemas: [python, scripts/validate_schemas.py]
+  brain: [python, scripts/validate_brain.py]
+  gui: [python, scripts/validate_gui_javascript.py]

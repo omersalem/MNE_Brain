@@ -20,8 +20,8 @@ def test_milestone_13() -> bool:
     passed = 0
 
     master_report = run_master_validation()
-    if master_report["success"] and master_report["passed"] == master_report["total"] == 20 and master_report["mode"] == "OFFLINE_NON_EXECUTING":
-        print(" [PASS] Master validation reports 20 truthful offline gates")
+    if master_report["success"] and master_report["passed"] == master_report["total"] == 22 and master_report["mode"] == "OFFLINE_NON_EXECUTING":
+        print(" [PASS] Master validation reports 22 truthful offline gates including P10 and P11")
         passed += 1
     else:
         errors.append(f"Master validation failed: {master_report}")

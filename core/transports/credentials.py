@@ -29,14 +29,20 @@ class CredentialResolver:
             values[key.strip()] = value
         return values
 
-    def external_source(self, source_path_env: str = "MNE_FORTIGATE_CREDENTIAL_ENV_FILE") -> dict[str, str]:
-        if not self.KEY.fullmatch(source_path_env):
-            return {}
-        raw_path = self.local.get(source_path_env, "")
-        path = Path(raw_path)
-        if not path.is_absolute() or not path.is_file():
-            return {}
-        return self._read_env(path)
+    def external_source(self, source_path_env: str = "MNE_CREDENTIAL_ENV_FILE") -> dict[str, str]:
+        """Load ignored external credential-reference files without exposing them."""
+        candidates = [source_path_env]
+        if source_path_env == "MNE_CREDENTIAL_ENV_FILE":
+            candidates.append("MNE_FORTIGATE_CREDENTIAL_ENV_FILE")
+        merged: dict[str, str] = {}
+        for candidate in candidates:
+            if not self.KEY.fullmatch(candidate):
+                continue
+            raw_path = self.local.get(candidate, "")
+            path = Path(raw_path)
+            if path.is_absolute() and path.is_file():
+                merged.update(self._read_env(path))
+        return merged
 
     def value(self, key: str) -> str:
         """Resolve a non-secret or secret transport value with local overrides."""
@@ -49,10 +55,9 @@ class CredentialResolver:
     def resolve(self, *, target: str, host_key: str, username_key: str, password_key: str) -> tuple[str, str]:
         if not all(self.KEY.fullmatch(item) for item in (host_key, username_key, password_key)):
             raise ValueError("Credential key mapping is invalid.")
-        source = self.external_source()
-        if source.get(host_key) != target:
+        if self.value(host_key) != target:
             raise ValueError("Credential target does not match the exact transport target.")
-        username, password = source.get(username_key, ""), source.get(password_key, "")
+        username, password = self.value(username_key), self.value(password_key)
         if not username or not password:
             raise ValueError("Credential values are unavailable.")
         return username, password
@@ -61,16 +66,29 @@ class CredentialResolver:
         """Resolve credentials when Kerberos or a TLS pin supplies target identity."""
         if not all(self.KEY.fullmatch(item) for item in (username_key, password_key)):
             raise ValueError("Credential key mapping is invalid.")
-        source = self.external_source()
-        username, password = source.get(username_key, ""), source.get(password_key, "")
+        username, password = self.value(username_key), self.value(password_key)
         if not username or not password:
             raise ValueError("Credential values are unavailable.")
         return username, password
 
     def readiness(self, mappings: list[dict[str, str]]) -> dict[str, bool]:
         """Return only configured/not-configured flags; never values."""
-        source = self.external_source()
         return {
-            str(item["id"]): all(bool(source.get(item.get(key, ""))) for key in ("host_key", "username_key", "password_key"))
+            str(item["id"]): all(bool(self.value(item.get(key, ""))) for key in ("host_key", "username_key", "password_key"))
             for item in mappings
         }
+
+    def status(self, key: str, *, kind: str = "opaque") -> str:
+        """Return only CONFIGURED, MISSING, or INVALID for an exact reference."""
+        if not self.KEY.fullmatch(key):
+            return "INVALID"
+        value = self.value(key)
+        if not value:
+            return "MISSING"
+        if kind == "opaque" and not value.startswith(("secretref://", "vaultref://")):
+            return "INVALID"
+        if kind == "sha256" and not re.fullmatch(r"[A-Fa-f0-9]{64}", value):
+            return "INVALID"
+        if kind == "ssh_hostkey" and not re.fullmatch(r"ssh-[A-Za-z0-9-]+\s+\d+\s+SHA256:[A-Za-z0-9+/=]+", value):
+            return "INVALID"
+        return "CONFIGURED"

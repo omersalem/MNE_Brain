@@ -1,22 +1,22 @@
 ---
 id: "sw-cisco-core-01"
-name: "HQ Core Switch (Cisco IOS-XE)"
+name: "HQ Core Switch (Cisco Catalyst 9500 Stack)"
 category: "network"
-aliases: ["cisco", "sw-cisco", "core-switch", "172.23.19.2"]
-hostname: "sw-cisco-core-01"
-fqdn: "sw-cisco-core-01.mne.gov.ps"
-ip: "172.23.19.2"
-vlan: "19"
-services: ["switching", "vlan-routing", "trunking"]
+aliases: ["cisco", "sw-cisco", "core-switch", "main core switch", "CoreSwitch1", "172.23.70.254"]
+hostname: "CoreSwitch1"
+fqdn: "CoreSwitch1.mne.gov.ps"
+ip: "172.23.70.254"
+vlan: "70"
+services: ["switching", "campus-aggregation", "trunking", "40g-uplink"]
 owner: "Network Infrastructure Team"
-related_entities: ["fw-fortigate-hq-01"]
+related_entities: ["fw-fortigate-hq-01", "sw-cisco-floor-1", "sw-cisco-floor-2"]
 knowledge_status: "unverified"
 source: "legacy_release_2_import"
 last_verified: null
 freshness_ttl_hours: 720
 ---
 
-# Canonical Facts — Cisco Core Switch
+# Canonical Facts — Cisco Core Switch (CoreSwitch1)
 
 > **Entity ID:** `sw-cisco-core-01`  
 > **Trust Level:** Level 3 (Canonical Vault Fact)  
@@ -25,14 +25,15 @@ freshness_ttl_hours: 720
 ---
 
 ## 🏛️ Device Identity & Network Details
-- **Hostname:** `sw-cisco-core-01`
-- **Management IP:** `172.23.19.2`
-- **Model:** Cisco Catalyst 9300
-- **IOS-XE Version:** 17.06.03
-- **Role:** HQ Core Distribution Switch
+- **Hostname:** `CoreSwitch1`
+- **Management IP:** `172.23.70.254` (VLAN 70 Network Management)
+- **Model:** Cisco Catalyst 9500 Stack
+- **Role:** Campus Aggregation Switch (Basement through Floor 6)
 
 ---
 
-## 🔌 Interface Topology
-- **GigabitEthernet0/0/1:** Core Gateway (172.23.19.2/24) — Link UP
-- **GigabitEthernet0/0/2:** Access Switch Trunk — Link DOWN
+## 🔌 Interface Topology & Links
+- **Po44 (40G QSFP):** Campus Uplink to Fujitsu Core (0/44) — Link UP
+- **Twe 1/0/1–9:** Floor Switch Downlinks (Floor 1 through 6, GND, B1, Khadamat) — Link UP
+- **Twe 1/0/12 & 2/0/12:** WAF Trunk to F5 BIG-IP (Ports 1.1 & 1.2) — Link UP
+

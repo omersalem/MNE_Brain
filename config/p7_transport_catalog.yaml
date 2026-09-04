@@ -28,5 +28,5 @@ target_reconciliations:
   - {entity_id: fw-fortigate-rafah-01, canonical_target: 10.235.18.1, documented_target: 10.235.18.1, disposition: DOCUMENTED_CANDIDATE_ONLY, source_reference: BRANCH_CONNECTIVITY_BASELINE.md}
   - {entity_id: fw-fortigate-salfit-01, canonical_target: 10.165.18.1, documented_target: 10.235.18.1, disposition: CONFLICT_REQUIRES_IDENTITY_PROOF, source_reference: BRANCH_CONNECTIVITY_BASELINE.md}
   - {entity_id: fw-fortigate-tubas-01, canonical_target: 10.201.18.1, documented_target: 10.230.18.1, disposition: CONFLICT_REQUIRES_IDENTITY_PROOF, source_reference: BRANCH_CONNECTIVITY_BASELINE.md}
-  - {entity_id: fw-fortigate-tulkarm-01, canonical_target: 10.110.19.1, documented_target: 10.165.18.1, disposition: CONFLICT_REQUIRES_IDENTITY_PROOF, source_reference: BRANCH_CONNECTIVITY_BASELINE.md}
+  - {entity_id: fw-fortigate-tulkarm-01, canonical_target: 10.165.18.1, documented_target: 10.165.18.1, disposition: DOCUMENTED_CANDIDATE_ONLY, source_reference: BRANCH_CONNECTIVITY_BASELINE.md}
   - {entity_id: san-greenunit-01, canonical_target: 172.23.70.70, documented_target: 172.23.70.70, disposition: CONFLICT_REQUIRES_IDENTITY_PROOF, source_reference: MAIN_DEVICE_LINK_PORT_DISCOVERY.md}

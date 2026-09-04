@@ -1,145 +1,375 @@
 {
-  "last_updated": "2026-08-02T13:50:04.590626",
-  "total_entities": 46,
+  "last_updated": "2026-09-04T12:31:52.793238+00:00",
+  "total_entities": 48,
   "entities": [
     {
       "entity_id": "app-apdct-web-01",
       "name": "APDCT Government Application Server",
       "category": "compute",
       "aliases": [
+        "172.23.79.79",
         "apdct",
         "apdct-app",
-        "172.23.79.79",
         "apdct-web"
       ],
       "hostname": "app-apdct-web-01",
       "fqdn": "apdct.mne.gov.ps",
       "ip": "172.23.79.79",
+      "ip_addresses": [
+        "172.23.79.79"
+      ],
       "vlan": "79",
       "services": [
-        "http-80",
         "apdct-service",
+        "http-80",
         "internal-portal"
       ],
       "owner": "E-Government Applications Team",
       "related_entities": [
-        "waf-f5-bigip-mgmt",
-        "vc-vmware-mgmt-01"
+        "vc-vmware-mgmt-01",
+        "waf-f5-bigip-mgmt"
       ],
-      "canonical_file": "knowledge/compute/apdct-app-canonical.md",
-      "ip_addresses": [
-        "172.23.79.79"
-      ]
+      "knowledge_status": "unverified",
+      "source": "legacy_release_2_import",
+      "last_verified": null,
+      "freshness_ttl_hours": 720,
+      "evidence_refs": [],
+      "verification_target": "",
+      "verification_check_id": "",
+      "verification_outcome": "",
+      "canonical_file": "knowledge/compute/apdct-app-canonical.md"
     },
     {
       "entity_id": "app-auction-test-01",
       "name": "Auction Portal Web Test Host",
       "category": "compute",
       "aliases": [
-        "auction-app",
-        "auct-vs",
         "172.23.79.100",
+        "auct-vs",
+        "auction-app",
         "auction-test"
       ],
       "hostname": "app-auction-test-01",
       "fqdn": "auction.mne.gov.ps",
       "ip": "172.23.79.100",
+      "ip_addresses": [
+        "172.23.79.100"
+      ],
       "vlan": "79",
       "services": [
+        "auction-portal",
         "http-80",
-        "php-health-check",
-        "auction-portal"
+        "php-health-check"
       ],
       "owner": "E-Government Applications Team",
       "related_entities": [
-        "waf-f5-bigip-mgmt",
-        "vc-vmware-mgmt-01"
+        "vc-vmware-mgmt-01",
+        "waf-f5-bigip-mgmt"
       ],
-      "canonical_file": "knowledge/compute/auction-app-canonical.md",
+      "knowledge_status": "unverified",
+      "source": "legacy_release_2_import",
+      "last_verified": null,
+      "freshness_ttl_hours": 720,
+      "evidence_refs": [],
+      "verification_target": "",
+      "verification_check_id": "",
+      "verification_outcome": "",
+      "canonical_file": "knowledge/compute/auction-app-canonical.md"
+    },
+    {
+      "entity_id": "backup-veeam-hq-01",
+      "name": "HQ Veeam Backup & Disaster Recovery Server",
+      "category": "storage",
+      "aliases": [
+        "172.23.69.60",
+        "FUJI-BACKUP-SER",
+        "backup-server",
+        "veeam-backup",
+        "veeam-hq"
+      ],
+      "hostname": "FUJI-BACKUP-SER",
+      "fqdn": "backup-veeam-hq-01.mne.gov.ps",
+      "ip": "172.23.69.60",
       "ip_addresses": [
-        "172.23.79.100"
-      ]
+        "172.23.69.60"
+      ],
+      "vlan": "69",
+      "services": [
+        "disaster-recovery",
+        "san-repository",
+        "veeam-backup",
+        "vm-snapshots"
+      ],
+      "owner": "Storage & Disaster Recovery Team",
+      "related_entities": [
+        "san-fujitsu-01",
+        "vc-vmware-hq-01"
+      ],
+      "knowledge_status": "unverified",
+      "source": "legacy_release_2_import",
+      "last_verified": null,
+      "freshness_ttl_hours": 720,
+      "evidence_refs": [],
+      "verification_target": "",
+      "verification_check_id": "",
+      "verification_outcome": "",
+      "canonical_file": "knowledge/storage/veeam-backup-canonical.md"
+    },
+    {
+      "entity_id": "dc-mne-ad-01",
+      "name": "MNE-DC1 Primary Domain Controller & Enterprise DNS",
+      "category": "identity",
+      "aliases": [
+        "172.23.71.173",
+        "172.23.71.27",
+        "dc1-mne",
+        "mne-dc1",
+        "mne-dc1-ad"
+      ],
+      "hostname": "dc-mne-ad-01",
+      "fqdn": "MNE-DC1.mne.gov.ps",
+      "ip": "172.23.71.27",
+      "ip_addresses": [
+        "172.23.71.27"
+      ],
+      "vlan": "71",
+      "services": [
+        "active-directory",
+        "kerberos",
+        "ldap-ssl",
+        "primary-dns",
+        "winrm"
+      ],
+      "owner": "Identity & Core Windows Infrastructure Team",
+      "related_entities": [
+        "dc-windows-ad-01",
+        "ex-windows-mail-01"
+      ],
+      "knowledge_status": "unverified",
+      "source": "legacy_release_2_import",
+      "last_verified": null,
+      "freshness_ttl_hours": 720,
+      "evidence_refs": [],
+      "verification_target": "",
+      "verification_check_id": "",
+      "verification_outcome": "",
+      "canonical_file": "knowledge/identity/mne-dc1-canonical.md"
+    },
+    {
+      "entity_id": "dc-mne-ad-02",
+      "name": "MNE-DC2 Secondary Domain Controller & Domain Naming Master",
+      "category": "identity",
+      "aliases": [
+        "172.23.71.28",
+        "dc2-mne",
+        "mne-dc2",
+        "mne-dc2-ad"
+      ],
+      "hostname": "MNE-DC2",
+      "fqdn": "MNE-DC2.mne.gov.ps",
+      "ip": "172.23.71.28",
+      "ip_addresses": [
+        "172.23.71.28"
+      ],
+      "vlan": "71",
+      "services": [
+        "active-directory",
+        "dns-replica",
+        "domain-naming-master",
+        "rid-master"
+      ],
+      "owner": "Identity & Core Windows Infrastructure Team",
+      "related_entities": [
+        "dc-mne-ad-01",
+        "ex-windows-mail-01"
+      ],
+      "knowledge_status": "unverified",
+      "source": "legacy_release_2_import",
+      "last_verified": null,
+      "freshness_ttl_hours": 720,
+      "evidence_refs": [],
+      "verification_target": "",
+      "verification_check_id": "",
+      "verification_outcome": "",
+      "canonical_file": "knowledge/identity/mne-dc2-canonical.md"
+    },
+    {
+      "entity_id": "dc-windows-ad-01",
+      "name": "Primary Domain Controller (AD/DNS)",
+      "category": "identity",
+      "aliases": [
+        "172.23.71.27",
+        "active directory",
+        "ad",
+        "dc-01",
+        "domain-controller"
+      ],
+      "hostname": "dc-windows-ad-01",
+      "fqdn": "MNE-DC1.mne.gov.ps",
+      "ip": "172.23.71.27",
+      "ip_addresses": [
+        "172.23.71.27"
+      ],
+      "vlan": "71",
+      "services": [
+        "active-directory",
+        "dns",
+        "kerberos",
+        "ldap"
+      ],
+      "owner": "Identity & Security Team",
+      "related_entities": [
+        "dc-mne-ad-01",
+        "fw-fortigate-hq-01"
+      ],
+      "knowledge_status": "unverified",
+      "source": "docs/company_docs/Ministry_Manual/MASTER_ASSET_INVENTORY.md",
+      "last_verified": null,
+      "freshness_ttl_hours": 720,
+      "evidence_refs": [],
+      "verification_target": "",
+      "verification_check_id": "",
+      "verification_outcome": "",
+      "canonical_file": "knowledge/identity/ad-canonical.md"
+    },
+    {
+      "entity_id": "dc-windows-ad-02",
+      "name": "Secondary Domain Controller (AD/DNS Replica)",
+      "category": "identity",
+      "aliases": [
+        "172.23.71.28",
+        "ad-secondary",
+        "dc-02",
+        "dc-windows-02"
+      ],
+      "hostname": "dc-windows-ad-02",
+      "fqdn": "MNE-DC2.mne.gov.ps",
+      "ip": "172.23.71.28",
+      "ip_addresses": [
+        "172.23.71.28"
+      ],
+      "vlan": "71",
+      "services": [
+        "active-directory",
+        "dns-replica",
+        "kerberos",
+        "ldap-replica"
+      ],
+      "owner": "Identity & Core Windows Infrastructure Team",
+      "related_entities": [
+        "dc-mne-ad-02",
+        "dc-windows-ad-01",
+        "vc-vmware-hq-01"
+      ],
+      "knowledge_status": "unverified",
+      "source": "docs/company_docs/Ministry_Manual/MASTER_ASSET_INVENTORY.md",
+      "last_verified": null,
+      "freshness_ttl_hours": 720,
+      "evidence_refs": [],
+      "verification_target": "",
+      "verification_check_id": "",
+      "verification_outcome": "",
+      "canonical_file": "knowledge/identity/ad-secondary-canonical.md"
     },
     {
       "entity_id": "esxi-node-hq-01",
       "name": "HQ ESXi Hypervisor Host Node 01",
       "category": "compute",
       "aliases": [
+        "172.23.69.30",
         "esxi-01",
         "esxi-hq-01",
-        "172.23.19.11",
         "host-node-01"
       ],
       "hostname": "esxi-node-hq-01",
       "fqdn": "esxi-node-hq-01.mne.gov.ps",
-      "ip": "172.23.19.11",
-      "vlan": "19",
+      "ip": "172.23.69.30",
+      "ip_addresses": [
+        "172.23.69.30"
+      ],
+      "vlan": "69",
       "services": [
-        "vmware-esxi",
         "host-management",
         "vmotion",
+        "vmware-esxi",
         "vsan"
       ],
       "owner": "Virtualization & Infrastructure Team",
       "related_entities": [
-        "vc-vmware-hq-01",
-        "san-fujitsu-01"
+        "san-fujitsu-01",
+        "vc-vmware-hq-01"
       ],
-      "canonical_file": "knowledge/compute/esxi-node1-canonical.md",
-      "ip_addresses": [
-        "172.23.19.11"
-      ]
+      "knowledge_status": "unverified",
+      "source": "legacy_release_2_import",
+      "last_verified": null,
+      "freshness_ttl_hours": 720,
+      "evidence_refs": [],
+      "verification_target": "",
+      "verification_check_id": "",
+      "verification_outcome": "",
+      "canonical_file": "knowledge/compute/esxi-node1-canonical.md"
     },
     {
       "entity_id": "esxi-node-hq-02",
       "name": "HQ ESXi Hypervisor Host Node 02",
       "category": "compute",
       "aliases": [
+        "172.23.69.31",
         "esxi-02",
         "esxi-hq-02",
-        "172.23.19.12",
         "host-node-02"
       ],
       "hostname": "esxi-node-hq-02",
       "fqdn": "esxi-node-hq-02.mne.gov.ps",
-      "ip": "172.23.19.12",
-      "vlan": "19",
+      "ip": "172.23.69.31",
+      "ip_addresses": [
+        "172.23.69.31"
+      ],
+      "vlan": "69",
       "services": [
-        "vmware-esxi",
         "host-management",
         "vmotion",
+        "vmware-esxi",
         "vsan"
       ],
       "owner": "Virtualization & Infrastructure Team",
       "related_entities": [
-        "vc-vmware-hq-01",
-        "san-fujitsu-01"
+        "san-fujitsu-01",
+        "vc-vmware-hq-01"
       ],
-      "canonical_file": "knowledge/compute/esxi-node2-canonical.md",
-      "ip_addresses": [
-        "172.23.19.12"
-      ]
+      "knowledge_status": "unverified",
+      "source": "legacy_release_2_import",
+      "last_verified": null,
+      "freshness_ttl_hours": 720,
+      "evidence_refs": [],
+      "verification_target": "",
+      "verification_check_id": "",
+      "verification_outcome": "",
+      "canonical_file": "knowledge/compute/esxi-node2-canonical.md"
     },
     {
       "entity_id": "ex-windows-mail-01",
       "name": "MNE Enterprise Exchange 2019 Mail Server",
       "category": "compute",
       "aliases": [
+        "172.23.71.36",
         "exchange",
         "exchange-2019",
         "mail-server",
-        "172.23.71.36",
         "mne-mail"
       ],
       "hostname": "ex-windows-mail-01",
       "fqdn": "mail.mne.gov.ps",
       "ip": "172.23.71.36",
+      "ip_addresses": [
+        "172.23.71.36"
+      ],
       "vlan": "71",
       "services": [
-        "smtp-25",
-        "submission-587",
         "imaps-993",
         "owa-https",
+        "smtp-25",
+        "submission-587",
         "winrm-5985"
       ],
       "owner": "Messaging & Collaboration Systems Team",
@@ -147,10 +377,15 @@
         "dc-mne-ad-01",
         "fw-fortigate-edge-01"
       ],
-      "canonical_file": "knowledge/compute/exchange-canonical.md",
-      "ip_addresses": [
-        "172.23.71.36"
-      ]
+      "knowledge_status": "unverified",
+      "source": "legacy_release_2_import",
+      "last_verified": null,
+      "freshness_ttl_hours": 720,
+      "evidence_refs": [],
+      "verification_target": "",
+      "verification_check_id": "",
+      "verification_outcome": "",
+      "canonical_file": "knowledge/compute/exchange-canonical.md"
     },
     {
       "entity_id": "ex-windows-mail-02",
@@ -164,278 +399,863 @@
       "hostname": "EXCGANGESRV1",
       "fqdn": "EXCGANGESRV1.mne.gov.ps",
       "ip": "172.23.71.35",
+      "ip_addresses": [
+        "172.23.71.35"
+      ],
       "vlan": "71",
       "services": [
-        "smtp-25",
-        "submission-587",
+        "dag-replication",
         "imaps-993",
-        "dag-replication"
+        "smtp-25",
+        "submission-587"
       ],
       "owner": "Messaging & Collaboration Systems Team",
       "related_entities": [
-        "ex-windows-mail-01",
-        "dc-mne-ad-01"
+        "dc-mne-ad-01",
+        "ex-windows-mail-01"
       ],
-      "canonical_file": "knowledge/compute/exchange-node2-canonical.md",
-      "ip_addresses": [
-        "172.23.71.35"
-      ]
+      "knowledge_status": "unverified",
+      "source": "legacy_release_2_import",
+      "last_verified": null,
+      "freshness_ttl_hours": 720,
+      "evidence_refs": [],
+      "verification_target": "",
+      "verification_check_id": "",
+      "verification_outcome": "",
+      "canonical_file": "knowledge/compute/exchange-node2-canonical.md"
     },
     {
-      "entity_id": "web-greenunit-ubuntu-01",
-      "name": "Greenunit Web Application Host (Ubuntu Nginx/PHP)",
-      "category": "compute",
+      "entity_id": "fmc-cisco-hq-01",
+      "name": "Cisco Firepower Management Center (FMC)",
+      "category": "network",
       "aliases": [
-        "greenunit",
-        "web-greenunit",
-        "ubuntu-greenunit",
-        "172.23.79.200"
+        "172.23.70.77",
+        "cisco-fmc",
+        "firepower-mgmt",
+        "fmc",
+        "fmc-hq"
       ],
-      "hostname": "web-greenunit-ubuntu-01",
-      "fqdn": "greenunit.mne.gov.ps",
-      "ip": "172.23.79.200",
-      "vlan": "79",
-      "services": [
-        "nginx-80",
-        "php8.3-fpm",
-        "mariadb-3306",
-        "ssh-22",
-        "fail2ban"
-      ],
-      "owner": "Web Applications & E-Government Operations Team",
-      "related_entities": [
-        "waf-f5-bigip-mgmt",
-        "vc-vmware-mgmt-01"
-      ],
-      "canonical_file": "knowledge/compute/greenunit-canonical.md",
+      "hostname": "fmc-cisco-hq-01",
+      "fqdn": "fmc-cisco-hq-01.mne.gov.ps",
+      "ip": "172.23.70.77",
       "ip_addresses": [
-        "172.23.79.200"
-      ]
+        "172.23.70.77"
+      ],
+      "vlan": "70",
+      "services": [
+        "firepower-policy",
+        "fmc-management",
+        "ips-sensor-mgmt"
+      ],
+      "owner": "Network & Security Operations Team",
+      "related_entities": [
+        "ftd-cisco-hq-01",
+        "fw-fortigate-edge-01"
+      ],
+      "knowledge_status": "unverified",
+      "source": "legacy_release_2_import",
+      "last_verified": null,
+      "freshness_ttl_hours": 720,
+      "evidence_refs": [],
+      "verification_target": "",
+      "verification_check_id": "",
+      "verification_outcome": "",
+      "canonical_file": "knowledge/topology/cisco-fmc-canonical.md"
     },
     {
-      "entity_id": "prt-jenin-office-01",
-      "name": "Jenin Office Network Printer (HP LaserJet Enterprise)",
-      "category": "compute",
+      "entity_id": "ftd-cisco-hq-01",
+      "name": "Cisco Firepower Threat Defense (FTD Internal Firewall)",
+      "category": "network",
       "aliases": [
-        "jenin-printer",
-        "printer-jenin",
-        "172.23.20.220",
-        "prt-jenin"
+        "172.23.70.78",
+        "cisco-ftd",
+        "ftd-hq",
+        "internal-firewall"
       ],
-      "hostname": "prt-jenin-office-01",
-      "fqdn": "prt-jenin-office-01.mne.gov.ps",
-      "ip": "172.23.20.220",
-      "vlan": "20",
-      "services": [
-        "network-printing",
-        "ipp",
-        "raw-jetdirect-9100",
-        "snmp"
-      ],
-      "owner": "Jenin Administrative Support",
-      "related_entities": [
-        "sw-cisco-jenin-01",
-        "fw-fortigate-jenin-01"
-      ],
-      "canonical_file": "knowledge/compute/jenin-printer-canonical.md",
+      "hostname": "ftd-cisco-hq-01",
+      "fqdn": "ftd-cisco-hq-01.mne.gov.ps",
+      "ip": "172.23.70.78",
       "ip_addresses": [
-        "172.23.20.220"
-      ]
+        "172.23.70.78"
+      ],
+      "vlan": "70",
+      "services": [
+        "ftd-firewall",
+        "malware-protection",
+        "next-gen-ips",
+        "vlan-filtering"
+      ],
+      "owner": "Network & Security Operations Team",
+      "related_entities": [
+        "fmc-cisco-hq-01",
+        "fw-fortigate-edge-01"
+      ],
+      "knowledge_status": "unverified",
+      "source": "legacy_release_2_import",
+      "last_verified": null,
+      "freshness_ttl_hours": 720,
+      "evidence_refs": [],
+      "verification_target": "",
+      "verification_check_id": "",
+      "verification_outcome": "",
+      "canonical_file": "knowledge/topology/cisco-ftd-canonical.md"
+    },
+    {
+      "entity_id": "fw-fortigate-bethlehem-01",
+      "name": "Bethlehem Regional Branch Firewall (FortiGate)",
+      "category": "network",
+      "aliases": [
+        "10.60.18.1",
+        "FW-MNE-Bethlahem",
+        "bethlehem-branch",
+        "bethlehem-firewall",
+        "fw-bethlehem"
+      ],
+      "hostname": "FW-MNE-Bethlahem",
+      "fqdn": "FW-MNE-Bethlahem.mne.gov.ps",
+      "ip": "10.60.18.1",
+      "ip_addresses": [
+        "10.60.18.1"
+      ],
+      "vlan": "18",
+      "services": [
+        "branch-routing",
+        "firewall",
+        "ipsec-vpn",
+        "nat"
+      ],
+      "owner": "Network & Security Operations Team",
+      "related_entities": [
+        "fw-fortigate-hq-01"
+      ],
+      "knowledge_status": "unverified",
+      "source": "legacy_release_2_import",
+      "last_verified": null,
+      "freshness_ttl_hours": 720,
+      "evidence_refs": [],
+      "verification_target": "",
+      "verification_check_id": "",
+      "verification_outcome": "",
+      "canonical_file": "knowledge/topology/bethlehem-branch-canonical.md"
+    },
+    {
+      "entity_id": "fw-fortigate-edge-01",
+      "name": "FortiGate Edge Firewall & SSL-VPN Gateway",
+      "category": "network",
+      "aliases": [
+        "172.23.70.4",
+        "edge-firewall",
+        "fortigate-edge",
+        "main fortigate",
+        "vpn-gateway"
+      ],
+      "hostname": "FG-MNE",
+      "fqdn": "fw-fortigate-edge-01.mne.gov.ps",
+      "ip": "172.23.70.4",
+      "ip_addresses": [
+        "172.23.70.4"
+      ],
+      "vlan": "70",
+      "services": [
+        "firewall",
+        "nat",
+        "sd-wan",
+        "ssl-vpn",
+        "web-filter"
+      ],
+      "owner": "Network & Security Operations Team",
+      "related_entities": [
+        "fmc-cisco-hq-01",
+        "ftd-cisco-hq-01",
+        "waf-f5-bigip-mgmt"
+      ],
+      "knowledge_status": "unverified",
+      "source": "legacy_release_2_import",
+      "last_verified": null,
+      "freshness_ttl_hours": 720,
+      "evidence_refs": [],
+      "verification_target": "",
+      "verification_check_id": "",
+      "verification_outcome": "",
+      "canonical_file": "knowledge/topology/fortigate-edge-canonical.md"
+    },
+    {
+      "entity_id": "fw-fortigate-gaza-01",
+      "name": "Gaza Regional Branch Firewall (FortiGate)",
+      "category": "network",
+      "aliases": [
+        "10.211.18.1",
+        "fw-gaza",
+        "gaza-branch",
+        "gaza-firewall"
+      ],
+      "hostname": "fw-fortigate-gaza-01",
+      "fqdn": "fw-fortigate-gaza-01.mne.gov.ps",
+      "ip": "10.211.18.1",
+      "ip_addresses": [
+        "10.211.18.1"
+      ],
+      "vlan": "18",
+      "services": [
+        "branch-routing",
+        "firewall",
+        "ipsec-vpn",
+        "nat"
+      ],
+      "owner": "Network & Security Operations Team",
+      "related_entities": [
+        "fw-fortigate-hq-01",
+        "sw-cisco-gaza-01"
+      ],
+      "knowledge_status": "unverified",
+      "source": "legacy_release_2_import",
+      "last_verified": null,
+      "freshness_ttl_hours": 720,
+      "evidence_refs": [],
+      "verification_target": "",
+      "verification_check_id": "",
+      "verification_outcome": "",
+      "canonical_file": "knowledge/topology/gaza-branch-canonical.md"
+    },
+    {
+      "entity_id": "fw-fortigate-hebron-01",
+      "name": "Hebron Regional Branch Firewall (FortiGate)",
+      "category": "network",
+      "aliases": [
+        "10.40.18.1",
+        "FW-MNE-Hebron",
+        "fw-hebron",
+        "hebron-branch",
+        "hebron-firewall"
+      ],
+      "hostname": "FW-MNE-Hebron",
+      "fqdn": "fw-mne-hebron.mne.gov.ps",
+      "ip": "10.40.18.1",
+      "ip_addresses": [
+        "10.40.18.1"
+      ],
+      "vlan": "18",
+      "services": [
+        "branch-routing",
+        "firewall",
+        "ipsec-vpn",
+        "nat"
+      ],
+      "owner": "Network & Security Operations Team",
+      "related_entities": [
+        "fw-fortigate-hq-01",
+        "sw-cisco-hebron-01"
+      ],
+      "knowledge_status": "unverified",
+      "source": "docs/company_docs/Ministry_Manual/BRANCH_CONNECTIVITY_BASELINE.md",
+      "last_verified": null,
+      "freshness_ttl_hours": 720,
+      "evidence_refs": [],
+      "verification_target": "",
+      "verification_check_id": "",
+      "verification_outcome": "",
+      "canonical_file": "knowledge/topology/hebron-branch-canonical.md"
+    },
+    {
+      "entity_id": "fw-fortigate-hq-01",
+      "name": "HQ Core Firewall (FortiGate 601E)",
+      "category": "network",
+      "aliases": [
+        "172.23.13.201",
+        "FG-MNE-B",
+        "fg-mne-b",
+        "fortigate",
+        "fortigate-hq",
+        "fw-fortigate-hq-01",
+        "hq-firewall"
+      ],
+      "hostname": "FG-MNE-B",
+      "fqdn": "FG-MNE-B.mne.gov.ps",
+      "ip": "172.23.13.201",
+      "ip_addresses": [
+        "172.23.13.201"
+      ],
+      "vlan": "13",
+      "services": [
+        "branch-interconnect",
+        "firewall",
+        "ipsec-vpn",
+        "nat",
+        "routing",
+        "ssl-vpn"
+      ],
+      "owner": "Network Infrastructure Team",
+      "related_entities": [
+        "ftd-cisco-hq-01",
+        "sw-cisco-core-01",
+        "vc-vmware-hq-01"
+      ],
+      "knowledge_status": "unverified",
+      "source": "legacy_release_2_import",
+      "last_verified": null,
+      "freshness_ttl_hours": 720,
+      "evidence_refs": [],
+      "verification_target": "",
+      "verification_check_id": "",
+      "verification_outcome": "",
+      "canonical_file": "knowledge/topology/fortigate-canonical.md"
+    },
+    {
+      "entity_id": "fw-fortigate-jenin-01",
+      "name": "Jenin Branch Firewall (FortiGate 71G)",
+      "category": "network",
+      "aliases": [
+        "10.201.18.1",
+        "FW-MNE-Jenin",
+        "fortigate-jenin",
+        "fw-jenin",
+        "jenin-firewall",
+        "jenin-fw"
+      ],
+      "hostname": "FW-MNE-Jenin",
+      "fqdn": "FW-MNE-Jenin.mne.gov.ps",
+      "ip": "10.201.18.1",
+      "ip_addresses": [
+        "10.201.18.1"
+      ],
+      "vlan": "18",
+      "services": [
+        "branch-routing",
+        "firewall",
+        "ipsec-vpn",
+        "nat"
+      ],
+      "owner": "Network & Security Operations Team",
+      "related_entities": [
+        "fw-fortigate-hq-01",
+        "prt-jenin-office-01",
+        "sw-cisco-jenin-01"
+      ],
+      "knowledge_status": "unverified",
+      "source": "legacy_release_2_import",
+      "last_verified": null,
+      "freshness_ttl_hours": 720,
+      "evidence_refs": [],
+      "verification_target": "",
+      "verification_check_id": "",
+      "verification_outcome": "",
+      "canonical_file": "knowledge/topology/fortigate-jenin-canonical.md"
+    },
+    {
+      "entity_id": "fw-fortigate-jericho-01",
+      "name": "Jericho Regional Branch Firewall (FortiGate)",
+      "category": "network",
+      "aliases": [
+        "10.211.18.1",
+        "FW-MNE-Jericho",
+        "fw-jericho",
+        "jericho-branch",
+        "jericho-firewall"
+      ],
+      "hostname": "FW-MNE-Jericho",
+      "fqdn": "FW-MNE-Jericho.mne.gov.ps",
+      "ip": "10.211.18.1",
+      "ip_addresses": [
+        "10.211.18.1"
+      ],
+      "vlan": "18",
+      "services": [
+        "branch-routing",
+        "firewall",
+        "ipsec-vpn",
+        "nat"
+      ],
+      "owner": "Network & Security Operations Team",
+      "related_entities": [
+        "fw-fortigate-hq-01"
+      ],
+      "knowledge_status": "unverified",
+      "source": "legacy_release_2_import",
+      "last_verified": null,
+      "freshness_ttl_hours": 720,
+      "evidence_refs": [],
+      "verification_target": "",
+      "verification_check_id": "",
+      "verification_outcome": "",
+      "canonical_file": "knowledge/topology/jericho-branch-canonical.md"
+    },
+    {
+      "entity_id": "fw-fortigate-khanyounis-01",
+      "name": "Khan Younis Regional Branch Firewall (FortiGate)",
+      "category": "network",
+      "aliases": [
+        "10.230.18.1",
+        "fw-khanyounis",
+        "khanyounis-branch",
+        "khanyounis-firewall"
+      ],
+      "hostname": "fw-fortigate-khanyounis-01",
+      "fqdn": "fw-fortigate-khanyounis-01.mne.gov.ps",
+      "ip": "10.230.18.1",
+      "ip_addresses": [
+        "10.230.18.1"
+      ],
+      "vlan": "18",
+      "services": [
+        "branch-routing",
+        "firewall",
+        "ipsec-vpn",
+        "nat"
+      ],
+      "owner": "Network & Security Operations Team",
+      "related_entities": [
+        "fw-fortigate-hq-01",
+        "sw-cisco-khanyounis-01"
+      ],
+      "knowledge_status": "unverified",
+      "source": "legacy_release_2_import",
+      "last_verified": null,
+      "freshness_ttl_hours": 720,
+      "evidence_refs": [],
+      "verification_target": "",
+      "verification_check_id": "",
+      "verification_outcome": "",
+      "canonical_file": "knowledge/topology/khanyounis-branch-canonical.md"
+    },
+    {
+      "entity_id": "fw-fortigate-nablus-01",
+      "name": "Nablus Regional Branch Firewall (FortiGate)",
+      "category": "network",
+      "aliases": [
+        "10.131.18.1",
+        "FW-MNE-Nablus",
+        "fw-nablus",
+        "nablus-branch",
+        "nablus-firewall"
+      ],
+      "hostname": "FW-MNE-Nablus",
+      "fqdn": "FW-MNE-Nablus.mne.gov.ps",
+      "ip": "10.131.18.1",
+      "ip_addresses": [
+        "10.131.18.1"
+      ],
+      "vlan": "18",
+      "services": [
+        "branch-routing",
+        "firewall",
+        "ipsec-vpn",
+        "nat"
+      ],
+      "owner": "Network & Security Operations Team",
+      "related_entities": [
+        "fw-fortigate-hq-01"
+      ],
+      "knowledge_status": "unverified",
+      "source": "legacy_release_2_import",
+      "last_verified": null,
+      "freshness_ttl_hours": 720,
+      "evidence_refs": [],
+      "verification_target": "",
+      "verification_check_id": "",
+      "verification_outcome": "",
+      "canonical_file": "knowledge/topology/nablus-branch-canonical.md"
+    },
+    {
+      "entity_id": "fw-fortigate-qalqilya-01",
+      "name": "Qalqilya Regional Branch Firewall (FortiGate)",
+      "category": "network",
+      "aliases": [
+        "10.180.18.1",
+        "FW-MNE-Qalqilyah",
+        "fw-qalqilya",
+        "qalqilya-branch",
+        "qalqilya-firewall"
+      ],
+      "hostname": "FW-MNE-Qalqilyah",
+      "fqdn": "FW-MNE-Qalqilyah.mne.gov.ps",
+      "ip": "10.180.18.1",
+      "ip_addresses": [
+        "10.180.18.1"
+      ],
+      "vlan": "18",
+      "services": [
+        "branch-routing",
+        "firewall",
+        "ipsec-vpn",
+        "nat"
+      ],
+      "owner": "Network & Security Operations Team",
+      "related_entities": [
+        "fw-fortigate-hq-01"
+      ],
+      "knowledge_status": "unverified",
+      "source": "legacy_release_2_import",
+      "last_verified": null,
+      "freshness_ttl_hours": 720,
+      "evidence_refs": [],
+      "verification_target": "",
+      "verification_check_id": "",
+      "verification_outcome": "",
+      "canonical_file": "knowledge/topology/qalqilya-branch-canonical.md"
+    },
+    {
+      "entity_id": "fw-fortigate-rafah-01",
+      "name": "Rafah Regional Branch Firewall (FortiGate)",
+      "category": "network",
+      "aliases": [
+        "10.235.18.1",
+        "fw-rafah",
+        "rafah-branch",
+        "rafah-firewall"
+      ],
+      "hostname": "fw-fortigate-rafah-01",
+      "fqdn": "fw-fortigate-rafah-01.mne.gov.ps",
+      "ip": "10.235.18.1",
+      "ip_addresses": [
+        "10.235.18.1"
+      ],
+      "vlan": "18",
+      "services": [
+        "branch-routing",
+        "firewall",
+        "ipsec-vpn",
+        "nat"
+      ],
+      "owner": "Network & Security Operations Team",
+      "related_entities": [
+        "fw-fortigate-hq-01",
+        "sw-cisco-rafah-01"
+      ],
+      "knowledge_status": "unverified",
+      "source": "legacy_release_2_import",
+      "last_verified": null,
+      "freshness_ttl_hours": 720,
+      "evidence_refs": [],
+      "verification_target": "",
+      "verification_check_id": "",
+      "verification_outcome": "",
+      "canonical_file": "knowledge/topology/rafah-branch-canonical.md"
+    },
+    {
+      "entity_id": "fw-fortigate-ramallah-01",
+      "name": "Ramallah Regional Branch Firewall (FortiGate)",
+      "category": "network",
+      "aliases": [
+        "10.110.19.1",
+        "FW-MNE-Ramallah-Gold",
+        "fw-ramallah",
+        "ramallah-branch",
+        "ramallah-firewall",
+        "ramallah-gold"
+      ],
+      "hostname": "FW-MNE-Ramallah-Gold",
+      "fqdn": "fw-mne-ramallah-gold.mne.gov.ps",
+      "ip": "10.110.19.1",
+      "ip_addresses": [
+        "10.110.19.1"
+      ],
+      "vlan": "19",
+      "services": [
+        "branch-routing",
+        "firewall",
+        "ipsec-vpn",
+        "nat"
+      ],
+      "owner": "Network & Security Operations Team",
+      "related_entities": [
+        "fw-fortigate-hq-01",
+        "sw-cisco-ramallah-01"
+      ],
+      "knowledge_status": "unverified",
+      "source": "docs/company_docs/Ministry_Manual/BRANCH_CONNECTIVITY_BASELINE.md",
+      "last_verified": null,
+      "freshness_ttl_hours": 720,
+      "evidence_refs": [],
+      "verification_target": "",
+      "verification_check_id": "",
+      "verification_outcome": "",
+      "canonical_file": "knowledge/topology/ramallah-branch-canonical.md"
+    },
+    {
+      "entity_id": "fw-fortigate-salfit-01",
+      "name": "Salfit Regional Branch Firewall (FortiGate)",
+      "category": "network",
+      "aliases": [
+        "10.235.18.1",
+        "FW-MNE-Salfeet",
+        "fw-salfit",
+        "salfeet-branch",
+        "salfit-branch",
+        "salfit-firewall"
+      ],
+      "hostname": "FW-MNE-Salfeet",
+      "fqdn": "FW-MNE-Salfeet.mne.gov.ps",
+      "ip": "10.235.18.1",
+      "ip_addresses": [
+        "10.235.18.1"
+      ],
+      "vlan": "18",
+      "services": [
+        "branch-routing",
+        "firewall",
+        "ipsec-vpn",
+        "nat"
+      ],
+      "owner": "Network & Security Operations Team",
+      "related_entities": [
+        "fw-fortigate-hq-01"
+      ],
+      "knowledge_status": "unverified",
+      "source": "legacy_release_2_import",
+      "last_verified": null,
+      "freshness_ttl_hours": 720,
+      "evidence_refs": [],
+      "verification_target": "",
+      "verification_check_id": "",
+      "verification_outcome": "",
+      "canonical_file": "knowledge/topology/salfit-branch-canonical.md"
+    },
+    {
+      "entity_id": "fw-fortigate-tubas-01",
+      "name": "Tubas Regional Branch Firewall (FortiGate)",
+      "category": "network",
+      "aliases": [
+        "10.230.18.1",
+        "FW-MNE-Tubas",
+        "fw-tubas",
+        "tubas-branch",
+        "tubas-firewall"
+      ],
+      "hostname": "FW-MNE-Tubas",
+      "fqdn": "fw-mne-tubas.mne.gov.ps",
+      "ip": "10.230.18.1",
+      "ip_addresses": [
+        "10.230.18.1"
+      ],
+      "vlan": "18",
+      "services": [
+        "branch-routing",
+        "firewall",
+        "ipsec-vpn",
+        "nat"
+      ],
+      "owner": "Network & Security Operations Team",
+      "related_entities": [
+        "fw-fortigate-hq-01",
+        "sw-cisco-tubas-01"
+      ],
+      "knowledge_status": "unverified",
+      "source": "docs/company_docs/Ministry_Manual/BRANCH_CONNECTIVITY_BASELINE.md",
+      "last_verified": null,
+      "freshness_ttl_hours": 720,
+      "evidence_refs": [],
+      "verification_target": "",
+      "verification_check_id": "",
+      "verification_outcome": "",
+      "canonical_file": "knowledge/topology/tubas-branch-canonical.md"
+    },
+    {
+      "entity_id": "fw-fortigate-tulkarm-01",
+      "name": "Tulkarm Regional Branch Firewall (FortiGate)",
+      "category": "network",
+      "aliases": [
+        "10.165.18.1",
+        "fw-tulkarm",
+        "tulkarm-branch",
+        "tulkarm-firewall"
+      ],
+      "hostname": "fw-fortigate-tulkarm-01",
+      "fqdn": "fw-fortigate-tulkarm-01.mne.gov.ps",
+      "ip": "10.165.18.1",
+      "ip_addresses": [
+        "10.165.18.1"
+      ],
+      "vlan": "",
+      "services": [
+        "branch-routing",
+        "firewall",
+        "ipsec-vpn",
+        "nat"
+      ],
+      "owner": "Network & Security Operations Team",
+      "related_entities": [
+        "fw-fortigate-hq-01",
+        "rtr-tulkarm-01",
+        "sw-cisco-tulkarm-01"
+      ],
+      "knowledge_status": "unverified",
+      "source": "MNE_Infrastructure/BRANCH_CONNECTIVITY_BASELINE.md",
+      "last_verified": null,
+      "freshness_ttl_hours": 720,
+      "evidence_refs": [],
+      "verification_target": "",
+      "verification_check_id": "",
+      "verification_outcome": "",
+      "canonical_file": "knowledge/topology/tulkarm-branch-canonical.md"
     },
     {
       "entity_id": "n8n-automation-server-01",
       "name": "n8n Workflow Automation Engine Server",
       "category": "compute",
       "aliases": [
-        "n8n-automation",
-        "n8n-server",
+        "172.23.19.80",
         "automation-server",
-        "172.23.19.80"
+        "n8n-automation",
+        "n8n-server"
       ],
       "hostname": "n8n-automation-server-01",
       "fqdn": "n8n-automation-server-01.mne.gov.ps",
       "ip": "172.23.19.80",
+      "ip_addresses": [
+        "172.23.19.80"
+      ],
       "vlan": "19",
       "services": [
-        "n8n-workflows",
-        "webhook-listener",
+        "alert-remediation",
         "api-integrations",
-        "alert-remediation"
+        "n8n-workflows",
+        "webhook-listener"
       ],
       "owner": "NOC Automation & Systems Engineering Team",
       "related_entities": [
-        "vc-vmware-hq-01",
-        "fw-fortigate-hq-01"
-      ],
-      "canonical_file": "knowledge/compute/n8n-automation-canonical.md",
-      "ip_addresses": [
-        "172.23.19.80"
-      ]
-    },
-    {
-      "entity_id": "vc-vmware-hq-01",
-      "name": "vCenter Server HQ",
-      "category": "compute",
-      "aliases": [
-        "vmware",
-        "vcenter",
-        "vcenter-hq",
-        "172.23.19.10"
-      ],
-      "hostname": "vc-vmware-hq-01",
-      "fqdn": "vc-vmware-hq-01.mne.gov.ps",
-      "ip": "172.23.19.10",
-      "vlan": "19",
-      "services": [
-        "vcenter",
-        "esxi-management",
-        "vsphere"
-      ],
-      "owner": "Virtualization Infrastructure Team",
-      "related_entities": [
         "fw-fortigate-hq-01",
-        "san-fujitsu-01"
-      ],
-      "canonical_file": "knowledge/compute/vmware-canonical.md",
-      "ip_addresses": [
-        "172.23.19.10"
-      ]
-    },
-    {
-      "entity_id": "dc-windows-ad-01",
-      "name": "Primary Domain Controller (AD/DNS)",
-      "category": "identity",
-      "aliases": [
-        "active directory",
-        "ad",
-        "dc-01",
-        "domain-controller",
-        "172.23.19.20"
-      ],
-      "hostname": "dc-windows-ad-01",
-      "fqdn": "dc-windows-ad-01.mne.gov.ps",
-      "ip": "172.23.19.20",
-      "vlan": "19",
-      "services": [
-        "active-directory",
-        "dns",
-        "kerberos",
-        "ldap"
-      ],
-      "owner": "Identity & Security Team",
-      "related_entities": [
-        "fw-fortigate-hq-01"
-      ],
-      "canonical_file": "knowledge/identity/ad-canonical.md",
-      "ip_addresses": [
-        "172.23.19.20"
-      ]
-    },
-    {
-      "entity_id": "dc-windows-ad-02",
-      "name": "Secondary Domain Controller (AD/DNS Replica)",
-      "category": "identity",
-      "aliases": [
-        "ad-secondary",
-        "dc-02",
-        "dc-windows-02",
-        "172.23.19.21"
-      ],
-      "hostname": "dc-windows-ad-02",
-      "fqdn": "dc-windows-ad-02.mne.gov.ps",
-      "ip": "172.23.19.21",
-      "vlan": "19",
-      "services": [
-        "active-directory",
-        "dns-replica",
-        "kerberos",
-        "ldap-replica"
-      ],
-      "owner": "Identity & Core Windows Infrastructure Team",
-      "related_entities": [
-        "dc-windows-ad-01",
         "vc-vmware-hq-01"
       ],
-      "canonical_file": "knowledge/identity/ad-secondary-canonical.md",
-      "ip_addresses": [
-        "172.23.19.21"
-      ]
+      "knowledge_status": "unverified",
+      "source": "legacy_release_2_import",
+      "last_verified": null,
+      "freshness_ttl_hours": 720,
+      "evidence_refs": [],
+      "verification_target": "",
+      "verification_check_id": "",
+      "verification_outcome": "",
+      "canonical_file": "knowledge/compute/n8n-automation-canonical.md"
     },
     {
-      "entity_id": "dc-mne-ad-01",
-      "name": "MNE-DC1 Primary Domain Controller & Enterprise DNS",
-      "category": "identity",
+      "entity_id": "prt-jenin-office-01",
+      "name": "Jenin Office Network Printer (HP LaserJet Enterprise)",
+      "category": "compute",
       "aliases": [
-        "mne-dc1",
-        "mne-dc1-ad",
-        "172.23.71.27",
-        "172.23.71.173",
-        "dc1-mne"
+        "10.201.18.220",
+        "jenin-printer",
+        "printer-jenin",
+        "prt-jenin"
       ],
-      "hostname": "dc-mne-ad-01",
-      "fqdn": "MNE-DC1.mne.gov.ps",
-      "ip": "172.23.71.27",
-      "vlan": "71",
-      "services": [
-        "active-directory",
-        "primary-dns",
-        "winrm",
-        "kerberos",
-        "ldap-ssl"
-      ],
-      "owner": "Identity & Core Windows Infrastructure Team",
-      "related_entities": [
-        "ex-windows-mail-01",
-        "dc-windows-ad-01"
-      ],
-      "canonical_file": "knowledge/identity/mne-dc1-canonical.md",
+      "hostname": "prt-jenin-office-01",
+      "fqdn": "prt-jenin-office-01.mne.gov.ps",
+      "ip": "10.201.18.220",
       "ip_addresses": [
-        "172.23.71.27"
-      ]
+        "10.201.18.220"
+      ],
+      "vlan": "18",
+      "services": [
+        "ipp",
+        "network-printing",
+        "raw-jetdirect-9100",
+        "snmp"
+      ],
+      "owner": "Jenin Administrative Support",
+      "related_entities": [
+        "fw-fortigate-jenin-01",
+        "sw-cisco-jenin-01"
+      ],
+      "knowledge_status": "unverified",
+      "source": "legacy_release_2_import",
+      "last_verified": null,
+      "freshness_ttl_hours": 720,
+      "evidence_refs": [],
+      "verification_target": "",
+      "verification_check_id": "",
+      "verification_outcome": "",
+      "canonical_file": "knowledge/compute/jenin-printer-canonical.md"
     },
     {
-      "entity_id": "dc-mne-ad-02",
-      "name": "MNE-DC2 Secondary Domain Controller & Domain Naming Master",
-      "category": "identity",
+      "entity_id": "rtr-tulkarm-01",
+      "name": "Tulkarm Branch Router",
+      "category": "network",
       "aliases": [
-        "mne-dc2",
-        "mne-dc2-ad",
-        "172.23.71.28",
-        "dc2-mne"
+        "10.165.18.2",
+        "rtr-tulkarm",
+        "rtr-tulkarm-01",
+        "tulkarm router",
+        "tulkarm-router"
       ],
-      "hostname": "MNE-DC2",
-      "fqdn": "MNE-DC2.mne.gov.ps",
-      "ip": "172.23.71.28",
-      "vlan": "71",
-      "services": [
-        "active-directory",
-        "dns-replica",
-        "domain-naming-master",
-        "rid-master"
-      ],
-      "owner": "Identity & Core Windows Infrastructure Team",
-      "related_entities": [
-        "dc-mne-ad-01",
-        "ex-windows-mail-01"
-      ],
-      "canonical_file": "knowledge/identity/mne-dc2-canonical.md",
+      "hostname": "rtr-tulkarm-01",
+      "fqdn": "",
+      "ip": "10.165.18.2",
       "ip_addresses": [
-        "172.23.71.28"
-      ]
+        "10.165.18.2"
+      ],
+      "vlan": "",
+      "services": [
+        "branch-routing",
+        "management",
+        "wan"
+      ],
+      "owner": "Network & Security Operations Team",
+      "related_entities": [
+        "fw-fortigate-tulkarm-01",
+        "sw-cisco-tulkarm-01"
+      ],
+      "knowledge_status": "unverified",
+      "source": "Release 1 Tulkarm operational inventory; imported as an unverified Release 2 baseline",
+      "last_verified": null,
+      "freshness_ttl_hours": 720,
+      "evidence_refs": [],
+      "verification_target": "",
+      "verification_check_id": "",
+      "verification_outcome": "",
+      "canonical_file": "knowledge/topology/tulkarm-router-canonical.md"
+    },
+    {
+      "entity_id": "san-fujitsu-01",
+      "name": "Fujitsu Eternus SAN Storage",
+      "category": "storage",
+      "aliases": [
+        "172.23.68.20",
+        "eternus-san",
+        "san",
+        "san-fujitsu-eternus-01",
+        "san-storage"
+      ],
+      "hostname": "san-fujitsu-eternus-01",
+      "fqdn": "san01.mne.gov.ps",
+      "ip": "172.23.68.20",
+      "ip_addresses": [
+        "172.23.68.20"
+      ],
+      "vlan": "68",
+      "services": [
+        "fibre-channel",
+        "iscsi",
+        "san-storage"
+      ],
+      "owner": "Storage Operations Team",
+      "related_entities": [
+        "backup-veeam-hq-01",
+        "vc-vmware-hq-01"
+      ],
+      "knowledge_status": "unverified",
+      "source": "legacy_release_2_import",
+      "last_verified": null,
+      "freshness_ttl_hours": 720,
+      "evidence_refs": [],
+      "verification_target": "",
+      "verification_check_id": "",
+      "verification_outcome": "",
+      "canonical_file": "knowledge/storage/san-canonical.md"
     },
     {
       "entity_id": "san-greenunit-01",
       "name": "Greenunit SAN Fibre Storage Controller",
       "category": "storage",
       "aliases": [
+        "172.23.70.70",
         "greenunit-san",
         "san-70",
-        "san-controller",
-        "172.23.70.70"
+        "san-controller"
       ],
       "hostname": "san-greenunit-01",
       "fqdn": "san-greenunit-01.mne.gov.ps",
       "ip": "172.23.70.70",
+      "ip_addresses": [
+        "172.23.70.70"
+      ],
       "vlan": "70",
       "services": [
         "fibre-channel",
@@ -447,941 +1267,597 @@
         "san-fujitsu-01",
         "sw-fujitsu-san-01"
       ],
-      "canonical_file": "knowledge/storage/greenunit-san-canonical.md",
-      "ip_addresses": [
-        "172.23.70.70"
-      ]
-    },
-    {
-      "entity_id": "san-fujitsu-01",
-      "name": "Fujitsu Eternus SAN Storage",
-      "category": "storage",
-      "aliases": [
-        "san",
-        "san-storage",
-        "eternus-san",
-        "172.23.19.50"
-      ],
-      "hostname": "san-fujitsu-01",
-      "fqdn": "san-fujitsu-01.mne.gov.ps",
-      "ip": "172.23.19.50",
-      "vlan": "19",
-      "services": [
-        "iscsi",
-        "fibre-channel",
-        "san-storage"
-      ],
-      "owner": "Storage Operations Team",
-      "related_entities": [
-        "vc-vmware-hq-01"
-      ],
-      "canonical_file": "knowledge/storage/san-canonical.md",
-      "ip_addresses": [
-        "172.23.19.50"
-      ]
-    },
-    {
-      "entity_id": "backup-veeam-hq-01",
-      "name": "HQ Veeam Backup & Disaster Recovery Server",
-      "category": "storage",
-      "aliases": [
-        "veeam-backup",
-        "backup-server",
-        "veeam-hq",
-        "172.23.19.60"
-      ],
-      "hostname": "backup-veeam-hq-01",
-      "fqdn": "backup-veeam-hq-01.mne.gov.ps",
-      "ip": "172.23.19.60",
-      "vlan": "19",
-      "services": [
-        "veeam-backup",
-        "vm-snapshots",
-        "disaster-recovery",
-        "san-repository"
-      ],
-      "owner": "Storage & Disaster Recovery Team",
-      "related_entities": [
-        "san-fujitsu-01",
-        "vc-vmware-hq-01"
-      ],
-      "canonical_file": "knowledge/storage/veeam-backup-canonical.md",
-      "ip_addresses": [
-        "172.23.19.60"
-      ]
-    },
-    {
-      "entity_id": "fw-fortigate-bethlehem-01",
-      "name": "Bethlehem Regional Branch Firewall (FortiGate)",
-      "category": "network",
-      "aliases": [
-        "bethlehem-firewall",
-        "fw-bethlehem",
-        "10.70.18.1",
-        "bethlehem-branch"
-      ],
-      "hostname": "fw-fortigate-bethlehem-01",
-      "fqdn": "fw-fortigate-bethlehem-01.mne.gov.ps",
-      "ip": "10.70.18.1",
-      "vlan": "18",
-      "services": [
-        "firewall",
-        "ipsec-vpn",
-        "branch-routing",
-        "nat"
-      ],
-      "owner": "Network & Security Operations Team",
-      "related_entities": [
-        "fw-fortigate-hq-01",
-        "sw-cisco-bethlehem-01"
-      ],
-      "canonical_file": "knowledge/topology/bethlehem-branch-canonical.md",
-      "ip_addresses": [
-        "10.70.18.1"
-      ]
+      "knowledge_status": "unverified",
+      "source": "legacy_release_2_import",
+      "last_verified": null,
+      "freshness_ttl_hours": 720,
+      "evidence_refs": [],
+      "verification_target": "",
+      "verification_check_id": "",
+      "verification_outcome": "",
+      "canonical_file": "knowledge/storage/greenunit-san-canonical.md"
     },
     {
       "entity_id": "sw-cisco-core-01",
-      "name": "HQ Core Switch (Cisco IOS-XE)",
+      "name": "HQ Core Switch (Cisco Catalyst 9500 Stack)",
       "category": "network",
       "aliases": [
+        "172.23.70.254",
+        "CoreSwitch1",
         "cisco",
-        "sw-cisco",
         "core-switch",
-        "172.23.19.2"
+        "main core switch",
+        "sw-cisco"
       ],
-      "hostname": "sw-cisco-core-01",
-      "fqdn": "sw-cisco-core-01.mne.gov.ps",
-      "ip": "172.23.19.2",
-      "vlan": "19",
+      "hostname": "CoreSwitch1",
+      "fqdn": "CoreSwitch1.mne.gov.ps",
+      "ip": "172.23.70.254",
+      "ip_addresses": [
+        "172.23.70.254"
+      ],
+      "vlan": "70",
       "services": [
+        "40g-uplink",
+        "campus-aggregation",
         "switching",
-        "vlan-routing",
         "trunking"
       ],
       "owner": "Network Infrastructure Team",
       "related_entities": [
-        "fw-fortigate-hq-01"
-      ],
-      "canonical_file": "knowledge/topology/cisco-core-canonical.md",
-      "ip_addresses": [
-        "172.23.19.2"
-      ]
-    },
-    {
-      "entity_id": "fmc-cisco-hq-01",
-      "name": "Cisco Firepower Management Center (FMC)",
-      "category": "topology",
-      "aliases": [
-        "cisco-fmc",
-        "fmc-hq",
-        "firepower-mgmt",
-        "172.23.70.77"
-      ],
-      "hostname": "fmc-cisco-hq-01",
-      "fqdn": "fmc-cisco-hq-01.mne.gov.ps",
-      "ip": "172.23.70.77",
-      "vlan": "70",
-      "services": [
-        "fmc-management",
-        "ips-sensor-mgmt",
-        "firepower-policy"
-      ],
-      "owner": "Network & Security Operations Team",
-      "related_entities": [
-        "ftd-cisco-hq-01",
-        "fw-fortigate-edge-01"
-      ],
-      "canonical_file": "knowledge/topology/cisco-fmc-canonical.md",
-      "ip_addresses": [
-        "172.23.70.77"
-      ]
-    },
-    {
-      "entity_id": "ftd-cisco-hq-01",
-      "name": "Cisco Firepower Threat Defense (FTD Internal Firewall)",
-      "category": "topology",
-      "aliases": [
-        "cisco-ftd",
-        "ftd-hq",
-        "internal-firewall",
-        "172.23.70.78"
-      ],
-      "hostname": "ftd-cisco-hq-01",
-      "fqdn": "ftd-cisco-hq-01.mne.gov.ps",
-      "ip": "172.23.70.78",
-      "vlan": "70",
-      "services": [
-        "ftd-firewall",
-        "next-gen-ips",
-        "malware-protection",
-        "vlan-filtering"
-      ],
-      "owner": "Network & Security Operations Team",
-      "related_entities": [
-        "fmc-cisco-hq-01",
-        "fw-fortigate-edge-01"
-      ],
-      "canonical_file": "knowledge/topology/cisco-ftd-canonical.md",
-      "ip_addresses": [
-        "172.23.70.78"
-      ]
-    },
-    {
-      "entity_id": "sw-cisco-jenin-01",
-      "name": "Jenin Branch Access Switch (Cisco Catalyst)",
-      "category": "network",
-      "aliases": [
-        "jenin-switch",
-        "sw-jenin",
-        "cisco-jenin",
-        "172.23.20.2"
-      ],
-      "hostname": "sw-cisco-jenin-01",
-      "fqdn": "sw-cisco-jenin-01.mne.gov.ps",
-      "ip": "172.23.20.2",
-      "vlan": "20",
-      "services": [
-        "switching",
-        "poe+",
-        "vlan-20-access",
-        "port-security"
-      ],
-      "owner": "Network & Security Operations Team",
-      "related_entities": [
-        "fw-fortigate-jenin-01",
-        "prt-jenin-office-01"
-      ],
-      "canonical_file": "knowledge/topology/cisco-jenin-canonical.md",
-      "ip_addresses": [
-        "172.23.20.2"
-      ]
-    },
-    {
-      "entity_id": "waf-f5-bigip-01",
-      "name": "F5 BIG-IP Web Application Firewall & ADC",
-      "category": "topology",
-      "aliases": [
-        "f5-bigip",
-        "waf-f5",
-        "load-balancer",
-        "172.23.19.5",
-        "f5-waf"
-      ],
-      "hostname": "waf-f5-bigip-01",
-      "fqdn": "waf-f5-bigip-01.mne.gov.ps",
-      "ip": "172.23.19.5",
-      "vlan": "19",
-      "services": [
-        "waf-protection",
-        "load-balancing",
-        "ssl-offloading",
-        "asm-policy"
-      ],
-      "owner": "Network & Security Operations Team",
-      "related_entities": [
         "fw-fortigate-hq-01",
-        "sw-cisco-core-01"
+        "sw-cisco-floor-1",
+        "sw-cisco-floor-2"
       ],
-      "canonical_file": "knowledge/topology/f5-bigip-canonical.md",
-      "ip_addresses": [
-        "172.23.19.5"
-      ]
+      "knowledge_status": "unverified",
+      "source": "legacy_release_2_import",
+      "last_verified": null,
+      "freshness_ttl_hours": 720,
+      "evidence_refs": [],
+      "verification_target": "",
+      "verification_check_id": "",
+      "verification_outcome": "",
+      "canonical_file": "knowledge/topology/cisco-core-canonical.md"
     },
     {
       "entity_id": "sw-cisco-floor-1",
       "name": "Floor 1 Main Access Switch (Cisco Catalyst 9K Lite)",
       "category": "network",
       "aliases": [
-        "floor-1-switch",
-        "sw-floor1",
+        "172.23.70.222",
         "F1_acc_Main",
-        "172.23.70.222"
+        "floor-1-switch",
+        "sw-floor1"
       ],
       "hostname": "F1_acc_Main",
       "fqdn": "F1_acc_Main.mne.gov.ps",
       "ip": "172.23.70.222",
+      "ip_addresses": [
+        "172.23.70.222"
+      ],
       "vlan": "21",
       "services": [
-        "poe+",
-        "floor-access",
         "8-vlans",
+        "floor-access",
+        "poe+",
         "vlan-21-flr1"
       ],
       "owner": "Network Operations Team",
       "related_entities": [
-        "sw-cisco-core-01",
-        "fw-fortigate-edge-01"
+        "fw-fortigate-edge-01",
+        "sw-cisco-core-01"
       ],
-      "canonical_file": "knowledge/topology/floor-1-canonical.md",
-      "ip_addresses": [
-        "172.23.70.222"
-      ]
+      "knowledge_status": "unverified",
+      "source": "legacy_release_2_import",
+      "last_verified": null,
+      "freshness_ttl_hours": 720,
+      "evidence_refs": [],
+      "verification_target": "",
+      "verification_check_id": "",
+      "verification_outcome": "",
+      "canonical_file": "knowledge/topology/floor-1-canonical.md"
     },
     {
       "entity_id": "sw-cisco-floor-2",
       "name": "Floor 2 Access Switch (Cisco Catalyst 9K Lite)",
       "category": "network",
       "aliases": [
-        "floor-2-switch",
-        "sw-floor2",
+        "172.23.70.223",
         "f2_acc_sw1",
-        "172.23.70.223"
+        "floor-2-switch",
+        "sw-floor2"
       ],
       "hostname": "f2_acc_sw1",
       "fqdn": "f2_acc_sw1.mne.gov.ps",
       "ip": "172.23.70.223",
+      "ip_addresses": [
+        "172.23.70.223"
+      ],
       "vlan": "22",
       "services": [
-        "poe+",
-        "floor-access",
         "8-vlans",
+        "floor-access",
+        "poe+",
         "vlan-22-flr2"
       ],
       "owner": "Network Operations Team",
       "related_entities": [
-        "sw-cisco-core-01",
-        "fw-fortigate-edge-01"
+        "fw-fortigate-edge-01",
+        "sw-cisco-core-01"
       ],
-      "canonical_file": "knowledge/topology/floor-2-canonical.md",
-      "ip_addresses": [
-        "172.23.70.223"
-      ]
+      "knowledge_status": "unverified",
+      "source": "legacy_release_2_import",
+      "last_verified": null,
+      "freshness_ttl_hours": 720,
+      "evidence_refs": [],
+      "verification_target": "",
+      "verification_check_id": "",
+      "verification_outcome": "",
+      "canonical_file": "knowledge/topology/floor-2-canonical.md"
     },
     {
       "entity_id": "sw-cisco-floor-3",
       "name": "Floor 3 Access Switch (Cisco Catalyst 9K Lite)",
       "category": "network",
       "aliases": [
-        "floor-3-switch",
-        "sw-floor3",
+        "172.23.70.224",
         "f3_acc_sw1",
-        "172.23.70.224"
+        "floor-3-switch",
+        "sw-floor3"
       ],
       "hostname": "f3_acc_sw1",
       "fqdn": "f3_acc_sw1.mne.gov.ps",
       "ip": "172.23.70.224",
+      "ip_addresses": [
+        "172.23.70.224"
+      ],
       "vlan": "23",
       "services": [
-        "poe+",
-        "floor-access",
         "8-vlans",
+        "floor-access",
+        "poe+",
         "vlan-23-flr3"
       ],
       "owner": "Network Operations Team",
       "related_entities": [
-        "sw-cisco-core-01",
-        "fw-fortigate-edge-01"
+        "fw-fortigate-edge-01",
+        "sw-cisco-core-01"
       ],
-      "canonical_file": "knowledge/topology/floor-3-canonical.md",
-      "ip_addresses": [
-        "172.23.70.224"
-      ]
+      "knowledge_status": "unverified",
+      "source": "legacy_release_2_import",
+      "last_verified": null,
+      "freshness_ttl_hours": 720,
+      "evidence_refs": [],
+      "verification_target": "",
+      "verification_check_id": "",
+      "verification_outcome": "",
+      "canonical_file": "knowledge/topology/floor-3-canonical.md"
     },
     {
       "entity_id": "sw-cisco-floor-4",
       "name": "Floor 4 Access Switch (Cisco Catalyst 9K Lite)",
       "category": "network",
       "aliases": [
-        "floor-4-switch",
-        "sw-floor4",
+        "172.23.70.225",
         "F4_acc_sw1",
-        "172.23.70.225"
+        "floor-4-switch",
+        "sw-floor4"
       ],
       "hostname": "F4_acc_sw1",
       "fqdn": "F4_acc_sw1.mne.gov.ps",
       "ip": "172.23.70.225",
+      "ip_addresses": [
+        "172.23.70.225"
+      ],
       "vlan": "24",
       "services": [
-        "poe+",
-        "floor-access",
         "8-vlans",
+        "floor-access",
+        "poe+",
         "vlan-24-flr4"
       ],
       "owner": "Network Operations Team",
       "related_entities": [
-        "sw-cisco-core-01",
-        "fw-fortigate-edge-01"
+        "fw-fortigate-edge-01",
+        "sw-cisco-core-01"
       ],
-      "canonical_file": "knowledge/topology/floor-4-canonical.md",
-      "ip_addresses": [
-        "172.23.70.225"
-      ]
+      "knowledge_status": "unverified",
+      "source": "legacy_release_2_import",
+      "last_verified": null,
+      "freshness_ttl_hours": 720,
+      "evidence_refs": [],
+      "verification_target": "",
+      "verification_check_id": "",
+      "verification_outcome": "",
+      "canonical_file": "knowledge/topology/floor-4-canonical.md"
     },
     {
       "entity_id": "sw-cisco-floor-5",
       "name": "Floor 5 Main Access Switch (Cisco Catalyst 9K Lite)",
       "category": "network",
       "aliases": [
-        "floor-5-switch",
-        "sw-floor5",
+        "172.23.70.226",
         "Floor_5_main",
-        "172.23.70.226"
+        "floor-5-switch",
+        "sw-floor5"
       ],
       "hostname": "Floor_5_main",
       "fqdn": "Floor_5_main.mne.gov.ps",
       "ip": "172.23.70.226",
+      "ip_addresses": [
+        "172.23.70.226"
+      ],
       "vlan": "25",
       "services": [
-        "poe+",
-        "floor-access",
         "8-vlans",
+        "floor-access",
+        "poe+",
         "vlan-25-flr5"
       ],
       "owner": "Network Operations Team",
       "related_entities": [
-        "sw-cisco-core-01",
-        "fw-fortigate-edge-01"
+        "fw-fortigate-edge-01",
+        "sw-cisco-core-01"
       ],
-      "canonical_file": "knowledge/topology/floor-5-canonical.md",
-      "ip_addresses": [
-        "172.23.70.226"
-      ]
+      "knowledge_status": "unverified",
+      "source": "legacy_release_2_import",
+      "last_verified": null,
+      "freshness_ttl_hours": 720,
+      "evidence_refs": [],
+      "verification_target": "",
+      "verification_check_id": "",
+      "verification_outcome": "",
+      "canonical_file": "knowledge/topology/floor-5-canonical.md"
     },
     {
       "entity_id": "sw-cisco-floor-6",
       "name": "Floor 6 Access Switch (Cisco Catalyst 9K Lite)",
       "category": "network",
       "aliases": [
-        "floor-6-switch",
-        "sw-floor6",
+        "172.23.70.227",
         "F6_acc_Sw1",
-        "172.23.70.227"
+        "floor-6-switch",
+        "sw-floor6"
       ],
       "hostname": "F6_acc_Sw1",
       "fqdn": "F6_acc_Sw1.mne.gov.ps",
       "ip": "172.23.70.227",
+      "ip_addresses": [
+        "172.23.70.227"
+      ],
       "vlan": "26",
       "services": [
-        "poe+",
-        "floor-access",
         "8-vlans",
+        "floor-access",
+        "poe+",
         "vlan-26-flr6"
       ],
       "owner": "Network Operations Team",
       "related_entities": [
-        "sw-cisco-core-01",
-        "fw-fortigate-edge-01"
+        "fw-fortigate-edge-01",
+        "sw-cisco-core-01"
       ],
-      "canonical_file": "knowledge/topology/floor-6-canonical.md",
-      "ip_addresses": [
-        "172.23.70.227"
-      ]
+      "knowledge_status": "unverified",
+      "source": "legacy_release_2_import",
+      "last_verified": null,
+      "freshness_ttl_hours": 720,
+      "evidence_refs": [],
+      "verification_target": "",
+      "verification_check_id": "",
+      "verification_outcome": "",
+      "canonical_file": "knowledge/topology/floor-6-canonical.md"
     },
     {
       "entity_id": "sw-cisco-floor-b1",
       "name": "Floor B1 Access Switch (Cisco Catalyst 9K Lite)",
       "category": "network",
       "aliases": [
-        "floor-b1-switch",
-        "sw-b1",
+        "172.23.70.220",
         "F_-1_acc_Sw1",
-        "172.23.70.220"
+        "floor-b1-switch",
+        "sw-b1"
       ],
       "hostname": "F_-1_acc_Sw1",
       "fqdn": "F_-1_acc_Sw1.mne.gov.ps",
       "ip": "172.23.70.220",
+      "ip_addresses": [
+        "172.23.70.220"
+      ],
       "vlan": "19",
       "services": [
-        "poe+",
-        "floor-access",
         "8-vlans",
+        "floor-access",
+        "poe+",
         "vlan-19-b1"
       ],
       "owner": "Network Operations Team",
       "related_entities": [
-        "sw-cisco-core-01",
-        "fw-fortigate-edge-01"
+        "fw-fortigate-edge-01",
+        "sw-cisco-core-01"
       ],
-      "canonical_file": "knowledge/topology/floor-b1-canonical.md",
-      "ip_addresses": [
-        "172.23.70.220"
-      ]
+      "knowledge_status": "unverified",
+      "source": "legacy_release_2_import",
+      "last_verified": null,
+      "freshness_ttl_hours": 720,
+      "evidence_refs": [],
+      "verification_target": "",
+      "verification_check_id": "",
+      "verification_outcome": "",
+      "canonical_file": "knowledge/topology/floor-b1-canonical.md"
     },
     {
       "entity_id": "sw-cisco-floor-gnd",
       "name": "Ground Floor Access Switch (Cisco Catalyst 9K Lite)",
       "category": "network",
       "aliases": [
-        "ground-floor-switch",
-        "sw-gnd",
+        "172.23.70.221",
         "F0_acc_Sw1",
-        "172.23.70.221"
+        "ground-floor-switch",
+        "sw-gnd"
       ],
       "hostname": "F0_acc_Sw1",
       "fqdn": "F0_acc_Sw1.mne.gov.ps",
       "ip": "172.23.70.221",
+      "ip_addresses": [
+        "172.23.70.221"
+      ],
       "vlan": "20",
       "services": [
-        "poe+",
-        "floor-access",
         "8-vlans",
+        "floor-access",
+        "poe+",
         "vlan-20-gnd"
       ],
       "owner": "Network Operations Team",
       "related_entities": [
-        "sw-cisco-core-01",
-        "fw-fortigate-edge-01"
+        "fw-fortigate-edge-01",
+        "sw-cisco-core-01"
       ],
-      "canonical_file": "knowledge/topology/floor-gnd-canonical.md",
-      "ip_addresses": [
-        "172.23.70.221"
-      ]
+      "knowledge_status": "unverified",
+      "source": "legacy_release_2_import",
+      "last_verified": null,
+      "freshness_ttl_hours": 720,
+      "evidence_refs": [],
+      "verification_target": "",
+      "verification_check_id": "",
+      "verification_outcome": "",
+      "canonical_file": "knowledge/topology/floor-gnd-canonical.md"
     },
     {
       "entity_id": "sw-cisco-floor-svc",
       "name": "Khadamat Services Access Switch (Cisco Catalyst 9K Lite)",
       "category": "network",
       "aliases": [
-        "khadamat-switch",
-        "sw-khadamat",
+        "172.23.70.219",
         "Khadamat",
-        "172.23.70.219"
+        "khadamat-switch",
+        "sw-khadamat"
       ],
       "hostname": "Khadamat",
       "fqdn": "Khadamat.mne.gov.ps",
       "ip": "172.23.70.219",
+      "ip_addresses": [
+        "172.23.70.219"
+      ],
       "vlan": "19",
       "services": [
+        "8-vlans",
         "poe+",
         "services-access",
-        "8-vlans",
         "vlan-19-svc"
       ],
       "owner": "Network Operations Team",
       "related_entities": [
-        "sw-cisco-core-01",
-        "fw-fortigate-edge-01"
+        "fw-fortigate-edge-01",
+        "sw-cisco-core-01"
       ],
-      "canonical_file": "knowledge/topology/floor-svc-canonical.md",
-      "ip_addresses": [
-        "172.23.70.219"
-      ]
+      "knowledge_status": "unverified",
+      "source": "legacy_release_2_import",
+      "last_verified": null,
+      "freshness_ttl_hours": 720,
+      "evidence_refs": [],
+      "verification_target": "",
+      "verification_check_id": "",
+      "verification_outcome": "",
+      "canonical_file": "knowledge/topology/floor-svc-canonical.md"
     },
     {
-      "entity_id": "fw-fortigate-hq-01",
-      "name": "HQ Core Firewall (FortiGate)",
+      "entity_id": "sw-cisco-jenin-01",
+      "name": "Jenin Branch Access Switch",
       "category": "network",
       "aliases": [
-        "fortigate",
-        "fw-fortigate",
-        "fortigate-01",
-        "172.23.19.1",
-        "hq-firewall"
+        "10.201.18.3",
+        "cisco-jenin",
+        "jenin-switch",
+        "sw-access-jenin",
+        "sw-jenin"
       ],
-      "hostname": "fw-fortigate-hq-01",
-      "fqdn": "fw-fortigate-hq-01.mne.gov.ps",
-      "ip": "172.23.19.1",
-      "vlan": "19",
-      "services": [
-        "firewall",
-        "ipsec-vpn",
-        "nat",
-        "routing"
-      ],
-      "owner": "Network Infrastructure Team",
-      "related_entities": [
-        "sw-cisco-core-01",
-        "vc-vmware-hq-01"
-      ],
-      "canonical_file": "knowledge/topology/fortigate-canonical.md",
+      "hostname": "sw-access-jenin",
+      "fqdn": "sw-access-jenin.mne.gov.ps",
+      "ip": "10.201.18.3",
       "ip_addresses": [
-        "172.23.19.1"
-      ]
-    },
-    {
-      "entity_id": "fw-fortigate-edge-01",
-      "name": "FortiGate Edge Firewall & SSL-VPN Gateway",
-      "category": "network",
-      "aliases": [
-        "fortigate-edge",
-        "edge-firewall",
-        "172.23.70.4",
-        "vpn-gateway"
+        "10.201.18.3"
       ],
-      "hostname": "fw-fortigate-edge-01",
-      "fqdn": "fw-fortigate-edge-01.mne.gov.ps",
-      "ip": "172.23.70.4",
-      "vlan": "70",
+      "vlan": "18",
       "services": [
-        "firewall",
-        "ssl-vpn",
-        "nat",
-        "sd-wan",
-        "web-filter"
+        "branch-access",
+        "poe+",
+        "port-security",
+        "switching"
       ],
       "owner": "Network & Security Operations Team",
       "related_entities": [
-        "fmc-cisco-hq-01",
-        "ftd-cisco-hq-01",
-        "waf-f5-bigip-mgmt"
-      ],
-      "canonical_file": "knowledge/topology/fortigate-edge-canonical.md",
-      "ip_addresses": [
-        "172.23.70.4"
-      ]
-    },
-    {
-      "entity_id": "fw-fortigate-jenin-01",
-      "name": "Jenin Branch Firewall (FortiGate)",
-      "category": "network",
-      "aliases": [
-        "jenin-firewall",
-        "fw-jenin",
-        "fortigate-jenin",
-        "172.23.20.1",
-        "jenin-fw"
-      ],
-      "hostname": "fw-fortigate-jenin-01",
-      "fqdn": "fw-fortigate-jenin-01.mne.gov.ps",
-      "ip": "172.23.20.1",
-      "vlan": "20",
-      "services": [
-        "firewall",
-        "ipsec-vpn",
-        "nat",
-        "branch-routing"
-      ],
-      "owner": "Network & Security Operations Team",
-      "related_entities": [
-        "sw-cisco-jenin-01",
-        "fw-fortigate-hq-01",
+        "fw-fortigate-jenin-01",
         "prt-jenin-office-01"
       ],
-      "canonical_file": "knowledge/topology/fortigate-jenin-canonical.md",
-      "ip_addresses": [
-        "172.23.20.1"
-      ]
+      "knowledge_status": "unverified",
+      "source": "legacy_release_2_import",
+      "last_verified": null,
+      "freshness_ttl_hours": 720,
+      "evidence_refs": [],
+      "verification_target": "",
+      "verification_check_id": "",
+      "verification_outcome": "",
+      "canonical_file": "knowledge/topology/cisco-jenin-canonical.md"
     },
     {
-      "entity_id": "fw-fortigate-gaza-01",
-      "name": "Gaza Regional Branch Firewall (FortiGate)",
+      "entity_id": "sw-cisco-tulkarm-01",
+      "name": "Tulkarm Branch Access Switch",
       "category": "network",
       "aliases": [
-        "gaza-firewall",
-        "fw-gaza",
-        "10.211.18.1",
-        "gaza-branch"
+        "10.165.18.3",
+        "sw-access-tulkarm",
+        "sw-tulkarm",
+        "tulkarm access switch",
+        "tulkarm switch",
+        "tulkarm-switch"
       ],
-      "hostname": "fw-fortigate-gaza-01",
-      "fqdn": "fw-fortigate-gaza-01.mne.gov.ps",
-      "ip": "10.211.18.1",
-      "vlan": "18",
+      "hostname": "sw-access-tulkarm",
+      "fqdn": "",
+      "ip": "10.165.18.3",
+      "ip_addresses": [
+        "10.165.18.3"
+      ],
+      "vlan": "",
       "services": [
-        "firewall",
-        "ipsec-vpn",
-        "branch-routing",
-        "nat"
+        "branch-access",
+        "management",
+        "switching"
+      ],
+      "owner": "Network & Security Operations Team",
+      "related_entities": [
+        "fw-fortigate-tulkarm-01",
+        "rtr-tulkarm-01"
+      ],
+      "knowledge_status": "unverified",
+      "source": "MNE_Infrastructure/BRANCH_CONNECTIVITY_BASELINE.md",
+      "last_verified": null,
+      "freshness_ttl_hours": 720,
+      "evidence_refs": [],
+      "verification_target": "",
+      "verification_check_id": "",
+      "verification_outcome": "",
+      "canonical_file": "knowledge/topology/tulkarm-switch-canonical.md"
+    },
+    {
+      "entity_id": "vc-vmware-hq-01",
+      "name": "vCenter Server Appliance (VCSA 7.0.3)",
+      "category": "compute",
+      "aliases": [
+        "172.23.69.38",
+        "vcenter",
+        "vcenter-hq",
+        "vcenter-main",
+        "vmware"
+      ],
+      "hostname": "vcenter-main",
+      "fqdn": "vcenter-main.mne.gov.ps",
+      "ip": "172.23.69.38",
+      "ip_addresses": [
+        "172.23.69.38"
+      ],
+      "vlan": "69",
+      "services": [
+        "esxi-management",
+        "vcenter",
+        "vm-clustering",
+        "vsphere"
+      ],
+      "owner": "Virtualization Infrastructure Team",
+      "related_entities": [
+        "esxi-node-hq-01",
+        "esxi-node-hq-02",
+        "fw-fortigate-hq-01",
+        "san-fujitsu-01"
+      ],
+      "knowledge_status": "unverified",
+      "source": "legacy_release_2_import",
+      "last_verified": null,
+      "freshness_ttl_hours": 720,
+      "evidence_refs": [],
+      "verification_target": "",
+      "verification_check_id": "",
+      "verification_outcome": "",
+      "canonical_file": "knowledge/compute/vmware-canonical.md"
+    },
+    {
+      "entity_id": "waf-f5-bigip-01",
+      "name": "F5 BIG-IP r2000 Web Application Firewall & ADC",
+      "category": "network",
+      "aliases": [
+        "172.23.70.89",
+        "f5-bigip",
+        "f5-bigip-hq-01",
+        "f5-waf",
+        "load-balancer",
+        "waf-f5"
+      ],
+      "hostname": "f5-bigip-hq-01",
+      "fqdn": "f5-bigip-hq-01.mne.gov.ps",
+      "ip": "172.23.70.89",
+      "ip_addresses": [
+        "172.23.70.89"
+      ],
+      "vlan": "70",
+      "services": [
+        "asm-policy",
+        "esadad-publishing",
+        "load-balancing",
+        "ssl-offloading",
+        "waf-protection"
       ],
       "owner": "Network & Security Operations Team",
       "related_entities": [
         "fw-fortigate-hq-01",
-        "sw-cisco-gaza-01"
+        "sw-cisco-core-01"
       ],
-      "canonical_file": "knowledge/topology/gaza-branch-canonical.md",
-      "ip_addresses": [
-        "10.211.18.1"
-      ]
+      "knowledge_status": "unverified",
+      "source": "legacy_release_2_import",
+      "last_verified": null,
+      "freshness_ttl_hours": 720,
+      "evidence_refs": [],
+      "verification_target": "",
+      "verification_check_id": "",
+      "verification_outcome": "",
+      "canonical_file": "knowledge/topology/f5-bigip-canonical.md"
     },
     {
-      "entity_id": "fw-fortigate-hebron-01",
-      "name": "Hebron Regional Branch Firewall (FortiGate)",
-      "category": "network",
+      "entity_id": "web-greenunit-ubuntu-01",
+      "name": "Greenunit Web Application Host (Ubuntu Nginx/PHP)",
+      "category": "compute",
       "aliases": [
-        "hebron-firewall",
-        "fw-hebron",
-        "10.40.18.1",
-        "hebron-branch"
+        "172.23.79.200",
+        "greenunit",
+        "ubuntu-greenunit",
+        "web-greenunit"
       ],
-      "hostname": "fw-fortigate-hebron-01",
-      "fqdn": "fw-fortigate-hebron-01.mne.gov.ps",
-      "ip": "10.40.18.1",
-      "vlan": "18",
-      "services": [
-        "firewall",
-        "ipsec-vpn",
-        "branch-routing",
-        "nat"
-      ],
-      "owner": "Network & Security Operations Team",
-      "related_entities": [
-        "fw-fortigate-hq-01",
-        "sw-cisco-hebron-01"
-      ],
-      "canonical_file": "knowledge/topology/hebron-branch-canonical.md",
+      "hostname": "web-greenunit-ubuntu-01",
+      "fqdn": "greenunit.mne.gov.ps",
+      "ip": "172.23.79.200",
       "ip_addresses": [
-        "10.40.18.1"
-      ]
-    },
-    {
-      "entity_id": "fw-fortigate-jericho-01",
-      "name": "Jericho Regional Branch Firewall (FortiGate)",
-      "category": "network",
-      "aliases": [
-        "jericho-firewall",
-        "fw-jericho",
-        "10.180.18.1",
-        "jericho-branch"
+        "172.23.79.200"
       ],
-      "hostname": "fw-fortigate-jericho-01",
-      "fqdn": "fw-fortigate-jericho-01.mne.gov.ps",
-      "ip": "10.180.18.1",
-      "vlan": "18",
+      "vlan": "79",
       "services": [
-        "firewall",
-        "ipsec-vpn",
-        "branch-routing",
-        "nat"
+        "fail2ban",
+        "mariadb-3306",
+        "nginx-80",
+        "php8.3-fpm",
+        "ssh-22"
       ],
-      "owner": "Network & Security Operations Team",
+      "owner": "Web Applications & E-Government Operations Team",
       "related_entities": [
-        "fw-fortigate-hq-01",
-        "sw-cisco-jericho-01"
+        "vc-vmware-mgmt-01",
+        "waf-f5-bigip-mgmt"
       ],
-      "canonical_file": "knowledge/topology/jericho-branch-canonical.md",
-      "ip_addresses": [
-        "10.180.18.1"
-      ]
-    },
-    {
-      "entity_id": "fw-fortigate-khanyounis-01",
-      "name": "Khan Younis Regional Branch Firewall (FortiGate)",
-      "category": "network",
-      "aliases": [
-        "khanyounis-firewall",
-        "fw-khanyounis",
-        "10.230.18.1",
-        "khanyounis-branch"
-      ],
-      "hostname": "fw-fortigate-khanyounis-01",
-      "fqdn": "fw-fortigate-khanyounis-01.mne.gov.ps",
-      "ip": "10.230.18.1",
-      "vlan": "18",
-      "services": [
-        "firewall",
-        "ipsec-vpn",
-        "branch-routing",
-        "nat"
-      ],
-      "owner": "Network & Security Operations Team",
-      "related_entities": [
-        "fw-fortigate-hq-01",
-        "sw-cisco-khanyounis-01"
-      ],
-      "canonical_file": "knowledge/topology/khanyounis-branch-canonical.md",
-      "ip_addresses": [
-        "10.230.18.1"
-      ]
-    },
-    {
-      "entity_id": "fw-fortigate-nablus-01",
-      "name": "Nablus Regional Branch Firewall (FortiGate)",
-      "category": "network",
-      "aliases": [
-        "nablus-firewall",
-        "fw-nablus",
-        "10.60.18.1",
-        "nablus-branch"
-      ],
-      "hostname": "fw-fortigate-nablus-01",
-      "fqdn": "fw-fortigate-nablus-01.mne.gov.ps",
-      "ip": "10.60.18.1",
-      "vlan": "18",
-      "services": [
-        "firewall",
-        "ipsec-vpn",
-        "branch-routing",
-        "nat"
-      ],
-      "owner": "Network & Security Operations Team",
-      "related_entities": [
-        "fw-fortigate-hq-01",
-        "sw-cisco-nablus-01"
-      ],
-      "canonical_file": "knowledge/topology/nablus-branch-canonical.md",
-      "ip_addresses": [
-        "10.60.18.1"
-      ]
-    },
-    {
-      "entity_id": "fw-fortigate-qalqilya-01",
-      "name": "Qalqilya Regional Branch Firewall (FortiGate)",
-      "category": "network",
-      "aliases": [
-        "qalqilya-firewall",
-        "fw-qalqilya",
-        "10.131.18.1",
-        "qalqilya-branch"
-      ],
-      "hostname": "fw-fortigate-qalqilya-01",
-      "fqdn": "fw-fortigate-qalqilya-01.mne.gov.ps",
-      "ip": "10.131.18.1",
-      "vlan": "18",
-      "services": [
-        "firewall",
-        "ipsec-vpn",
-        "branch-routing",
-        "nat"
-      ],
-      "owner": "Network & Security Operations Team",
-      "related_entities": [
-        "fw-fortigate-hq-01",
-        "sw-cisco-qalqilya-01"
-      ],
-      "canonical_file": "knowledge/topology/qalqilya-branch-canonical.md",
-      "ip_addresses": [
-        "10.131.18.1"
-      ]
-    },
-    {
-      "entity_id": "fw-fortigate-rafah-01",
-      "name": "Rafah Regional Branch Firewall (FortiGate)",
-      "category": "network",
-      "aliases": [
-        "rafah-firewall",
-        "fw-rafah",
-        "10.235.18.1",
-        "rafah-branch"
-      ],
-      "hostname": "fw-fortigate-rafah-01",
-      "fqdn": "fw-fortigate-rafah-01.mne.gov.ps",
-      "ip": "10.235.18.1",
-      "vlan": "18",
-      "services": [
-        "firewall",
-        "ipsec-vpn",
-        "branch-routing",
-        "nat"
-      ],
-      "owner": "Network & Security Operations Team",
-      "related_entities": [
-        "fw-fortigate-hq-01",
-        "sw-cisco-rafah-01"
-      ],
-      "canonical_file": "knowledge/topology/rafah-branch-canonical.md",
-      "ip_addresses": [
-        "10.235.18.1"
-      ]
-    },
-    {
-      "entity_id": "fw-fortigate-ramallah-01",
-      "name": "Ramallah Regional Branch Firewall (FortiGate)",
-      "category": "network",
-      "aliases": [
-        "ramallah-firewall",
-        "fw-ramallah",
-        "10.100.25.1",
-        "ramallah-branch"
-      ],
-      "hostname": "fw-fortigate-ramallah-01",
-      "fqdn": "fw-fortigate-ramallah-01.mne.gov.ps",
-      "ip": "10.100.25.1",
-      "vlan": "25",
-      "services": [
-        "firewall",
-        "ipsec-vpn",
-        "branch-routing",
-        "nat"
-      ],
-      "owner": "Network & Security Operations Team",
-      "related_entities": [
-        "fw-fortigate-hq-01",
-        "sw-cisco-ramallah-01"
-      ],
-      "canonical_file": "knowledge/topology/ramallah-branch-canonical.md",
-      "ip_addresses": [
-        "10.100.25.1"
-      ]
-    },
-    {
-      "entity_id": "fw-fortigate-salfit-01",
-      "name": "Salfit Regional Branch Firewall (FortiGate)",
-      "category": "network",
-      "aliases": [
-        "salfit-firewall",
-        "fw-salfit",
-        "10.165.18.1",
-        "salfit-branch"
-      ],
-      "hostname": "fw-fortigate-salfit-01",
-      "fqdn": "fw-fortigate-salfit-01.mne.gov.ps",
-      "ip": "10.165.18.1",
-      "vlan": "18",
-      "services": [
-        "firewall",
-        "ipsec-vpn",
-        "branch-routing",
-        "nat"
-      ],
-      "owner": "Network & Security Operations Team",
-      "related_entities": [
-        "fw-fortigate-hq-01",
-        "sw-cisco-salfit-01"
-      ],
-      "canonical_file": "knowledge/topology/salfit-branch-canonical.md",
-      "ip_addresses": [
-        "10.165.18.1"
-      ]
-    },
-    {
-      "entity_id": "fw-fortigate-tubas-01",
-      "name": "Tubas Regional Branch Firewall (FortiGate)",
-      "category": "network",
-      "aliases": [
-        "tubas-firewall",
-        "fw-tubas",
-        "10.201.18.1",
-        "tubas-branch"
-      ],
-      "hostname": "fw-fortigate-tubas-01",
-      "fqdn": "fw-fortigate-tubas-01.mne.gov.ps",
-      "ip": "10.201.18.1",
-      "vlan": "18",
-      "services": [
-        "firewall",
-        "ipsec-vpn",
-        "branch-routing",
-        "nat"
-      ],
-      "owner": "Network & Security Operations Team",
-      "related_entities": [
-        "fw-fortigate-hq-01",
-        "sw-cisco-tubas-01"
-      ],
-      "canonical_file": "knowledge/topology/tubas-branch-canonical.md",
-      "ip_addresses": [
-        "10.201.18.1"
-      ]
-    },
-    {
-      "entity_id": "fw-fortigate-tulkarm-01",
-      "name": "Tulkarm Regional Branch Firewall (FortiGate)",
-      "category": "network",
-      "aliases": [
-        "tulkarm-firewall",
-        "fw-tulkarm",
-        "10.110.19.1",
-        "tulkarm-branch"
-      ],
-      "hostname": "fw-fortigate-tulkarm-01",
-      "fqdn": "fw-fortigate-tulkarm-01.mne.gov.ps",
-      "ip": "10.110.19.1",
-      "vlan": "19",
-      "services": [
-        "firewall",
-        "ipsec-vpn",
-        "branch-routing",
-        "nat"
-      ],
-      "owner": "Network & Security Operations Team",
-      "related_entities": [
-        "fw-fortigate-hq-01",
-        "sw-cisco-tulkarm-01"
-      ],
-      "canonical_file": "knowledge/topology/tulkarm-branch-canonical.md",
-      "ip_addresses": [
-        "10.110.19.1"
-      ]
+      "knowledge_status": "unverified",
+      "source": "legacy_release_2_import",
+      "last_verified": null,
+      "freshness_ttl_hours": 720,
+      "evidence_refs": [],
+      "verification_target": "",
+      "verification_check_id": "",
+      "verification_outcome": "",
+      "canonical_file": "knowledge/compute/greenunit-canonical.md"
     }
   ]
 }

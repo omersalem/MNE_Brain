@@ -1,0 +1,39 @@
+bind_host: 127.0.0.1
+bind_port: 8080
+owner_session:
+  cookie_name: mne_owner_session
+  username_ref: MNE_OWNER_USERNAME
+  password_hash_ref: MNE_OWNER_PASSWORD_HASH
+  inactivity_seconds: 1800
+  nonce_ttl_seconds: 300
+  max_sessions: 1
+  maximum_failures: 5
+  lockout_seconds: 300
+http:
+  max_request_bytes: 1048576
+  max_workers: 16
+  request_timeout_seconds: 30
+  sse_heartbeat_seconds: 15
+external_authorization_ttl_seconds: 300
+external_data:
+  auto_authorize_redacted_conversation: true
+  explicit_authorization_required_for_live_evidence: true
+workspace_approval_ttl_seconds: 300
+opencode:
+  minimum_version: 1.0.0
+  bind_host: 127.0.0.1
+  port_selection: RANDOM_AVAILABLE
+  server_password: IN_MEMORY_ONLY
+  startup_health_timeout_seconds: 12
+  maximum_restart_attempts: 3
+  restart_backoff_seconds: [0.5, 1.0, 2.0]
+  native_shell: DENY
+  native_edits: DENY
+  external_directories: DENY
+  native_subagents: DENY
+  uncontrolled_mcp: DENY
+execution:
+  p7_live_reads_enabled: false
+  p7_owner_scoped_live_reads_available: true
+  p10_writes_enabled: false
+  external_provider_calls_enabled: true

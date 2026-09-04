@@ -1,0 +1,6 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#", "$id": "https://mne-brain.local/schemas/p10-check-result.schema.json",
+  "title": "P10 Read-Only Check Result", "type": "object", "additionalProperties": false,
+  "required": ["check_id", "passed", "read_only", "evidence_id", "observed_at"],
+  "properties": {"check_id": {"type": "string", "pattern": "^[a-z][a-z0-9_]{2,79}$"}, "passed": {"type": "boolean"}, "read_only": {"const": true}, "evidence_id": {"type": "string", "minLength": 3}, "observed_at": {"type": "string", "format": "date-time"}, "detail": {"type": "string", "maxLength": 500}}
+}

@@ -8,7 +8,7 @@ Current verified state:
 
 - P1 offline foundations and Milestones 1–13 are complete.
 - The classified offline test collection passes.
-- All 46 knowledge notes remain `unverified`.
+- All 47 knowledge notes remain `unverified`.
 - Live transport adapters are not activated.
 - Alert ingestion, execution, and remediation remain disabled.
 - Simplified P0 Git containment is complete; no broader credential-hardening or production-security claim is made.

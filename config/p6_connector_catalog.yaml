@@ -46,7 +46,7 @@ connectors:
     adapter_id: "cisco_ssh_readonly"
     implementation_status: "offline_validated"
     live_transport_status: "NOT_REGISTERED"
-    entity_ids: ["sw-cisco-core-01", "sw-cisco-floor-1", "sw-cisco-floor-2", "sw-cisco-floor-3", "sw-cisco-floor-4", "sw-cisco-floor-5", "sw-cisco-floor-6", "sw-cisco-floor-b1", "sw-cisco-floor-gnd", "sw-cisco-floor-svc", "sw-cisco-jenin-01"]
+    entity_ids: ["rtr-tulkarm-01", "sw-cisco-core-01", "sw-cisco-floor-1", "sw-cisco-floor-2", "sw-cisco-floor-3", "sw-cisco-floor-4", "sw-cisco-floor-5", "sw-cisco-floor-6", "sw-cisco-floor-b1", "sw-cisco-floor-gnd", "sw-cisco-floor-svc", "sw-cisco-jenin-01", "sw-cisco-tulkarm-01"]
     port_env: "CISCO_SSH_PORT"
     credential_ref_env: "CISCO_CREDENTIAL_REF"
     timeout_seconds: 15

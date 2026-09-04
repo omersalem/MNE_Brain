@@ -1,0 +1,23 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Owner Direct Write Risk Warning",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["target_device_system", "exact_intended_change", "commands_or_api_operations", "expected_impact_and_downtime_risk", "blast_radius", "prechecks", "postchecks", "rollback_steps", "rollback_status", "identity_status", "identity_warning"],
+  "properties": {
+    "target_device_system": {"type": "string", "minLength": 1},
+    "exact_intended_change": {"type": "string", "minLength": 1},
+    "commands_or_api_operations": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+    "expected_impact_and_downtime_risk": {"type": "string", "minLength": 1},
+    "blast_radius": {"type": "string", "minLength": 1},
+    "prechecks": {"type": "array", "items": {"type": "string"}},
+    "postchecks": {"type": "array", "items": {"type": "string"}},
+    "rollback_steps": {"type": "array", "minItems": 1, "items": {"type": "string"}},
+    "rollback_status": {"enum": ["DECLARED", "NO_SAFE_ROLLBACK"]},
+    "identity_status": {"enum": ["IDENTITY_VERIFIED", "IDENTITY_UNVERIFIED"]},
+    "identity_warning": {"type": "string", "minLength": 1},
+    "can_rollback": {"type": "boolean"},
+    "risk_level": {"type": "string", "enum": ["LOW", "MEDIUM", "HIGH", "CRITICAL"]},
+    "rollback_summary": {"type": "string"}
+  }
+}

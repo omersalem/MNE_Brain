@@ -1,16 +1,16 @@
 # P6 Multi-Platform Connector Pilot Report
 
-**Date:** 2026-08-16  
+**Date:** 2026-08-24
 **Mode:** `OFFLINE_MULTI_PLATFORM_CONNECTOR_READINESS`  
 **Result:** 25/25 scenarios passed
 
 ## Coverage
 
 - Connector families: **15**
-- Canonical entities: **46**
-- Exact planning coverage: **46/46 (100%)**
-- Injected offline validation coverage: **46/46 (100%)**
-- Owner-gated real transport coverage: **1/46 (2.17%)**
+- Canonical entities: **47**
+- Exact planning coverage: **48/48 (100%)**
+- Injected offline validation coverage: **48/48 (100%)**
+- Connector-native owner-gated real transport coverage: **1/48 (2.08%)**; P7 bindings are governed separately
 - Production readiness claimed: **false**
 
 ## Safety

@@ -1,0 +1,13 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#", "$id": "https://mne-brain.local/schemas/p10-execution-result.schema.json",
+  "title": "P10 Execution Result", "type": "object", "additionalProperties": false,
+  "required": ["execution_id", "plan_id", "operation_id", "status", "success", "submitted", "mutation_started", "automatic_retry", "post_check_results", "manual_verification_required", "rollback_status", "rollback_result", "timestamp", "audit_mode", "retention", "output_persisted", "credentials_included", "notification_sent", "ticket_created", "page_sent", "automatic_assignment", "automatic_remediation"],
+  "properties": {
+    "execution_id": {"type": "string"}, "plan_id": {"type": "string"}, "operation_id": {"type": "string"}, "status": {"type": "string"},
+    "success": {"type": "boolean"}, "submitted": {"type": "boolean"}, "mutation_started": {"type": "boolean"}, "automatic_retry": {"const": false}, "driver_status": {"type": ["string", "null"]},
+    "post_check_results": {"type": "array"}, "manual_verification_required": {"type": "boolean"}, "rollback_status": {"type": "string"}, "rollback_result": {"type": ["object", "null"]},
+    "timestamp": {"type": "string", "format": "date-time"}, "audit_mode": {"const": "IN_MEMORY_ONLY"}, "retention": {"const": "NONE"},
+    "output_persisted": {"const": false}, "credentials_included": {"const": false}, "notification_sent": {"const": false},
+    "ticket_created": {"const": false}, "page_sent": {"const": false}, "automatic_assignment": {"const": false}, "automatic_remediation": {"const": false}
+  }
+}

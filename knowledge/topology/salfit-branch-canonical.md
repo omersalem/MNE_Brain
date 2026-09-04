@@ -2,14 +2,14 @@
 id: "fw-fortigate-salfit-01"
 name: "Salfit Regional Branch Firewall (FortiGate)"
 category: "network"
-aliases: ["salfit-firewall", "fw-salfit", "10.165.18.1", "salfit-branch"]
-hostname: "fw-fortigate-salfit-01"
-fqdn: "fw-fortigate-salfit-01.mne.gov.ps"
-ip: "10.165.18.1"
+aliases: ["salfit-firewall", "fw-salfit", "10.235.18.1", "salfit-branch", "salfeet-branch", "FW-MNE-Salfeet"]
+hostname: "FW-MNE-Salfeet"
+fqdn: "FW-MNE-Salfeet.mne.gov.ps"
+ip: "10.235.18.1"
 vlan: "18"
 services: ["firewall", "ipsec-vpn", "branch-routing", "nat"]
 owner: "Network & Security Operations Team"
-related_entities: ["fw-fortigate-hq-01", "sw-cisco-salfit-01"]
+related_entities: ["fw-fortigate-hq-01"]
 knowledge_status: "unverified"
 source: "legacy_release_2_import"
 last_verified: null
@@ -23,8 +23,13 @@ freshness_ttl_hours: 720
 > **Last Verified:** 2026-08-01T12:00:00Z
 
 ## 🛡️ Salfit Branch Security Details
-- **Hostname:** `fw-fortigate-salfit-01`
-- **Gateway IP:** `10.165.18.1`
-- **Subnet:** `10.165.18.0/24` (Salfit Regional Directorate)
-- **Switch IP:** `10.165.18.2` (sw-cisco-salfit-01)
-- **IPSec Tunnel:** Connected to HQ FortiGate (`172.23.19.1`) via WAN
+- **Hostname:** `FW-MNE-Salfeet`
+- **Gateway IP:** `10.235.18.1`
+- **Subnet:** `10.235.18.0/24` (Salfit / Salfeet Regional Directorate)
+- **Switch IP:** `10.235.18.3` (Branch Switch)
+- **Router IP:** `10.235.18.2` (Branch Router)
+- **WAN Links:**
+  - **wan1:** `172.27.13.30/30` (Central Interconnect)
+  - **wan2:** `213.6.192.142/30` (Public Internet WAN)
+  - **internal:** `10.235.18.1/24` (Local Branch LAN)
+

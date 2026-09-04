@@ -53,10 +53,17 @@ class TransportRegistry:
                 raise ValueError(f"SSH binding cannot declare a Kerberos FQDN: {binding['binding_id']}")
             if binding["protocol"] == "ssh" and binding["identity_mode"] != "PINNED_HOST_KEY":
                 raise ValueError(f"SSH binding requires a pinned host key: {binding['binding_id']}")
-            if binding["protocol"] == "rest" and (binding["identity_mode"] != "PINNED_TLS_CERT" or not operation.startswith("GET ")):
-                raise ValueError(f"REST binding requires pinned TLS and a GET operation: {binding['binding_id']}")
+            if binding["protocol"] == "rest" and (binding["identity_mode"] != "PINNED_TLS_CERT" or not operation.startswith(("GET ", "HEAD "))):
+                raise ValueError(f"REST binding requires pinned TLS and a GET/HEAD operation: {binding['binding_id']}")
             if binding["protocol"] == "ssh" and not operation.startswith(("get ", "show ", "hostnamectl ", "tmsh ", "system diagnostics ", "help")):
                 raise ValueError(f"SSH binding is outside the read-only grammar: {binding['binding_id']}")
+            if binding["protocol"] == "snmp" and (
+                binding["identity_mode"] != "SNMP_ENGINE_ID"
+                or not re.fullmatch(r"SNMP_(?:GET|WALK) [0-9.]+", operation)
+            ):
+                raise ValueError(f"SNMP binding requires an exact read-only OID and engine identity: {binding['binding_id']}")
+            if binding["protocol"] == "tcp" and binding["identity_mode"] != "EXACT_TARGET_ONLY":
+                raise ValueError(f"TCP dependency checks require an exact target: {binding['binding_id']}")
 
     def binding_summary(self) -> dict[str, Any]:
         bindings = self.binding_catalog["bindings"]
@@ -74,7 +81,7 @@ class TransportRegistry:
             "host_key_pinned_bindings": sum(item["identity_mode"] == "PINNED_HOST_KEY" for item in active),
             "tls_pinned_bindings": sum(item["identity_mode"] == "PINNED_TLS_CERT" for item in active),
             "kerberos_bindings": sum(item["identity_mode"] == "KERBEROS_FQDN" for item in active),
-            "permanent_mapping_complete": len(active) == 31 and len(excluded) == 1,
+            "permanent_mapping_complete": len(active) >= 32 and len(excluded) == 1,
             "operations_included": False,
             "environment_references_included": False,
         }

@@ -7,7 +7,7 @@
 
 ## Result
 
-All 12 governed runbooks were checked against the repository contracts and the relevant Ministry infrastructure baseline documents. The dedicated Cisco FMC/FTD procedure closes the only identified domain-selection gap. Exact entity scopes and service scopes now produce 46/46 context coverage and 46/46 owner-reviewed procedure coverage.
+All 12 governed runbooks were checked against the repository contracts and the relevant Ministry infrastructure baseline documents. The dedicated Cisco FMC/FTD procedure closes the only identified domain-selection gap. Exact entity scopes and service scopes now produce 48/48 context coverage and 48/48 owner-reviewed procedure coverage, including the Tulkarm router and access-switch identities added on 2026-08-24.
 
 ## Technical review basis
 

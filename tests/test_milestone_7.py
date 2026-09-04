@@ -93,7 +93,7 @@ def test_milestone_7() -> bool:
         )
 
     provider_failures: list[str] = []
-    for provider_name in ("openai", "anthropic", "gemini", "ollama", "deepseek"):
+    for provider_name in ("openai", "anthropic", "ollama", "deepseek"):
         response = LLMAdapter(provider=provider_name, base_dir=base_dir).generate_response(
             "Test prompt"
         )

@@ -1,873 +1,133 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" dir="ltr" data-theme="dark">
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>MNE_Brain Release 2 | Evidence Console</title>
-    <style>
-        :root {
-            color-scheme: dark;
-            --bg: #07111f;
-            --panel: #0d1b2d;
-            --panel-2: #12243a;
-            --line: #263b53;
-            --text: #e8f0f8;
-            --muted: #93a7bc;
-            --cyan: #49c6e5;
-            --blue: #4f8cff;
-            --amber: #f3b64b;
-            --radius: 12px;
-        }
-
-        * { box-sizing: border-box; }
-        body {
-            margin: 0;
-            min-height: 100vh;
-            background: radial-gradient(circle at top right, #102843 0, var(--bg) 42%);
-            color: var(--text);
-            font: 14px/1.5 Inter, "Segoe UI", sans-serif;
-        }
-        button, input, select, textarea { font: inherit; }
-        button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
-        .shell { display: grid; grid-template-columns: 250px minmax(0, 1fr); min-height: 100vh; }
-        .sidebar {
-            position: sticky;
-            top: 0;
-            height: 100vh;
-            padding: 24px 18px;
-            background: rgba(7, 17, 31, .94);
-            border-right: 1px solid var(--line);
-        }
-        .brand { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
-        .brand-mark {
-            display: grid;
-            place-items: center;
-            width: 42px;
-            height: 42px;
-            border: 1px solid #39718a;
-            border-radius: 12px;
-            background: #10283b;
-            color: var(--cyan);
-            font-weight: 800;
-        }
-        .brand strong { display: block; font-size: 16px; }
-        .brand span { color: var(--muted); font-size: 12px; }
-        .nav { display: grid; gap: 7px; }
-        .nav button {
-            width: 100%;
-            padding: 10px 12px;
-            border: 1px solid transparent;
-            border-radius: 8px;
-            background: transparent;
-            color: var(--muted);
-            text-align: left;
-            cursor: pointer;
-        }
-        .nav button:hover, .nav button.active { color: var(--text); background: var(--panel-2); border-color: var(--line); }
-        .architecture-note {
-            position: absolute;
-            right: 18px;
-            bottom: 20px;
-            left: 18px;
-            padding: 11px;
-            border: 1px solid #685529;
-            border-radius: 8px;
-            color: var(--amber);
-            font-size: 11px;
-            text-align: center;
-        }
-        main { min-width: 0; padding: 0 28px 40px; }
-        .topbar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 16px;
-            min-height: 76px;
-            border-bottom: 1px solid var(--line);
-        }
-        .topbar h1 { margin: 0; font-size: 17px; }
-        .topbar p { margin: 2px 0 0; color: var(--muted); font-size: 12px; }
-        .badge {
-            display: inline-flex;
-            align-items: center;
-            max-width: 100%;
-            padding: 4px 8px;
-            border: 1px solid #36506d;
-            border-radius: 999px;
-            background: #10243a;
-            color: #c8d9e9;
-            font: 700 11px/1.2 ui-monospace, Consolas, monospace;
-            overflow-wrap: anywhere;
-        }
-        .view { display: none; padding-top: 26px; }
-        .view.active { display: block; }
-        .view-heading { margin-bottom: 18px; }
-        .view-heading h2 { margin: 0 0 4px; font-size: 22px; }
-        .view-heading p { margin: 0; color: var(--muted); }
-        .notice {
-            margin-bottom: 20px;
-            padding: 12px 14px;
-            border: 1px solid #66552f;
-            border-radius: 9px;
-            background: rgba(243, 182, 75, .08);
-            color: #f8d99b;
-        }
-        .metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-bottom: 18px; }
-        .card { padding: 18px; border: 1px solid var(--line); border-radius: var(--radius); background: rgba(13, 27, 45, .9); }
-        .metric-label { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .06em; }
-        .metric-value { margin-top: 9px; color: var(--cyan); font-size: 22px; font-weight: 750; overflow-wrap: anywhere; }
-        .grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
-        .card h3 { margin: 0 0 14px; font-size: 15px; }
-        .stack { display: grid; gap: 9px; }
-        .kv { display: flex; justify-content: space-between; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--line); }
-        .kv:last-child { border-bottom: 0; }
-        .kv span:first-child { color: var(--muted); }
-        .table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel); }
-        table { width: 100%; border-collapse: collapse; }
-        th, td { padding: 12px 14px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
-        th { color: var(--muted); background: #0a1727; font-size: 11px; letter-spacing: .05em; text-transform: uppercase; }
-        tbody tr:last-child td { border-bottom: 0; }
-        code, .mono { color: #b8d6ed; font-family: ui-monospace, Consolas, monospace; font-size: 12px; }
-        .empty { padding: 22px; color: var(--muted); text-align: center; }
-        .error { color: #ffb4b4; }
-        .button {
-            padding: 8px 12px;
-            border: 1px solid #39718a;
-            border-radius: 7px;
-            background: #12324a;
-            color: var(--text);
-            cursor: pointer;
-        }
-        .button:hover { background: #17405e; }
-        .chat-card { display: grid; grid-template-rows: minmax(360px, 58vh) auto; padding: 0; overflow: hidden; }
-        .messages { padding: 18px; overflow-y: auto; }
-        .message { max-width: 86%; margin-bottom: 12px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 10px; white-space: pre-wrap; }
-        .message.user { margin-left: auto; background: #133b58; }
-        .message.assistant { background: #0c2034; }
-        .message-meta { display: block; margin-top: 8px; color: var(--muted); font-size: 11px; }
-        .chat-form { display: flex; gap: 10px; padding: 14px; border-top: 1px solid var(--line); background: #091726; }
-        .chat-form input, .search-input {
-            width: 100%;
-            padding: 10px 12px;
-            border: 1px solid var(--line);
-            border-radius: 7px;
-            background: #081421;
-            color: var(--text);
-        }
-        .intake-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
-        .field { display: grid; gap: 6px; }
-        .field label { color: var(--muted); font-size: 12px; }
-        .field input, .field select, .field textarea {
-            width: 100%;
-            padding: 10px 12px;
-            border: 1px solid var(--line);
-            border-radius: 7px;
-            background: #081421;
-            color: var(--text);
-        }
-        .field textarea { min-height: 96px; resize: vertical; }
-        .span-2 { grid-column: 1 / -1; }
-        .check-row { display: flex; flex-wrap: wrap; gap: 16px; padding: 8px 0; }
-        .check-row label { display: inline-flex; align-items: center; gap: 7px; color: var(--muted); }
-        .intake-result { margin-top: 18px; }
-        .split { display: grid; grid-template-columns: 340px minmax(0, 1fr); gap: 18px; }
-        .knowledge-list { display: grid; gap: 8px; max-height: 64vh; margin-top: 12px; overflow-y: auto; }
-        .knowledge-list button { padding: 10px; border: 1px solid var(--line); border-radius: 7px; background: #0a192a; color: var(--text); text-align: left; cursor: pointer; }
-        .knowledge-list small { display: block; margin-top: 3px; color: var(--muted); }
-        pre { max-height: 58vh; margin: 0; overflow: auto; color: #c9d8e7; white-space: pre-wrap; word-break: break-word; }
-        @media (max-width: 1050px) { .metrics { grid-template-columns: repeat(2, 1fr); } .grid-2, .split, .intake-form { grid-template-columns: 1fr; } .span-2 { grid-column: auto; } }
-        @media (max-width: 760px) {
-            .shell { grid-template-columns: 1fr; }
-            .sidebar { position: static; height: auto; border-right: 0; border-bottom: 1px solid var(--line); }
-            .architecture-note { position: static; margin-top: 16px; }
-            .nav { grid-template-columns: repeat(2, 1fr); }
-            main { padding: 0 16px 28px; }
-            .topbar { align-items: flex-start; flex-direction: column; padding: 16px 0; }
-            .metrics { grid-template-columns: 1fr; }
-        }
-    </style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="MNE_Brain Release 2 owner-controlled infrastructure AI console">
+  <meta name="color-scheme" content="dark light">
+  <title>MNE_Brain · Infrastructure AI Console</title>
+  <link rel="stylesheet" href="/styles/main.css">
 </head>
 <body>
-<div class="shell">
-    <aside class="sidebar">
-        <div class="brand">
-            <div class="brand-mark" aria-hidden="true">MB</div>
-            <div><strong>MNE_Brain</strong><span>Release 2 Evidence Console</span></div>
-        </div>
-        <nav class="nav" aria-label="Primary navigation">
-            <button class="active" data-view="overview">Overview</button>
-            <button data-view="incident-intake">Incident intake</button>
-            <button data-view="assistant">Troubleshooting</button>
-            <button data-view="p8">P8 diagnostic planner</button>
-            <button data-view="p9">P9 deep diagnostics</button>
-            <button data-view="inventory">Entity inventory</button>
-            <button data-view="runbooks">Runbook readiness</button>
-            <button data-view="connectors">Connector readiness</button>
-            <button data-view="transports">Live transport readiness</button>
-            <button data-view="knowledge">Knowledge evidence</button>
-            <button data-view="investigations">Investigation traces</button>
-            <button data-view="actions">Remediation plans</button>
-            <button data-view="automation">Alert ingestion</button>
-            <button data-view="logs">Audit records</button>
-        </nav>
-        <div class="architecture-note">ZERO Business Logic in GUI<br>Read-only presentation except delegated queries</div>
-    </aside>
+  <section id="login-gate" class="login-gate" aria-labelledby="login-title">
+    <form id="owner-login-form" class="login-card">
+      <span class="brand-mark" aria-hidden="true">M</span>
+      <span class="eyebrow">Local owner access</span>
+      <h1 id="login-title">Sign in to MNE_Brain</h1>
+      <p>One authenticated owner session. Reads run automatically; every write still requires an exact preview and your approval.</p>
+      <label for="owner-username">Username</label>
+      <input id="owner-username" name="username" autocomplete="username" required autofocus>
+      <label for="owner-password">Password</label>
+      <input id="owner-password" name="password" type="password" autocomplete="current-password" required>
+      <button class="primary" type="submit">Sign in</button>
+      <output id="login-status" role="status">Checking owner session…</output>
+    </form>
+  </section>
+  <a class="skip-link" href="#conversation">Skip to conversation</a>
+  <div id="offline-banner" class="offline-banner" role="status" hidden>Connection lost. Your conversation remains in this browser view while the server reconnects.</div>
 
-    <main>
-        <header class="topbar">
-            <div><h1>MNE_Brain Release 2</h1><p id="snapshot-time">Loading backend snapshot…</p></div>
-            <span class="badge" id="system-status">LOADING</span>
+  <header class="topbar">
+    <div class="brand-block" aria-label="MNE Brain Release 2">
+      <span class="brand-mark" aria-hidden="true">M</span>
+      <div><strong>MNE_Brain Release 2</strong><span>Infrastructure AI Console</span></div>
+    </div>
+    <div class="top-controls">
+      <label class="control-field" for="provider-select"><span>AI engine</span><select id="provider-select" aria-describedby="provider-status"></select></label>
+      <label class="control-field" for="model-select"><span>Model</span><select id="model-select" aria-describedby="provider-status"></select></label>
+      <p id="model-details" class="settings-note" aria-live="polite"></p>
+      <label class="control-field" for="permission-mode"><span>Permission mode</span>
+        <select id="permission-mode" disabled title="Owner Direct policy is enforced by the server">
+          <option value="OWNER_DIRECT">Owner Direct</option>
+        </select>
+      </label>
+      <button id="settings-button" class="icon-button" type="button" aria-controls="settings-panel" title="Settings">Settings</button>
+      <button id="logout-button" class="icon-button" type="button" title="End the owner session">Sign out</button>
+    </div>
+  </header>
+
+  <div class="safety-strip" role="status">
+    <span class="status-pill safe"><i aria-hidden="true"></i>Loopback owner session</span>
+    <span class="status-pill"><i aria-hidden="true"></i>Conversations: memory only</span>
+    <span class="status-pill warning"><i aria-hidden="true"></i>Owner Direct · reads automatic, writes need final confirmation</span>
+    <span class="safety-label">Development console only · ZERO Business Logic in GUI · server policy is authoritative.</span>
+  </div>
+
+  <main class="workspace">
+    <nav class="threads-panel" aria-label="Conversation threads">
+      <div class="panel-heading"><span>Conversations</span><button id="new-thread" class="primary compact" type="button">+ New</button></div>
+      <label class="search-field" for="thread-search"><span class="sr-only">Search conversations</span><input id="thread-search" type="search" autocomplete="off" placeholder="Search conversations" aria-label="Search conversations"></label>
+      <ul id="thread-list" class="thread-list"></ul>
+      <div class="thread-actions">
+        <button id="export-thread" type="button">Export</button>
+        <button id="import-thread" type="button">Import</button>
+        <input id="import-thread-file" type="file" accept="application/json,.json" hidden>
+      </div>
+    </nav>
+
+    <section id="conversation" class="conversation-panel" aria-labelledby="conversation-title">
+      <header class="conversation-header">
+        <div><span class="eyebrow">Active conversation</span><h1 id="conversation-title">New conversation</h1></div>
+        <button id="cancel-turn" class="danger-quiet" type="button" disabled>Stop response</button>
+      </header>
+      <div id="message-stream" class="message-stream" role="log" aria-live="polite" aria-relevant="additions">
+        <section id="empty-state" class="empty-state">
+          <div class="empty-mark" aria-hidden="true">M</div>
+          <h2>How can I help with the infrastructure?</h2>
+          <p>Ask naturally. MNE_Brain may use all available read-only evidence automatically. Before any write, it must show the exact action, risk, verification, and rollback for your approval.</p>
+          <div class="prompt-examples" aria-label="Example prompts">
+            <button type="button" data-prompt="Explain the current Release 2 safety state.">Explain the safety state</button>
+            <button type="button" data-prompt="Search the workspace for the P7 activation requirements.">Find P7 requirements</button>
+          </div>
+        </section>
+      </div>
+      <section id="activity-panel" class="live-activity" aria-labelledby="activity-title" hidden>
+        <header class="activity-header">
+          <div class="activity-heading"><span class="activity-pulse" aria-hidden="true"></span><div><span class="eyebrow">Redacted operational trace</span><h2 id="activity-title">Live background activity</h2></div></div>
+          <div class="activity-controls"><span id="activity-state" class="activity-state">Starting</span><button id="toggle-activity" type="button" aria-expanded="true">Hide</button></div>
         </header>
+        <div id="activity-body">
+          <p class="activity-note">Shows server-approved progress, plans, commands, tools, evidence, validation, and approvals. Credentials and private model reasoning are never displayed.</p>
+          <ol id="activity-list" class="activity-list" aria-live="polite" aria-relevant="additions text"></ol>
+          <button id="activity-open-tools" class="activity-details" type="button">Open detailed operations and approvals</button>
+        </div>
+      </section>
+      <form id="composer" class="composer">
+        <label for="composer-input"><span class="sr-only">Message</span></label>
+        <textarea id="composer-input" rows="3" maxlength="200000" required placeholder="Ask with an exact target and evidence need…" aria-describedby="composer-hint turn-status"></textarea>
+        <div class="composer-footer">
+          <div><span id="turn-status" role="status">Ready</span><span id="composer-hint">Enter to send · Shift+Enter for a new line</span></div>
+          <button id="send-turn" class="primary send-button" type="submit">Send <span aria-hidden="true">↑</span></button>
+        </div>
+      </form>
+    </section>
 
-        <section class="view active" id="view-overview">
-            <div class="view-heading"><h2>Readiness overview</h2><p>Truthful project capability state from the backend; this is not live Ministry telemetry.</p></div>
-            <div class="notice">Development console only. P7 transport boundaries are implemented but disabled at rest; live reads require an exact owner-authorized scope. Alert ingestion and remediation remain disabled.</div>
-            <div class="metrics">
-                <div class="card"><div class="metric-label">System state</div><div class="metric-value" id="metric-system">LOADING</div></div>
-                <div class="card"><div class="metric-label">Indexed entities</div><div class="metric-value" id="metric-entities">—</div></div>
-                <div class="card"><div class="metric-label">Live verification</div><div class="metric-value" id="metric-verification">—</div></div>
-                <div class="card"><div class="metric-label">Alert ingestion</div><div class="metric-value" id="metric-alerts">—</div></div>
-                <div class="card"><div class="metric-label">Reviewed procedures</div><div class="metric-value" id="metric-runbooks">—</div></div>
-                <div class="card"><div class="metric-label">Offline connectors</div><div class="metric-value" id="metric-connectors">—</div></div>
-            </div>
-            <div class="grid-2">
-                <div class="card"><h3>Protocol capabilities</h3><div class="stack" id="driver-statuses"></div></div>
-                <div class="card"><h3>Knowledge status</h3><div class="stack" id="knowledge-statuses"></div></div>
-            </div>
-        </section>
+    <aside class="evidence-panel" aria-labelledby="evidence-title">
+      <div class="panel-heading"><h2 id="evidence-title">Context & evidence</h2><span class="trust-badge">Truth gated</span></div>
+      <section class="evidence-card"><h3>Sources</h3><ul id="evidence-sources"><li>No attributable source accepted.</li></ul></section>
+      <section class="evidence-card"><h3>Unknowns</h3><ul id="evidence-unknowns"><li>No evidence accepted yet.</li></ul></section>
+      <section class="evidence-card status-card"><h3>Control status</h3><dl><div><dt>Live reads</dt><dd id="live-status">Loading…</dd></div><div><dt>Codex harness</dt><dd id="codex-status">Loading…</dd></div><div><dt>Provider</dt><dd id="provider-status">Loading…</dd></div></dl></section>
+    </aside>
+  </main>
 
-        <section class="view" id="view-assistant">
-            <div class="view-heading"><h2>Evidence-based troubleshooting</h2><p>The GUI forwards the question; routing, evidence, policy, and answer status come from the backend.</p></div>
-            <div class="card chat-card">
-                <div class="messages" id="messages" aria-live="polite">
-                    <div class="message assistant">Ask an infrastructure question. Answers may be insufficient or require clarification because live verification is not configured.</div>
-                </div>
-                <form class="chat-form" id="chat-form">
-                    <input id="chat-input" autocomplete="off" placeholder="Describe the symptom, affected service, and target…" aria-label="Troubleshooting question">
-                    <button class="button" type="submit">Send query</button>
-                </form>
-            </div>
-        </section>
+  <section id="tool-drawer" class="tool-drawer" aria-labelledby="tool-title">
+    <header><div><span class="eyebrow">Governed operations</span><h2 id="tool-title">Activity details & change approvals</h2></div><button id="toggle-tools" type="button" aria-expanded="true">Collapse</button></header>
+    <div id="tool-content"><p class="approval-policy-summary">Owner Direct reads show live identity evidence. For a real change, the server displays the exact operation and risk warning; one final confirmation sends it once. Unseen future changes are never included.</p><div id="tool-proposals" class="empty-tools" role="status">No tool proposals for this conversation.</div><div id="workspace-diffs"></div><div id="p10-status" class="p10-status">Owner Direct is primary; legacy P10 remains available for existing governed plans.</div></div>
+  </section>
 
-        <section class="view" id="view-p8">
-            <div class="view-heading"><h2>P8 diagnostic planner</h2><p>Select one governed scenario and one exact operational binding. Planning never connects to a device.</p></div>
-            <div class="notice">P8 is disabled at rest. This browser can prepare read-only checks only; it cannot run them, persist evidence, call an external AI, notify anyone, or remediate.</div>
-            <div class="metrics">
-                <div class="card"><div class="metric-label">P8 state</div><div class="metric-value" id="p8-state">LOADING</div></div>
-                <div class="card"><div class="metric-label">Scenarios</div><div class="metric-value" id="p8-scenarios">â€”</div></div>
-                <div class="card"><div class="metric-label">Live enabled</div><div class="metric-value" id="p8-live">FALSE</div></div>
-            </div>
-            <form class="card intake-form" id="p8-plan-form">
-                <div class="field"><label for="p8-scenario">Scenario</label><select id="p8-scenario" required></select></div>
-                <div class="field"><label for="p8-binding">Exact operational binding</label><select id="p8-binding" required></select></div>
-                <div class="field span-2"><label for="p8-symptom">Reported symptom</label><textarea id="p8-symptom" maxlength="500" placeholder="Describe the observed symptom without credentials or secrets."></textarea></div>
-                <div class="span-2"><button class="button" type="submit">Prepare read-only diagnostic plan</button></div>
-            </form>
-            <div class="card stack intake-result" id="p8-plan-result"><div class="empty">No P8 plan prepared in this browser session.</div></div>
-        </section>
+  <dialog id="settings-panel" aria-labelledby="settings-title">
+    <form method="dialog" class="dialog-header"><div><span class="eyebrow">Console configuration</span><h2 id="settings-title">Provider settings</h2></div><button value="close" aria-label="Close settings">Close</button></form>
+    <p class="settings-note">OpenCode credentials are forwarded directly to the protected local OpenCode server and are never returned, logged, exported, or stored by MNE Brain. Redacted conversation and documented workspace context may reach the explicitly selected model; live evidence and all writes remain separately gated.</p>
+    <section id="codex-readiness" class="provider-card" aria-live="polite"><h3>Codex App Server readiness</h3><p>Checking the local ChatGPT-authenticated harness…</p></section>
+    <section id="opencode-readiness" class="provider-card" aria-live="polite"><h3>OpenCode readiness</h3><p>Checking the protected loopback HTTP/SSE server…</p></section>
+    <div class="theme-row"><span>Appearance</span><button id="theme-toggle" type="button" aria-pressed="false">Use light theme</button></div>
+    <section aria-labelledby="opencode-provider-title"><div class="panel-heading"><h3 id="opencode-provider-title">OpenCode providers</h3><button id="refresh-opencode" type="button">Refresh catalog</button></div><div id="provider-settings-list"></div></section>
+    <details open><summary>Connect with an API key</summary><form id="opencode-api-key-form"><label for="opencode-api-provider">Provider</label><select id="opencode-api-provider" required></select><label for="opencode-api-key">API key</label><input id="opencode-api-key" type="password" autocomplete="new-password" required><button type="submit">Connect directly through OpenCode</button></form></details>
+    <details id="opencode-oauth-panel"><summary>OAuth or device-code flow</summary><form id="opencode-oauth-complete-form"><label for="opencode-oauth-provider">Provider</label><select id="opencode-oauth-provider" required></select><label for="opencode-oauth-method">Authentication method</label><select id="opencode-oauth-method" required></select><div id="opencode-oauth-inputs"></div><button id="opencode-oauth-start" type="button">Start through OpenCode</button><label for="opencode-oauth-code">Code, only when OpenCode requests one</label><input id="opencode-oauth-code" autocomplete="one-time-code"><button type="submit">Complete through OpenCode</button></form></details>
+    <details><summary>Add custom OpenAI-compatible provider</summary><form id="opencode-custom-provider-form"><label for="custom-provider-id">Provider ID</label><input id="custom-provider-id" pattern="[a-z][a-z0-9_-]{2,63}" required><label for="custom-provider-name">Display name</label><input id="custom-provider-name" maxlength="100" required><label for="custom-provider-url">HTTPS base URL</label><input id="custom-provider-url" type="url" required><label for="custom-provider-protocol">Protocol</label><select id="custom-provider-protocol"><option value="chat_completions">Chat Completions</option><option value="responses">Responses API</option></select><label for="custom-provider-key">API key, optional and never saved by MNE Brain</label><input id="custom-provider-key" type="password" autocomplete="new-password"><label for="custom-provider-env">Environment credential reference, optional alternative to an API key</label><input id="custom-provider-env" pattern="[A-Z][A-Z0-9_]{2,80}"><label for="custom-provider-models">Models, one per line: id | display name | context | output</label><textarea id="custom-provider-models" rows="4" required></textarea><label for="custom-provider-headers">Optional non-secret headers as JSON</label><textarea id="custom-provider-headers" rows="3">{}</textarea><label><input id="custom-provider-loopback" type="checkbox"> Explicitly approve a loopback local-model endpoint</label><button type="submit">Validate and save metadata</button></form></details>
+    <p id="settings-status" role="status"></p>
+  </dialog>
 
-        <section class="view" id="view-p9">
-            <div class="view-heading"><h2>P9 deep diagnostic planner</h2><p>Prepare adaptive, platform-specific evidence collection for one exact scenario and primary binding.</p></div>
-            <div class="notice">This view is planning-only. Live checks require local owner authorization; raw output, automatic diagnosis, persistence, external AI, notifications, and remediation remain disabled.</div>
-            <div class="metrics">
-                <div class="card"><div class="metric-label">P9 state</div><div class="metric-value" id="p9-state">LOADING</div></div>
-                <div class="card"><div class="metric-label">Scenarios</div><div class="metric-value" id="p9-scenarios">â€”</div></div>
-                <div class="card"><div class="metric-label">Deep checks</div><div class="metric-value" id="p9-checks">â€”</div></div>
-                <div class="card"><div class="metric-label">Live enabled</div><div class="metric-value" id="p9-live">FALSE</div></div>
-            </div>
-            <form class="card intake-form" id="p9-plan-form">
-                <div class="field"><label for="p9-scenario">Scenario</label><select id="p9-scenario" required></select></div>
-                <div class="field"><label for="p9-binding">Exact primary binding</label><select id="p9-binding" required></select></div>
-                <div class="field span-2"><label for="p9-symptom">Reported symptom</label><textarea id="p9-symptom" maxlength="500" placeholder="Describe the observed failure without credentials or secrets."></textarea></div>
-                <div class="span-2"><button class="button" type="submit">Prepare adaptive diagnostic plan</button></div>
-            </form>
-            <div class="card stack intake-result" id="p9-plan-result"><div class="empty">No P9 plan prepared in this browser session.</div></div>
-        </section>
-
-        <section class="view" id="view-incident-intake">
-            <div class="view-heading"><h2>Incident intake</h2><p>Capture reported impact before evidence collection. Submitted facts remain unverified, in memory, and free of outbound messages.</p></div>
-            <div class="notice">This form creates an in-memory provisional case. It cannot connect to infrastructure, notify a team, confirm priority, or perform remediation.</div>
-            <form class="card intake-form" id="incident-intake-form">
-                <div class="field"><label for="intake-target">Target reference</label><input id="intake-target" required maxlength="128" placeholder="fw-fortigate-edge-01"></div>
-                <div class="field"><label for="intake-service">Affected service</label><input id="intake-service" required maxlength="128" placeholder="SSL VPN"></div>
-                <div class="field span-2"><label for="intake-symptom">Observed symptom</label><textarea id="intake-symptom" required maxlength="800" placeholder="Describe what users observe without including passwords or secrets."></textarea></div>
-                <div class="field"><label for="intake-scope">Affected scope</label><select id="intake-scope" required><option value="unknown">Unknown</option><option value="single_user">Single user</option><option value="multiple_users">Multiple users</option><option value="branch">One branch</option><option value="multiple_branches">Multiple branches</option><option value="ministry_wide">Ministry-wide</option></select></div>
-                <div class="field"><label for="intake-availability">Availability</label><select id="intake-availability" required><option value="unknown">Unknown</option><option value="unavailable">Unavailable</option><option value="degraded">Degraded</option><option value="intermittent">Intermittent</option></select></div>
-                <div class="field"><label for="intake-branches">Branch references</label><input id="intake-branches" maxlength="400" placeholder="nablus, jenin"></div>
-                <div class="field"><label for="intake-users">Affected user count</label><input id="intake-users" type="number" min="0" max="1000000" placeholder="12"></div>
-                <div class="check-row span-2">
-                    <label><input id="intake-security" type="checkbox"> Security impact reported</label>
-                    <label><input id="intake-data-loss" type="checkbox"> Data loss suspected</label>
-                    <label><input id="intake-public" type="checkbox"> Public service affected</label>
-                </div>
-                <div class="span-2"><button class="button" type="submit">Validate incident and prepare case</button></div>
-            </form>
-            <div class="card stack intake-result" id="incident-intake-result"><div class="empty">No incident submitted in this browser session.</div></div>
-        </section>
-
-        <section class="view" id="view-inventory">
-            <div class="view-heading"><h2>Entity inventory</h2><p>Indexed knowledge records with their explicit verification status and provenance.</p></div>
-            <div class="table-wrap"><table><thead><tr><th>Entity</th><th>Category</th><th>Address</th><th>Knowledge status</th><th>Source</th><th>Last verified</th></tr></thead><tbody id="inventory-body"></tbody></table></div>
-        </section>
-
-        <section class="view" id="view-runbooks">
-            <div class="view-heading"><h2>Runbook readiness</h2><p>Sole-owner procedure review and deterministic coverage. This is not live Ministry health or production certification.</p></div>
-            <div class="notice">All guidance remains metadata-only in the GUI. Read-only collection requires the owner to say proceed; configuration changes and remediation require a separate explicit owner instruction.</div>
-            <div class="metrics">
-                <div class="card"><div class="metric-label">Governed runbooks</div><div class="metric-value" id="runbook-total">—</div></div>
-                <div class="card"><div class="metric-label">Context coverage</div><div class="metric-value" id="runbook-context">—</div></div>
-                <div class="card"><div class="metric-label">Reviewed coverage</div><div class="metric-value" id="runbook-operational">—</div></div>
-                <div class="card"><div class="metric-label">Live state</div><div class="metric-value">UNVERIFIED</div></div>
-                <div class="card"><div class="metric-label">Production ready</div><div class="metric-value" id="runbook-production">FALSE</div></div>
-            </div>
-            <div class="table-wrap"><table><thead><tr><th>Runbook</th><th>Status</th><th>Type</th><th>Scope</th><th>Review basis</th><th>Live access</th><th>Remediation</th></tr></thead><tbody id="runbooks-body"></tbody></table></div>
-        </section>
-
-        <section class="view" id="view-connectors">
-            <div class="view-heading"><h2>Connector readiness</h2><p>Exact read-only connector planning and offline adapter validation. This is not live platform compatibility or health.</p></div>
-            <div class="notice">P6 connector metadata remains offline. P7 now supplies the live protocol boundaries in a separate owner-gated layer; every transport remains disabled at rest.</div>
-            <div class="metrics">
-                <div class="card"><div class="metric-label">Connector families</div><div class="metric-value" id="connector-total">—</div></div>
-                <div class="card"><div class="metric-label">Planning coverage</div><div class="metric-value" id="connector-planning">—</div></div>
-                <div class="card"><div class="metric-label">Offline validation</div><div class="metric-value" id="connector-offline">—</div></div>
-                <div class="card"><div class="metric-label">Real transports</div><div class="metric-value" id="connector-live">—</div></div>
-                <div class="card"><div class="metric-label">Live collection</div><div class="metric-value">DISABLED</div></div>
-                <div class="card"><div class="metric-label">Production ready</div><div class="metric-value" id="connector-production">FALSE</div></div>
-            </div>
-            <div class="table-wrap"><table><thead><tr><th>Connector</th><th>Platform</th><th>Protocol</th><th>Entities</th><th>Offline status</th><th>Live transport</th><th>Side effects</th></tr></thead><tbody id="connectors-body"></tbody></table></div>
-        </section>
-
-        <section class="view" id="view-transports">
-            <div class="view-heading"><h2>P7 live transport readiness</h2><p>Implementation and identity-gate coverage only. Opening this view never connects to a Ministry device.</p></div>
-            <div class="notice">All transports are disabled at rest. Reachability is trust 0; authenticated evidence requires exact owner scope and verified device identity. No remediation, persistence, ticketing, paging, assignment, or notifications.</div>
-            <div class="metrics">
-                <div class="card"><div class="metric-label">Entity coverage</div><div class="metric-value" id="transport-coverage">—</div></div>
-                <div class="card"><div class="metric-label">Protocol drivers</div><div class="metric-value" id="transport-drivers">—</div></div>
-                <div class="card"><div class="metric-label">Active bindings</div><div class="metric-value" id="transport-bindings">—</div></div>
-                <div class="card"><div class="metric-label">Owner excluded</div><div class="metric-value" id="transport-excluded">—</div></div>
-                <div class="card"><div class="metric-label">Identity conflicts</div><div class="metric-value" id="transport-conflicts">—</div></div>
-                <div class="card"><div class="metric-label">Live enabled</div><div class="metric-value" id="transport-enabled">FALSE</div></div>
-                <div class="card"><div class="metric-label">Audit mode</div><div class="metric-value" id="transport-audit">—</div></div>
-                <div class="card"><div class="metric-label">Retention</div><div class="metric-value" id="transport-retention">—</div></div>
-            </div>
-            <div class="table-wrap"><table><thead><tr><th>Protocol</th><th>Implementation</th><th>Identity gate</th><th>Credential gate</th><th>Default</th></tr></thead><tbody id="transports-body"></tbody></table></div>
-        </section>
-
-        <section class="view" id="view-knowledge">
-            <div class="view-heading"><h2>Knowledge evidence</h2><p>Read-only inspection of note metadata and source content.</p></div>
-            <div class="split">
-                <div class="card"><input class="search-input" id="knowledge-filter" placeholder="Filter notes…" aria-label="Filter knowledge notes"><div class="knowledge-list" id="knowledge-list"></div></div>
-                <div class="card"><h3 id="knowledge-title">Select a note</h3><pre id="knowledge-detail">No note selected.</pre></div>
-            </div>
-        </section>
-
-        <section class="view" id="view-investigations">
-            <div class="view-heading"><h2>Investigation traces</h2><p>Read-only observability events; an empty table does not imply system health.</p></div>
-            <div class="table-wrap"><table><thead><tr><th>Timestamp</th><th>Correlation ID</th><th>Component</th><th>Action</th><th>Status</th><th>Duration</th></tr></thead><tbody id="investigations-body"></tbody></table></div>
-        </section>
-
-        <section class="view" id="view-actions">
-            <div class="view-heading"><h2>Remediation planning templates</h2><p>Metadata and fingerprints only. Execution remains unavailable without an explicit owner instruction.</p></div>
-            <div class="table-wrap"><table><thead><tr><th>Action</th><th>Platform</th><th>Template status</th><th>Risk level</th><th>Checks</th><th>Command fingerprint</th><th>Execution</th></tr></thead><tbody id="actions-body"></tbody></table></div>
-        </section>
-
-        <section class="view" id="view-automation">
-            <div class="view-heading"><h2>Alert ingestion</h2><p>Read-only automation capability state. The GUI cannot submit or simulate alerts.</p></div>
-            <div class="card stack" id="automation-status"></div>
-        </section>
-
-        <section class="view" id="view-logs">
-            <div class="view-heading"><h2>Audit records</h2><p>Read-only redacted action audit metadata.</p></div>
-            <div class="table-wrap"><table><thead><tr><th>Timestamp</th><th>Action ID</th><th>Risk level</th><th>Status</th><th>Duration</th></tr></thead><tbody id="logs-body"></tbody></table></div>
-        </section>
-    </main>
-</div>
-
-<script>
-    'use strict';
-    const API_BASE = '/api';
-    const loadedViews = new Set();
-    let knowledgeNotes = [];
-    let p8Catalog = [];
-    let p9Catalog = [];
-
-    function text(value, fallback = '—') {
-        if (value === null || value === undefined || value === '') return fallback;
-        return String(value);
-    }
-
-    function make(tag, className, value) {
-        const node = document.createElement(tag);
-        if (className) node.className = className;
-        if (value !== undefined) node.textContent = text(value);
-        return node;
-    }
-
-    function addKeyValue(container, label, value) {
-        const row = make('div', 'kv');
-        row.append(make('span', '', label), make('span', 'mono', value));
-        container.append(row);
-    }
-
-    function addCell(row, value, className = '') {
-        row.append(make('td', className, value));
-    }
-
-    function emptyRow(body, columns, message) {
-        body.replaceChildren();
-        const row = document.createElement('tr');
-        const cell = make('td', 'empty', message);
-        cell.colSpan = columns;
-        row.append(cell);
-        body.append(row);
-    }
-
-    async function fetchJSON(path, options) {
-        const response = await fetch(API_BASE + path, options);
-        let payload;
-        try { payload = await response.json(); }
-        catch (error) { throw new Error('Backend returned a non-JSON response.'); }
-        if (!response.ok) throw new Error(text(payload.error || payload.reason, `Request failed with HTTP ${response.status}`));
-        return payload;
-    }
-
-    function showLoadError(container, error) {
-        container.replaceChildren(make('div', 'empty error', `Unable to load: ${error.message}`));
-    }
-
-    async function loadOverview() {
-        try {
-            const data = await fetchJSON('/dashboard');
-            document.getElementById('system-status').textContent = text(data.status);
-            document.getElementById('snapshot-time').textContent = `Backend snapshot: ${text(data.as_of)}`;
-            document.getElementById('metric-system').textContent = text(data.status);
-            document.getElementById('metric-entities').textContent = text(data.total_entities, '0');
-            document.getElementById('metric-verification').textContent = text(data.live_verification);
-            document.getElementById('metric-alerts').textContent = text(data.alert_ingestion);
-            document.getElementById('metric-runbooks').textContent = `${text(data.operational_runbook_coverage_percent, '0')}%`;
-            document.getElementById('metric-connectors').textContent = `${text(data.offline_connector_coverage_percent, '0')}%`;
-
-            const drivers = document.getElementById('driver-statuses');
-            drivers.replaceChildren();
-            Object.entries(data.driver_statuses || {}).forEach(([protocol, status]) => addKeyValue(drivers, protocol.toUpperCase(), status));
-            if (!drivers.children.length) drivers.append(make('div', 'empty', 'No driver capability data.'));
-
-            const statuses = document.getElementById('knowledge-statuses');
-            statuses.replaceChildren();
-            Object.entries(data.knowledge_status_counts || {}).forEach(([status, count]) => addKeyValue(statuses, status, count));
-            if (!statuses.children.length) statuses.append(make('div', 'empty', 'No indexed knowledge.'));
-        } catch (error) {
-            document.getElementById('system-status').textContent = 'API UNAVAILABLE';
-            document.getElementById('snapshot-time').textContent = error.message;
-        }
-    }
-
-    async function loadInventory() {
-        const body = document.getElementById('inventory-body');
-        emptyRow(body, 6, 'Loading entity records…');
-        try {
-            const data = await fetchJSON('/devices');
-            body.replaceChildren();
-            (data.devices || []).forEach(entity => {
-                const row = document.createElement('tr');
-                addCell(row, `${text(entity.name)}\n${text(entity.entity_id)}`);
-                addCell(row, entity.category);
-                addCell(row, entity.ip || entity.hostname);
-                addCell(row, entity.knowledge_status);
-                addCell(row, entity.source);
-                addCell(row, entity.last_verified, 'mono');
-                body.append(row);
-            });
-            if (!body.children.length) emptyRow(body, 6, 'No entity records returned.');
-        } catch (error) { emptyRow(body, 6, error.message); }
-    }
-
-    function renderKnowledgeList(filter = '') {
-        const list = document.getElementById('knowledge-list');
-        list.replaceChildren();
-        const query = filter.trim().toLowerCase();
-        knowledgeNotes.filter(note => `${text(note.title)} ${text(note.relative_path)} ${text(note.category)}`.toLowerCase().includes(query)).forEach(note => {
-            const button = make('button');
-            button.type = 'button';
-            button.append(make('strong', '', note.title), make('small', '', `${text(note.category)} · ${text(note.relative_path)}`));
-            button.addEventListener('click', () => {
-                document.getElementById('knowledge-title').textContent = text(note.title);
-                document.getElementById('knowledge-detail').textContent = text(note.content, 'No content.');
-            });
-            list.append(button);
-        });
-        if (!list.children.length) list.append(make('div', 'empty', 'No matching notes.'));
-    }
-
-    async function loadKnowledge() {
-        const list = document.getElementById('knowledge-list');
-        list.replaceChildren(make('div', 'empty', 'Loading knowledge notes…'));
-        try {
-            const data = await fetchJSON('/knowledge');
-            knowledgeNotes = data.notes || [];
-            renderKnowledgeList(document.getElementById('knowledge-filter').value);
-        } catch (error) { showLoadError(list, error); }
-    }
-
-    async function loadRunbooks() {
-        const body = document.getElementById('runbooks-body');
-        emptyRow(body, 7, 'Loading governed runbooks...');
-        try {
-            const data = await fetchJSON('/runbooks');
-            const coverage = data.coverage || {};
-            document.getElementById('runbook-total').textContent = text(data.total_runbooks, '0');
-            document.getElementById('runbook-context').textContent = `${text(coverage.context_coverage_percent, '0')}%`;
-            document.getElementById('runbook-operational').textContent = `${text(coverage.operational_coverage_percent, '0')}%`;
-            document.getElementById('runbook-production').textContent = text(coverage.production_readiness_claimed, 'false').toUpperCase();
-            body.replaceChildren();
-            (data.runbooks || []).forEach(runbook => {
-                const row = document.createElement('tr');
-                addCell(row, `${text(runbook.title)}\n${text(runbook.runbook_id)}`);
-                addCell(row, runbook.status);
-                addCell(row, runbook.runbook_type);
-                addCell(row, `${(runbook.scope_entity_ids || []).length} exact / ${(runbook.scope_services || []).length} services`);
-                addCell(row, (runbook.review_sources || []).join(', '));
-                addCell(row, runbook.live_access_allowed);
-                addCell(row, runbook.remediation_allowed);
-                body.append(row);
-            });
-            if (!body.children.length) emptyRow(body, 7, 'No governed runbooks returned.');
-        } catch (error) { emptyRow(body, 7, error.message); }
-    }
-
-    async function loadConnectors() {
-        const body = document.getElementById('connectors-body');
-        emptyRow(body, 7, 'Loading connector readiness...');
-        try {
-            const data = await fetchJSON('/connectors');
-            const coverage = data.coverage || {};
-            document.getElementById('connector-total').textContent = text(data.total_connectors, '0');
-            document.getElementById('connector-planning').textContent = `${text(coverage.planning_coverage_percent, '0')}%`;
-            document.getElementById('connector-offline').textContent = `${text(coverage.offline_validation_coverage_percent, '0')}%`;
-            document.getElementById('connector-live').textContent = `${text(coverage.live_transport_entities, '0')} / ${text(coverage.total_entities, '0')}`;
-            document.getElementById('connector-production').textContent = text(coverage.production_readiness_claimed, 'false').toUpperCase();
-            body.replaceChildren();
-            (data.connectors || []).forEach(connector => {
-                const row = document.createElement('tr');
-                addCell(row, `${text(connector.title)}\n${text(connector.connector_id)}`);
-                addCell(row, connector.platform);
-                addCell(row, connector.protocol);
-                addCell(row, connector.entity_count);
-                addCell(row, connector.implementation_status);
-                addCell(row, connector.live_transport_status);
-                addCell(row, 'DISABLED');
-                body.append(row);
-            });
-            if (!body.children.length) emptyRow(body, 7, 'No connector metadata returned.');
-        } catch (error) { emptyRow(body, 7, error.message); }
-    }
-
-    async function loadTransports() {
-        const body = document.getElementById('transports-body');
-        emptyRow(body, 5, 'Loading P7 transport readiness...');
-        try {
-            const data = await fetchJSON('/transports');
-            document.getElementById('transport-coverage').textContent = `${text(data.transport_implementation_coverage, '0')} / ${text(data.total_entities, '0')}`;
-            document.getElementById('transport-drivers').textContent = text((data.drivers || []).length, '0');
-            document.getElementById('transport-bindings').textContent = text((data.credential_bindings || {}).active_bindings, '0');
-            document.getElementById('transport-excluded').textContent = text((data.credential_bindings || {}).owner_excluded_bindings, '0');
-            document.getElementById('transport-conflicts').textContent = text(data.identity_conflicts, '0');
-            document.getElementById('transport-enabled').textContent = text(data.live_enabled, 'false').toUpperCase();
-            document.getElementById('transport-audit').textContent = text(data.audit_mode);
-            document.getElementById('transport-retention').textContent = text(data.retention);
-            body.replaceChildren();
-            (data.drivers || []).forEach(driver => {
-                const row = document.createElement('tr');
-                addCell(row, driver.protocol);
-                addCell(row, driver.implementation);
-                addCell(row, driver.identity_gate);
-                addCell(row, driver.credential_gate);
-                addCell(row, driver.default_enabled ? 'ENABLED' : 'DISABLED');
-                body.append(row);
-            });
-            if (!body.children.length) emptyRow(body, 5, 'No transport metadata returned.');
-        } catch (error) { emptyRow(body, 5, error.message); }
-    }
-
-    function populateP8Bindings() {
-        const scenarioId = document.getElementById('p8-scenario').value;
-        const scenario = p8Catalog.find(item => item.scenario_id === scenarioId);
-        const select = document.getElementById('p8-binding');
-        select.replaceChildren();
-        (scenario ? scenario.primary_bindings : []).forEach(bindingId => {
-            const option = make('option', '', bindingId);
-            option.value = bindingId;
-            select.append(option);
-        });
-    }
-
-    async function loadP8() {
-        const result = document.getElementById('p8-plan-result');
-        try {
-            const data = await fetchJSON('/troubleshooting/p8/status');
-            document.getElementById('p8-state').textContent = text(data.status);
-            document.getElementById('p8-scenarios').textContent = text(data.scenario_count, '0');
-            document.getElementById('p8-live').textContent = text(data.live_enabled, 'false').toUpperCase();
-            p8Catalog = data.catalog || [];
-            const scenarioSelect = document.getElementById('p8-scenario');
-            scenarioSelect.replaceChildren();
-            p8Catalog.forEach(item => {
-                const option = make('option', '', `${text(item.title)} (${text(item.family)})`);
-                option.value = item.scenario_id;
-                scenarioSelect.append(option);
-            });
-            populateP8Bindings();
-        } catch (error) { result.replaceChildren(make('div', 'empty error', `P8 unavailable: ${error.message}`)); }
-    }
-
-    function populateP9Bindings() {
-        const scenarioId = document.getElementById('p9-scenario').value;
-        const scenario = p9Catalog.find(item => item.scenario_id === scenarioId);
-        const select = document.getElementById('p9-binding');
-        select.replaceChildren();
-        (scenario ? scenario.primary_bindings : []).forEach(bindingId => {
-            const option = make('option', '', bindingId);
-            option.value = bindingId;
-            select.append(option);
-        });
-    }
-
-    async function loadP9() {
-        const result = document.getElementById('p9-plan-result');
-        try {
-            const data = await fetchJSON('/troubleshooting/p9/status');
-            document.getElementById('p9-state').textContent = text(data.status);
-            document.getElementById('p9-scenarios').textContent = text(data.scenario_count, '0');
-            document.getElementById('p9-checks').textContent = text(data.check_count, '0');
-            document.getElementById('p9-live').textContent = text(data.live_enabled, 'false').toUpperCase();
-            p9Catalog = data.catalog || [];
-            const scenarioSelect = document.getElementById('p9-scenario');
-            scenarioSelect.replaceChildren();
-            p9Catalog.forEach(item => {
-                const option = make('option', '', `${text(item.title)} (${text(item.family)})`);
-                option.value = item.scenario_id;
-                scenarioSelect.append(option);
-            });
-            populateP9Bindings();
-        } catch (error) { result.replaceChildren(make('div', 'empty error', `P9 unavailable: ${error.message}`)); }
-    }
-
-    async function loadInvestigations() {
-        const body = document.getElementById('investigations-body');
-        emptyRow(body, 6, 'Loading traces…');
-        try {
-            const data = await fetchJSON('/investigations');
-            body.replaceChildren();
-            (data.traces || []).forEach(trace => {
-                const row = document.createElement('tr');
-                addCell(row, trace.timestamp, 'mono');
-                addCell(row, trace.correlation_id, 'mono');
-                addCell(row, trace.component);
-                addCell(row, trace.action);
-                addCell(row, trace.status);
-                addCell(row, trace.duration_ms === undefined ? '—' : `${trace.duration_ms} ms`);
-                body.append(row);
-            });
-            if (!body.children.length) emptyRow(body, 6, 'No investigation traces recorded. This does not indicate health.');
-        } catch (error) { emptyRow(body, 6, error.message); }
-    }
-
-    async function loadActions() {
-        const body = document.getElementById('actions-body');
-        emptyRow(body, 7, 'Loading remediation metadata…');
-        try {
-            const data = await fetchJSON('/actions');
-            body.replaceChildren();
-            (data.actions || []).forEach(action => {
-                const row = document.createElement('tr');
-                addCell(row, `${text(action.title)}\n${text(action.action_id)}`);
-                addCell(row, action.platform);
-                addCell(row, action.template_status);
-                addCell(row, action.risk_level === undefined ? '—' : `Level ${action.risk_level}`);
-                addCell(row, `${text(action.pre_check_count, '0')} pre / ${text(action.post_check_count, '0')} post`);
-                addCell(row, text(action.command_fingerprint).slice(0, 16), 'mono');
-                addCell(row, text(action.execution_permitted));
-                body.append(row);
-            });
-            if (!body.children.length) emptyRow(body, 7, 'No remediation templates returned.');
-        } catch (error) { emptyRow(body, 7, error.message); }
-    }
-
-    async function loadAutomation() {
-        const container = document.getElementById('automation-status');
-        container.replaceChildren(make('div', 'empty', 'Loading alert-ingestion status…'));
-        try {
-            const data = await fetchJSON('/automation');
-            container.replaceChildren();
-            ['n8n_status', 'webhook_listener', 'automatic_investigation', 'automatic_remediation'].forEach(key => addKeyValue(container, key.replaceAll('_', ' '), data[key]));
-        } catch (error) { showLoadError(container, error); }
-    }
-
-    async function loadLogs() {
-        const body = document.getElementById('logs-body');
-        emptyRow(body, 5, 'Loading audit records…');
-        try {
-            const data = await fetchJSON('/logs');
-            body.replaceChildren();
-            (data.audit_logs || []).forEach(record => {
-                const row = document.createElement('tr');
-                addCell(row, record.timestamp, 'mono');
-                addCell(row, record.action_id, 'mono');
-                addCell(row, record.risk_level === undefined ? '—' : `Level ${record.risk_level}`);
-                addCell(row, record.status || record.result || 'UNKNOWN');
-                addCell(row, record.duration_seconds === undefined ? '—' : `${record.duration_seconds} s`);
-                body.append(row);
-            });
-            if (!body.children.length) emptyRow(body, 5, 'No audit records available.');
-        } catch (error) { emptyRow(body, 5, error.message); }
-    }
-
-    const loaders = {
-        overview: loadOverview,
-        inventory: loadInventory,
-        runbooks: loadRunbooks,
-        connectors: loadConnectors,
-        transports: loadTransports,
-        p8: loadP8,
-        p9: loadP9,
-        knowledge: loadKnowledge,
-        investigations: loadInvestigations,
-        actions: loadActions,
-        automation: loadAutomation,
-        logs: loadLogs
-    };
-
-    function activateView(viewName, button) {
-        document.querySelectorAll('.view').forEach(view => view.classList.toggle('active', view.id === `view-${viewName}`));
-        document.querySelectorAll('.nav button').forEach(item => item.classList.toggle('active', item === button));
-        if (loaders[viewName] && !loadedViews.has(viewName)) {
-            loadedViews.add(viewName);
-            loaders[viewName]();
-        }
-    }
-
-    document.querySelectorAll('.nav button').forEach(button => button.addEventListener('click', () => activateView(button.dataset.view, button)));
-    document.getElementById('knowledge-filter').addEventListener('input', event => renderKnowledgeList(event.target.value));
-    document.getElementById('p8-scenario').addEventListener('change', populateP8Bindings);
-    document.getElementById('p9-scenario').addEventListener('change', populateP9Bindings);
-    document.getElementById('p9-plan-form').addEventListener('submit', async event => {
-        event.preventDefault();
-        const result = document.getElementById('p9-plan-result');
-        result.replaceChildren(make('div', 'empty', 'Preparing adaptive deep-diagnostic plan...'));
-        try {
-            const data = await fetchJSON('/troubleshooting/p9/plan', {
-                method: 'POST', headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({scenario_id: document.getElementById('p9-scenario').value, binding_id: document.getElementById('p9-binding').value, symptom: document.getElementById('p9-symptom').value.trim()})
-            });
-            result.replaceChildren();
-            addKeyValue(result, 'Status', data.status);
-            addKeyValue(result, 'Scenario', data.scenario && data.scenario.title);
-            addKeyValue(result, 'Primary', data.primary_binding);
-            addKeyValue(result, 'Next check', data.next_check ? `${data.next_check.binding_id}: ${data.next_check.check_id}` : 'READY FOR REASONING');
-            addKeyValue(result, 'Objective', data.next_check && data.next_check.objective);
-            addKeyValue(result, 'Known gap', data.known_gap);
-            addKeyValue(result, 'Root cause', data.root_cause || 'NOT ASSESSED');
-            addKeyValue(result, 'Live connection', data.safety && data.safety.live_connection_attempted);
-            addKeyValue(result, 'Automatic diagnosis', data.safety && data.safety.automatic_diagnosis_attempted);
-            addKeyValue(result, 'Remediation', data.safety && data.safety.remediation_attempted);
-        } catch (error) { result.replaceChildren(make('div', 'empty error', `P9 plan rejected: ${error.message}`)); }
-    });
-    document.getElementById('p8-plan-form').addEventListener('submit', async event => {
-        event.preventDefault();
-        const result = document.getElementById('p8-plan-result');
-        result.replaceChildren(make('div', 'empty', 'Preparing bounded read-only checks...'));
-        try {
-            const data = await fetchJSON('/troubleshooting/p8/plan', {
-                method: 'POST', headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({scenario_id: document.getElementById('p8-scenario').value, binding_id: document.getElementById('p8-binding').value, symptom: document.getElementById('p8-symptom').value.trim()})
-            });
-            result.replaceChildren();
-            addKeyValue(result, 'Status', data.status);
-            addKeyValue(result, 'Scenario', data.scenario && data.scenario.title);
-            addKeyValue(result, 'Primary', data.primary && data.primary.binding_id);
-            addKeyValue(result, 'Identity disposition', data.primary && data.primary.identity_disposition);
-            addKeyValue(result, 'Planned checks', (data.planned_checks || []).map(item => `${item.binding_id}: ${item.check_id}`).join(', '));
-            addKeyValue(result, 'Unknowns', (data.unknowns || []).join(' | '));
-            addKeyValue(result, 'Next action', data.action);
-            addKeyValue(result, 'Live connection', data.safety && data.safety.live_connection_attempted);
-            addKeyValue(result, 'Remediation', data.safety && data.safety.remediation_attempted);
-        } catch (error) { result.replaceChildren(make('div', 'empty error', `P8 plan rejected: ${error.message}`)); }
-    });
-    document.getElementById('incident-intake-form').addEventListener('submit', async event => {
-        event.preventDefault();
-        const result = document.getElementById('incident-intake-result');
-        result.replaceChildren(make('div', 'empty', 'Validating reported facts and preparing a bounded case...'));
-        const branchReferences = document.getElementById('intake-branches').value.split(',').map(value => value.trim()).filter(Boolean);
-        const userCountValue = document.getElementById('intake-users').value;
-        const payload = {
-            target_reference: document.getElementById('intake-target').value.trim(),
-            symptom: document.getElementById('intake-symptom').value.trim(),
-            affected_service: document.getElementById('intake-service').value.trim(),
-            affected_scope: document.getElementById('intake-scope').value,
-            availability: document.getElementById('intake-availability').value,
-            branch_references: branchReferences,
-            affected_user_count: userCountValue === '' ? null : Number(userCountValue),
-            security_impact_reported: document.getElementById('intake-security').checked,
-            data_loss_suspected: document.getElementById('intake-data-loss').checked,
-            public_service_reported: document.getElementById('intake-public').checked,
-            reported_at: new Date().toISOString()
-        };
-        try {
-            const data = await fetchJSON('/incidents/intake', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify(payload)
-            });
-            result.replaceChildren();
-            addKeyValue(result, 'Intake status', data.status);
-            addKeyValue(result, 'Truth status', data.truth_status);
-            addKeyValue(result, 'Case ID', data.case && data.case.case_id);
-            addKeyValue(result, 'Target', data.case && data.case.target ? data.case.target.entity_id : 'NEEDS TARGET');
-            addKeyValue(result, 'Provisional priority', data.case && data.case.priority ? data.case.priority.classification : 'UNASSESSED');
-            addKeyValue(result, 'Sole owner', data.case && data.case.ownership ? data.case.ownership.primary.team : 'UNASSIGNED');
-            addKeyValue(result, 'Evidence request ready', data.readiness && data.readiness.evidence_request_ready);
-            addKeyValue(result, 'Owner controlled', data.readiness && data.readiness.owner_controlled);
-            addKeyValue(result, 'Evidence objectives', (data.next_evidence_objectives || []).map(item => item.check_id).join(', ') || 'WITHHELD');
-            const governance = data.workflow_governance || {};
-            addKeyValue(result, 'Governance', governance.approval_state);
-            addKeyValue(result, 'Owner reference', governance.owner_reference);
-            addKeyValue(result, 'Audit mode', governance.audit_mode);
-            addKeyValue(result, 'Retention', governance.retention);
-        } catch (error) {
-            result.replaceChildren(make('div', 'empty error', `Incident rejected: ${error.message}`));
-        }
-    });
-    document.getElementById('chat-form').addEventListener('submit', async event => {
-        event.preventDefault();
-        const input = document.getElementById('chat-input');
-        const question = input.value.trim();
-        if (!question) return;
-        input.value = '';
-        const messages = document.getElementById('messages');
-        messages.append(make('div', 'message user', question));
-        const answer = make('div', 'message assistant', 'Routing query and evaluating available evidence…');
-        messages.append(answer);
-        messages.scrollTop = messages.scrollHeight;
-        try {
-            const data = await fetchJSON('/chat', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({question})
-            });
-            answer.replaceChildren(make('div', '', data.response && data.response.response_text ? data.response.response_text : 'No response text returned.'));
-            const meta = data.live_verification || {};
-            answer.append(make('span', 'message-meta', `Verification: ${text(meta.status)} · Trust level: ${text(meta.trust_level, '0')}`));
-            const clarification = data.clarification_request;
-            if (clarification && clarification.requires_clarification) answer.append(make('span', 'message-meta', text(clarification.prompt, 'Target clarification required.')));
-        } catch (error) {
-            answer.classList.add('error');
-            answer.textContent = `Unable to complete query: ${error.message}`;
-        }
-        messages.scrollTop = messages.scrollHeight;
-    });
-
-    loadedViews.add('overview');
-    loadOverview();
-</script>
+  <noscript>This console requires JavaScript for presentation. Server safety controls remain authoritative.</noscript>
+  <script type="module" src="/scripts/auth.js"></script><script type="module" src="/scripts/threads.js"></script><script type="module" src="/scripts/composer.js"></script><script type="module" src="/scripts/activity.js"></script><script type="module" src="/scripts/evidence.js"></script><script type="module" src="/scripts/tool_calls.js"></script><script type="module" src="/scripts/providers.js"></script><script type="module" src="/scripts/approvals.js"></script><script type="module" src="/scripts/p10.js"></script>
 </body>
 </html>

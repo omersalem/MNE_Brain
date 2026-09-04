@@ -2,11 +2,11 @@
 id: "esxi-node-hq-01"
 name: "HQ ESXi Hypervisor Host Node 01"
 category: "compute"
-aliases: ["esxi-01", "esxi-hq-01", "172.23.19.11", "host-node-01"]
+aliases: ["esxi-01", "esxi-hq-01", "172.23.69.30", "host-node-01"]
 hostname: "esxi-node-hq-01"
 fqdn: "esxi-node-hq-01.mne.gov.ps"
-ip: "172.23.19.11"
-vlan: "19"
+ip: "172.23.69.30"
+vlan: "69"
 services: ["vmware-esxi", "host-management", "vmotion", "vsan"]
 owner: "Virtualization & Infrastructure Team"
 related_entities: ["vc-vmware-hq-01", "san-fujitsu-01"]
@@ -24,7 +24,8 @@ freshness_ttl_hours: 720
 
 ## 🖥️ Hypervisor Hardware Specs
 - **Hostname:** `esxi-node-hq-01`
-- **Management IP:** `172.23.19.11`
-- **Product:** VMware ESXi 7.0 Update 3 (Dell PowerEdge R750)
-- **vCenter Server:** Managed by `vc-vmware-hq-01` (`172.23.19.10`)
-- **RAM / CPU:** 512 GB RAM | 64 Cores Intel Xeon Platinum
+- **Management IP:** `172.23.69.30` (VLAN 69 VMware Management)
+- **Product:** VMware ESXi 7.0 Update 3
+- **vCenter Server:** Managed by `vc-vmware-hq-01` (`172.23.69.38`)
+- **Network Interfaces:** Dual 10G SFP+ uplinks to Fujitsu Core Switch
+

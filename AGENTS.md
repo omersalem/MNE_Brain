@@ -46,6 +46,8 @@ Question / Alert ➔ Incident Case Management ➔ Core Flow ➔ Incident Orchest
 - P7 must use schema-governed local environment bindings, pinned SSH/TLS or Kerberos identity, one allowlisted read-only check per scope, and in-memory-only evidence. Owner-excluded bindings are skipped without retries; live policy remains disabled at rest.
 - P8 must require one exact registered scenario and active operational binding, plan no more than three read-only checks, accept only fresh attributable trust-5 evidence, and keep AI handoffs below 6,000 characters. Operational reconciliation never promotes canonical facts automatically; live collection, persistence, external AI, notifications, ticketing, paging, assignment, and remediation remain disabled at rest.
 - P9 must execute only immutable schema-governed read-only operations for one exact scenario, use no more than three bindings and four checks per session, discard raw output after normalization, and require every AI conclusion to cite accepted fresh trust-5 evidence. Python may rank checks and validate assessments but must not encode root-cause reasoning. Stop early requires at least 95% evidence-bound confidence.
+- P10 must keep writes disabled at rest, prepare one exact five-minute in-memory plan from an active P7 binding and fresh pinned-identity evidence, require the exact single-use cataloged/critical/irreversible owner phrase, allow one global execution with zero write retries, and require independent post-checks. Level 4 is `CRITICAL_EXCEPTION_ONLY`; the legacy Boolean path cannot approve it. Committed rollback requires a new exact approval. Tickets, pages, notifications, assignments, automatic remediation, persistent audit, wildcard targets, batches, hidden chains, downloaded scripts, and credential-bearing commands remain disabled.
+- P11 must bind the primary server to loopback, protect every mutation with an owner cookie, same-origin CSRF, inactivity expiry, and one-time nonce, retain conversations in memory by default, and keep provider selection independent from tool permissions. The server may automatically issue and consume an exact short-lived digest for sanitized conversation and documented workspace context; supplied live evidence still requires an explicit external-data authorization. Workspace writes need an exact approved diff within the repository boundary. Live reads remain P7-only and infrastructure writes remain P10-only. The GUI renders server state and must not calculate risk, commands, hashes, phrases, evidence eligibility, or tool eligibility.
 
 ---
 
@@ -62,7 +64,7 @@ Question / Alert ➔ Incident Case Management ➔ Core Flow ➔ Incident Orchest
 | **Level 1** | **Low Risk** | Clear interface counters, refresh status, re-run health checks | **Explicit sole-owner instruction** |
 | **Level 2** | **Controlled Change** | Modify address object, add VLAN description, toggle F5 pool member | **Explicit sole-owner instruction** |
 | **Level 3** | **High Impact** | Firewall policy changes, routing changes, service restarts | **Explicit sole-owner instruction** |
-| **Level 4** | **Emergency Only** | Core firewall changes, SAN LUN modifications, Exchange DAG changes | **STRICTLY PROHIBITED** |
+| **Level 4** | **Critical Exception Only** | Core firewall changes, SAN LUN modifications, Exchange DAG changes | **P10 exact critical or irreversible phrase; never the cataloged pathway** |
 
 ---
 
@@ -90,4 +92,24 @@ Every entity, profile, task, evidence pack, and action template in Release 2 mus
 - `action.schema.json`
 - `p8-diagnostic-catalog.schema.json`
 - `p9-diagnostic-catalog.schema.json`
+- `p10-operation-catalog.schema.json`
+- `p10-operation-parameters.schema.json`
+- `p10-prepared-plan.schema.json`
+- `p10-approval-request.schema.json`
+- `p10-execution-result.schema.json`
+- `p10-rollback-plan.schema.json`
+- `p10-critical-warning.schema.json`
+- `p10-platform-transaction.schema.json`
+- `p10-check-result.schema.json`
+- `conversation-thread.schema.json`
+- `conversation-turn.schema.json`
+- `conversation-message.schema.json`
+- `provider-profile.schema.json`
+- `provider-capabilities.schema.json`
+- `tool-call.schema.json`
+- `tool-approval.schema.json`
+- `stream-event.schema.json`
+- `external-ai-authorization.schema.json`
+- `workspace-change-plan.schema.json`
+- `workspace-rollback-plan.schema.json`
 - `entity.schema.json`

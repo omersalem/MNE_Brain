@@ -1,6 +1,6 @@
 # P5 Owner-Reviewed Runbook Pilot Report
 
-**Date:** 2026-08-16  
+**Date:** 2026-08-24
 **Mode:** `OWNER_REVIEWED_CONTEXT_SELECTION`  
 **Result:** 18/18 scenarios passed
 
@@ -9,9 +9,9 @@
 - Governed runbooks: **12**
 - Owner-reviewed domain procedures: **9**
 - Owner-reviewed process procedures: **3**
-- Canonical entities: **46**
-- Context-covered entities: **46 (100%)**
-- Owner-reviewed procedure coverage: **46 (100%)**
+- Canonical entities: **47**
+- Context-covered entities: **47 (100%)**
+- Owner-reviewed procedure coverage: **47 (100%)**
 - Production readiness claimed: **false**
 
 The pilot covers schema and uniqueness, full context and procedure coverage, network, branch, Cisco FMC/FTD, F5/published services, identity/DNS, messaging, VMware, storage/backup, compute/application, exact-entity priority, unknown targets, malformed and duplicate runbooks, deterministic minimized output, and P4 handoff integration.

@@ -19,6 +19,11 @@ from core.troubleshooting.engine import P8TroubleshootingEngine
 from core.troubleshooting.p9_engine import P9DiagnosticEngine
 from core.evidence.build_evidence_pack import EvidencePackBuilder
 from core.execution.execution_engine import ExecutionEngine
+from core.execution.p10_engine import P10ExecutionEngine
+from core.conversation.engine import ConversationEngine
+from core.llm.registry import ProviderRegistry
+from core.tools.broker import ToolBroker
+from core.tools.drivers.p10_write import PLATFORM_DRIVER_FAMILIES
 from core.lifecycle.lifecycle_engine import KnowledgeLifecycleEngine
 from core.incidents.case_manager import IncidentCaseManager
 from core.llm.llm_adapter import LLMAdapter
@@ -36,7 +41,7 @@ from scripts.validate_p0_containment import validate_p0_containment
 
 
 def run_master_validation() -> dict[str, Any]:
-    """Run 20 read-only gates and return a machine-readable report."""
+    """Run 22 read-only gates and return a machine-readable report."""
     print("=" * 66)
     print(" MNE_Brain Release 2 - Offline Master Validation Gate")
     print("=" * 66)
@@ -49,7 +54,7 @@ def run_master_validation() -> dict[str, Any]:
             passed, detail = False, f"{type(exc).__name__}: {exc}"
         results.append({"gate": number, "name": name, "passed": bool(passed), "detail": detail})
         outcome = "PASS" if passed else "FAIL"
-        print(f"[GATE {number:02d}/20] {name} -> {outcome}: {detail}")
+        print(f"[GATE {number:02d}/22] {name} -> {outcome}: {detail}")
 
     def governance_check() -> tuple[bool, str]:
         required = [
@@ -80,6 +85,29 @@ def run_master_validation() -> dict[str, Any]:
             "p7-device-bindings.schema.json",
             "p8-diagnostic-catalog.schema.json",
             "p9-diagnostic-catalog.schema.json",
+            "p10-operation-catalog.schema.json",
+            "p10-operation-parameters.schema.json",
+            "p10-prepared-plan.schema.json",
+            "p10-approval-request.schema.json",
+            "p10-execution-result.schema.json",
+            "p10-rollback-plan.schema.json",
+            "p10-critical-warning.schema.json",
+            "p10-platform-transaction.schema.json",
+            "p10-check-result.schema.json",
+            "owner-direct-risk-warning.schema.json",
+            "owner-direct-identity-audit.schema.json",
+            "conversation-thread.schema.json",
+            "conversation-turn.schema.json",
+            "conversation-message.schema.json",
+            "provider-profile.schema.json",
+            "provider-capabilities.schema.json",
+            "tool-call.schema.json",
+            "tool-approval.schema.json",
+            "stream-event.schema.json",
+            "external-ai-authorization.schema.json",
+            "workspace-change-plan.schema.json",
+            "workspace-rollback-plan.schema.json",
+            "owner-full-control-coverage.schema.json",
             "task.schema.json",
         }
         for path in schema_paths:
@@ -94,7 +122,7 @@ def run_master_validation() -> dict[str, Any]:
             base_dir / "00_meta" / "schemas" / "canonical-note.schema.json",
         )
         statuses = report.get("status_counts", {})
-        passed = report["compliant"] and report["notes_scanned"] == 46 and statuses == {"unverified": 46}
+        passed = report["compliant"] and report["notes_scanned"] == 48 and statuses == {"unverified": 48}
         return passed, f"{report['notes_scanned']} compliant notes; statuses={statuses}"
 
     router = QueryRouter(base_dir=base_dir)
@@ -117,17 +145,17 @@ def run_master_validation() -> dict[str, Any]:
 
     def entity_check() -> tuple[bool, str]:
         index = entity_builder.build_index(persist=False)
-        match = entity_builder.resolve_entity("172.23.19.1")
+        match = entity_builder.resolve_entity("172.23.70.4")
         passed = (
-            index["total_entities"] == 46
+            index["total_entities"] == 48
             and len(match) == 1
-            and match[0]["entity_id"] == "fw-fortigate-hq-01"
+            and match[0]["entity_id"] == "fw-fortigate-edge-01"
             and match[0]["knowledge_status"] == "unverified"
         )
         return passed, f"{index['total_entities']} in-memory entities; exact identity preserved"
 
     def evidence_check() -> tuple[bool, str]:
-        targets = entity_builder.resolve_entity("172.23.19.1")
+        targets = entity_builder.resolve_entity("172.23.70.4")
         pack = evidence_builder.build_evidence_pack("Check firewall status", targets, persist=False)
         passed = (
             pack["total_tokens"] <= pack["max_token_budget"] == 1500
@@ -157,12 +185,12 @@ def run_master_validation() -> dict[str, Any]:
         passed = (
             live_read["policy_status"] == "DISABLED_BY_POLICY"
             and level_two["policy_status"] == "OWNER_INSTRUCTION_REQUIRED"
-            and level_four["policy_status"] == "STRICTLY_PROHIBITED"
+            and level_four["policy_status"] == "CRITICAL_EXCEPTION_ONLY"
             and not live_read["approved"]
             and not level_two["approved"]
             and not level_four["approved"]
         )
-        return passed, "live reads disabled; Levels 2 and 4 fail closed"
+        return passed, "live reads disabled; Level 2 needs owner instruction and Level 4 needs the P10 critical path"
 
     def verification_check() -> tuple[bool, str]:
         verifier = LiveVerificationEngine(base_dir=base_dir)
@@ -180,7 +208,7 @@ def run_master_validation() -> dict[str, Any]:
         return passed, "plans are non-connecting; authorization cannot invent telemetry"
 
     def lifecycle_check() -> tuple[bool, str]:
-        target = entity_builder.resolve_entity("172.23.19.1")[0]
+        target = entity_builder.resolve_entity("172.23.70.4")[0]
         result = KnowledgeLifecycleEngine(base_dir=base_dir).detect_knowledge_drift(
             target["entity_id"], target["canonical_file"], {"observed_facts": {"status": "up"}}, persist=False
         )
@@ -188,7 +216,7 @@ def run_master_validation() -> dict[str, Any]:
         return passed, "unverified canonical knowledge cannot be drift-promoted"
 
     def llm_check() -> tuple[bool, str]:
-        pack = evidence_builder.build_evidence_pack("Check firewall status", entity_builder.resolve_entity("172.23.19.1"))
+        pack = evidence_builder.build_evidence_pack("Check firewall status", entity_builder.resolve_entity("172.23.70.4"))
         response = LLMAdapter(provider="local_fallback", base_dir=base_dir).generate_response("Check firewall status", pack)
         passed = (
             response["status"] == "SUCCESS"
@@ -258,14 +286,48 @@ def run_master_validation() -> dict[str, Any]:
         passed = (
             ordinary["status"] == "BLOCKED"
             and prohibited["status"] == "BLOCKED"
-            and prohibited["remediation_plan"]["status"] == "PROHIBITED"
+            and prohibited["remediation_plan"]["status"] == "CRITICAL_EXCEPTION_REQUIRED"
             and ordinary["driver_invoked"] is False
             and prohibited["driver_invoked"] is False
             and not calls
             and '"command"' not in serialized
             and '"rollback_command"' not in serialized
         )
-        return passed, "unreviewed and Level-4 actions cannot execute or expose commands"
+        return passed, "unreviewed actions cannot execute; legacy Level 4 redirects to the P10 critical path"
+
+    def p10_readiness_check() -> tuple[bool, str]:
+        engine = P10ExecutionEngine(base_dir=base_dir)
+        metadata = engine.catalog.list_metadata()
+        passed = (
+            metadata["family_count"] == 7
+            and metadata["template_count"] == 56
+            and metadata["action_variant_count"] == 176
+            and len(PLATFORM_DRIVER_FAMILIES) == 8
+            and engine.execution_enabled is False
+            and engine.policy["level_4_policy"] == "CRITICAL_EXCEPTION_ONLY"
+            and engine.policy["audit_mode"] == "IN_MEMORY_ONLY"
+            and engine.policy["retention"] == "NONE"
+            and all(engine.policy[key] is False for key in ("ticketing_enabled", "paging_enabled", "notifications_enabled", "automatic_assignment_enabled", "automatic_remediation_enabled"))
+        )
+        return passed, "7 families, 56 templates, 176 action variants; P10 execution disabled at rest"
+
+    def p11_control_plane_check() -> tuple[bool, str]:
+        providers = ProviderRegistry(base_dir).list_profiles()
+        engine = ConversationEngine(base_dir)
+        thread = engine.create_thread(title="P11 offline gate")
+        turn = engine.start_turn(thread["thread_id"], content="offline deterministic check", run_async=False)
+        broker = ToolBroker(base_dir)
+        modules = {path.name for path in (base_dir / "gui/scripts").glob("*.js")}
+        required_modules = {"api.js", "auth.js", "threads.js", "composer.js", "streaming.js", "activity.js", "evidence.js", "tool_calls.js", "approvals.js", "providers.js", "p10.js"}
+        passed = (
+            len(providers) == 7
+            and {profile["provider_type"] for profile in providers if profile["enabled"]} == {"codex_app_server", "opencode", "deterministic_local"}
+            and turn["status"] == "COMPLETED"
+            and not broker.p7_live_enabled
+            and not broker.p10.execution_enabled
+            and modules == required_modules
+        )
+        return passed, "7 provider profiles including Codex App Server and OpenCode; local fallback lifecycle passed; P7/P10 live execution disabled; 11 GUI modules"
 
     def presentation_automation_check() -> tuple[bool, str]:
         html = (base_dir / "gui" / "index.html").read_text(encoding="utf-8")
@@ -319,8 +381,8 @@ def run_master_validation() -> dict[str, Any]:
         selection = registry.select_for_target(entity_builder.resolve_entity("waf-f5-bigip-01")[0])
         passed = (
             registry.build_registry()["total_runbooks"] == 12
-            and coverage["context_covered_entities"] == coverage["total_entities"] == 46
-            and coverage["operationally_covered_entities"] == 46
+            and coverage["context_covered_entities"] == coverage["total_entities"] == 48
+            and coverage["operationally_covered_entities"] == 48
             and coverage["operational_runbook_readiness"] is True
             and coverage["production_readiness_claimed"] is False
             and selection["candidates"][0]["runbook_id"] == "p5-published-service-triage"
@@ -338,7 +400,7 @@ def run_master_validation() -> dict[str, Any]:
                 )
             )
         )
-        return passed, "46 entities have context and owner-reviewed procedures; production remains unclaimed"
+        return passed, "48 entities have context and owner-reviewed procedures; production remains unclaimed"
 
     def p0_containment_check() -> tuple[bool, str]:
         report = validate_p0_containment()
@@ -367,7 +429,7 @@ def run_master_validation() -> dict[str, Any]:
         bindings = p7["credential_bindings"]
         passed = (
             registry.public_catalog()["total_connectors"] == 15
-            and coverage["total_entities"] == coverage["planned_entities"] == coverage["offline_validated_entities"] == 46
+            and coverage["total_entities"] == coverage["planned_entities"] == coverage["offline_validated_entities"] == 48
             and coverage["planning_coverage_percent"] == coverage["offline_validation_coverage_percent"] == 100.0
             and coverage["live_transport_entities"] == 1
             and coverage["live_collection_enabled"] is False
@@ -379,7 +441,7 @@ def run_master_validation() -> dict[str, Any]:
             and fixture["connection_attempted"] is False
             and live["reason"] == "P6_LIVE_TRANSPORTS_DISABLED"
             and live["connection_attempted"] is False
-            and p7["total_entities"] == p7["transport_implementation_coverage"] == 46
+            and p7["total_entities"] == p7["transport_implementation_coverage"] == 48
             and p7["transport_implementation_coverage_percent"] == 100.0
             and len(p7["drivers"]) == 7
             and p7["live_enabled"] is False
@@ -387,14 +449,14 @@ def run_master_validation() -> dict[str, Any]:
             and p7["retention"] == "NONE"
             and p7["persistence_enabled"] is False
             and p7["remediation_enabled"] is False
-            and bindings["total_bindings"] == 32
-            and bindings["active_bindings"] == 31
+            and bindings["total_bindings"] == 62
+            and bindings["active_bindings"] == 61
             and bindings["owner_excluded_bindings"] == 1
-            and bindings["identity_pinned_bindings"] == 27
-            and bindings["kerberos_bindings"] == 4
+            and bindings["identity_pinned_bindings"] == 50
+            and bindings["kerberos_bindings"] == 8
             and bindings["permanent_mapping_complete"] is True
             and p8_status["scenario_count"] == 8
-            and p8_status["reconciliation_count"] == 32
+            and p8_status["reconciliation_count"] == 62
             and p8_status["live_enabled"] is False
             and p8_plan["status"] == "EVIDENCE_REQUIRED"
             and 1 <= len(p8_plan["planned_checks"]) <= 3
@@ -429,10 +491,12 @@ def run_master_validation() -> dict[str, Any]:
     gate(18, "P5 runbook intelligence", runbook_intelligence_check)
     gate(19, "P6-P9 connector and troubleshooting readiness", connector_readiness_check)
     gate(20, "P0 simple local-secret containment", p0_containment_check)
+    gate(21, "P10 owner-controlled write readiness", p10_readiness_check)
+    gate(22, "P11 conversation, provider, and tool control plane", p11_control_plane_check)
 
     passed_count = sum(result["passed"] for result in results)
     report = {
-        "success": passed_count == len(results) == 20,
+        "success": passed_count == len(results) == 22,
         "passed": passed_count,
         "total": len(results),
         "mode": "OFFLINE_NON_EXECUTING",

@@ -1,0 +1,12 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#", "$id": "https://mne-brain.local/schemas/p10-operation-parameters.schema.json",
+  "title": "P10 Operation Parameters", "type": "object", "additionalProperties": false,
+  "required": ["operation_id", "binding_id", "target", "identity_pin", "parameters", "evidence"],
+  "properties": {
+    "operation_id": {"type": "string", "pattern": "^p10-[a-z0-9-]{3,95}$"},
+    "binding_id": {"type": "string", "pattern": "^p7-[a-z0-9-]{2,79}$"},
+    "target": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]{0,252}$"},
+    "identity_pin": {"type": "string", "minLength": 8, "maxLength": 512},
+    "parameters": {"type": "object"}, "evidence": {"type": "object"}
+  }
+}

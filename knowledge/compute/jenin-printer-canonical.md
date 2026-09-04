@@ -2,11 +2,11 @@
 id: "prt-jenin-office-01"
 name: "Jenin Office Network Printer (HP LaserJet Enterprise)"
 category: "compute"
-aliases: ["jenin-printer", "printer-jenin", "172.23.20.220", "prt-jenin"]
+aliases: ["jenin-printer", "printer-jenin", "10.201.18.220", "prt-jenin"]
 hostname: "prt-jenin-office-01"
 fqdn: "prt-jenin-office-01.mne.gov.ps"
-ip: "172.23.20.220"
-vlan: "20"
+ip: "10.201.18.220"
+vlan: "18"
 services: ["network-printing", "ipp", "raw-jetdirect-9100", "snmp"]
 owner: "Jenin Administrative Support"
 related_entities: ["sw-cisco-jenin-01", "fw-fortigate-jenin-01"]
@@ -24,7 +24,8 @@ freshness_ttl_hours: 720
 
 ## 🖨️ Printer & Network Specs
 - **Hostname:** `prt-jenin-office-01`
-- **IP Address:** `172.23.20.220`
+- **IP Address:** `10.201.18.220`
 - **Product:** HP LaserJet Enterprise M608dn
 - **Port:** `9100/tcp` (Raw JetDirect), `631/tcp` (IPP)
-- **Access Rule:** Allowed from workstation IP `172.23.19.19` via inter-subnet policy on `fw-fortigate-hq-01` and `fw-fortigate-jenin-01`.
+- **Subnet:** Jenin Branch Office Subnet `10.201.18.0/24` (Default Gateway: `10.201.18.1`)
+

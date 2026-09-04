@@ -4,7 +4,7 @@
 > **Project Scope:** `MNE_Brain_v2` (Focused strictly on MNE_Brain Infrastructure Brain)  
 > **Core Philosophy:** A Senior Infrastructure Engineer Implemented in Software  
 > **Author:** Chief Software Architect & AI Systems Architect  
-> **Status:** Architecture blueprint with P2 offline implementation; live and production operation remain disabled pending explicit sole-owner instruction  
+> **Status:** Implemented through P11 with Codex primary and OpenCode secondary AI engines; Ministry live reads, infrastructure writes, and production operation remain separately gated
 
 ---
 
@@ -59,7 +59,7 @@ P4 wraps the investigation with schema-bounded owner-reported impact, provisiona
 P5 validates and ranks governed troubleshooting runbook metadata using exact entity, service, and controlled category matching. It returns at most three candidates and never injects runbook bodies. Context coverage, sole-owner-reviewed procedure coverage, live-state truth, and production readiness are separate claims. Promotion is never automatic and requires an explicit instruction from `MNE-BRAIN-OWNER`; the owner may authorize a whole named phase without a ticket or second approval.
 
 ### 3D. Connector Intelligence (`core/connectors/`)
-P6 maps each canonical entity to exactly one schema-governed platform connector. The registry returns check IDs, evidence objectives, and operation fingerprints without raw operations, addresses, or credentials. Fifteen families cover all 46 entities; every route passes an injected trust-0 fixture, while live collection remains disabled. The connector layer contains no diagnosis or remediation logic and reuses the P2 evidence adapter for redaction, budgets, provenance, and trust.
+P6 maps each canonical entity to exactly one schema-governed platform connector. The registry returns check IDs, evidence objectives, and operation fingerprints without raw operations, addresses, or credentials. Fifteen families cover all 48 entities; every route passes an injected trust-0 fixture, while live collection remains disabled. The connector layer contains no diagnosis or remediation logic and reuses the P2 evidence adapter for redaction, budgets, provenance, and trust.
 
 ### 4. Policy Engine (`core/policy/`)
 A lightweight, deterministic policy layer positioned between Reasoning and Execution:
@@ -81,8 +81,10 @@ Manages the evolution of the Knowledge Base after Live Verification:
 
 ### 7. Execution Engine vs. Tool Engine Drivers
 Decouples action execution from protocol drivers:
-* **Execution Engine (`core/execution/`):** Disabled by default; requires the fixed owner plus explicit instruction, keeps audit in memory by default, bounds retries/timeouts, and never runs rollback automatically.
+* **Execution Engine (`core/execution/`):** Disabled by default; requires the fixed owner plus an authenticated loopback session, keeps audit in memory by default, bounds timeouts, has zero write retries, and can run only the pre-approved rollback on a declared postcheck failure.
 * **Tool Engine Drivers (`core/tools/drivers/`):** Simple protocol drivers containing **zero orchestration logic** (SSH Driver, REST Driver, PowerShell Driver, WinRM Driver, VMware Driver, SQL Driver, SNMP Driver).
+
+P10 adds a separate owner-controlled bridge: schema-governed typed platform transactions are prepared from one active P7 binding and fresh identity-pinned evidence, bound with rollback to a complete plan digest and the authenticated loopback owner session, held for five minutes in memory, and executable only after the exact single-use owner phrase. Level 4 is critical-exception-only. Global concurrency is one, write retries are zero, uncertain outcomes remain `UNCERTAIN`, and the displayed rollback runs only when the declared postcheck failure occurs. The eight P10 platform adapters remain disabled at rest.
 
 ### 8. Presentation GUI Rule (`gui/`)
 > **Mandatory Architectural Constraint:** The GUI must NEVER contain business logic. The GUI is 100% responsible for presentation (rendering telemetry graphs, query responses, and investigation state). All reasoning, investigation, policy evaluation, live verification, and decision-making remain strictly inside `MNE_Brain`.
@@ -128,3 +130,14 @@ MNE_Brain_v2/
 * Zero credentials exist in tracked code, profiles, or markdown notes.
 * Redaction engine automatically filters credentials from telemetry outputs.
 * Host targets come from canonical entity records; arbitrary user-supplied endpoints are not accepted by the P2 path.
+
+## P11 Conversation, Provider, and Tool Control Plane
+
+P11 adds `core/conversation/`, `core/codex/app_server.py`, `core/opencode/runtime.py`, a schema-governed provider registry, safe in-memory diagnostics, and `core/tools/broker.py`. The primary API is loopback-only, concurrently bounded, and owner-session protected. Codex App Server is supervised over JSONL/JSON-RPC using the existing ChatGPT login. OpenCode is supervised as an authenticated random-port loopback server with live provider/model/auth discovery, explicit model pinning, SSE normalization, cancellation, and bounded restart. Provider choice never changes permissions.
+
+New GUI threads use `OWNER_FULL_CONTROL` and select Codex when readiness succeeds. OpenCode is the only selectable secondary engine and requires an exact connected model. Each Codex thread sees a disposable mirror of the dynamically discovered checkout/worktree, excluding `.env`, `.git`, keys, credential stores, symlinks, caches, and oversized files. OpenCode native shell and edits are denied; its controlled MCP relay crosses the same server-side ToolBroker. Safe reads and registered P7 checks run automatically for the authenticated owner; real file diffs and P10 infrastructure writes require server-prepared exact approval. Direct infrastructure commands are declined. P7 remains the only infrastructure live-read boundary and P10 remains the only infrastructure-write boundary.
+
+The modular responsive GUI renders threads, AI progress/final text, plans, local command output, file diffs, dynamic tools, terminal state, live OpenCode provider/model settings, readiness, and exact approval prompts without calculating policy or eligibility. Refresh reattaches to a queued/running turn. P7 stays globally disabled at rest but owner-scoped exact reads may run automatically; P10 remains disabled until a separate explicit write authorization.
+# Owner Direct mode
+
+The owner-facing primary operational path is `core/infrastructure/owner_direct.py`. It uses registered protocol adapters and the secure credential resolver, produces in-memory identity evidence without automatic enrollment, and requires the GUI-owned final confirmation endpoint before a write. Legacy P7 and P10 remain available for their existing constrained workflows.

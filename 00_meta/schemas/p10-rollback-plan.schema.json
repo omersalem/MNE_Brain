@@ -1,0 +1,6 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#", "$id": "https://mne-brain.local/schemas/p10-rollback-plan.schema.json",
+  "title": "P10 Rollback Plan", "type": "object", "additionalProperties": false,
+  "required": ["original_plan_id", "rollback_hash", "approval_required", "post_checks", "strategy"],
+  "properties": {"original_plan_id": {"type": "string"}, "rollback_hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"}, "approval_required": {"const": false}, "post_checks": {"type": "array", "minItems": 1}, "strategy": {"const": "PREAPPROVED_AUTOMATIC_ON_DECLARED_FAILURE"}}
+}

@@ -108,7 +108,8 @@ class VerifiedHTTPTransport:
             body = response.read(131072 if method == "GET" else 0)
             if response.length and response.length > len(body):
                 return {"status": "OUTPUT_TOO_LARGE", "connection_attempted": True}
-            return {"status": "SUCCESS", "connection_attempted": True,
+            status = "AUTHENTICATION_FAILED" if response.status in {401, 403} else "SUCCESS"
+            return {"status": status, "connection_attempted": True,
                     "output": f"HTTP {response.status}\ncontent-type: {response.getheader('content-type', '')}\n" + body.decode("utf-8", "replace"),
                     "credential_returned": False, "raw_error_returned": False}
         except ssl.SSLCertVerificationError:

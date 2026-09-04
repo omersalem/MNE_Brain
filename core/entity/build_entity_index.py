@@ -15,6 +15,11 @@ import yaml
 class EntityIndexBuilder:
     """Build an in-memory entity index without inferring operational truth."""
 
+    _QUERY_STOP_WORDS = {
+        "a", "an", "and", "address", "branch", "device", "for", "give", "ip",
+        "is", "me", "of", "please", "regional", "show", "tell", "the", "to", "what",
+    }
+
     _index_lock = threading.Lock()
     _index_cache: dict[str, dict[str, Any]] = {}
     _lookup_cache: dict[str, dict[str, dict[str, list[dict[str, Any]]]]] = {}
@@ -149,6 +154,38 @@ class EntityIndexBuilder:
         exact_matches = lookup_candidates("exact")
         if exact_matches:
             return exact_matches
+
+        # An explicit IP is a stronger identifier than surrounding natural-language
+        # words.  If that IP is not indexed, fail closed instead of allowing a word
+        # such as "server" or "exchange" to select an unrelated entity.
+        explicit_ips = re.findall(r"(?<![\d.])(?:\d{1,3}\.){3}\d{1,3}(?![\d.])", query)
+        if explicit_ips:
+            return []
+
+        # Natural questions commonly separate a location and product name
+        # (for example, "Hebron FortiGate") instead of using a full alias.
+        # Evaluate the complete meaningful token set before allowing a generic
+        # one-word alias such as "fortigate" to win.
+        query_tokens = set(re.findall(r"[a-z0-9]+", query.casefold())) - self._QUERY_STOP_WORDS
+        scored: list[tuple[int, dict[str, Any]]] = []
+        if len(query_tokens) >= 2:
+            for entity in self.__class__._index_cache[cache_key].get("entities", []):
+                searchable = " ".join(
+                    str(value)
+                    for value in (
+                        entity["entity_id"], entity["name"], entity["hostname"], entity["fqdn"],
+                        entity["category"], *entity["aliases"], *entity.get("services", []),
+                    )
+                )
+                entity_tokens = set(re.findall(r"[a-z0-9]+", searchable.casefold()))
+                score = len(query_tokens.intersection(entity_tokens))
+                if score >= 2:
+                    scored.append((score, entity))
+            if scored:
+                best_score = max(score for score, _ in scored)
+                best = [entity for score, entity in scored if score == best_score]
+                if len(best) == 1:
+                    return best
         alias_matches = lookup_candidates("alias")
         if alias_matches:
             return alias_matches
@@ -165,7 +202,11 @@ class EntityIndexBuilder:
             elif any(self._matches_term(query, term) for term in alias_terms):
                 matches.append((1, entity))
 
-        return [entity for _, entity in sorted(matches, key=lambda item: (item[0], item[1]["entity_id"].casefold()))]
+        resolved = [entity for _, entity in sorted(matches, key=lambda item: (item[0], item[1]["entity_id"].casefold()))]
+        if resolved:
+            return resolved
+
+        return []
 
 
 if __name__ == "__main__":

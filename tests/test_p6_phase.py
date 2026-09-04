@@ -46,15 +46,15 @@ def test_p6_phase() -> bool:
     coverage = registry.coverage_report()
     if (
         public["total_connectors"] == 15
-        and coverage["total_entities"] == coverage["planned_entities"] == coverage["offline_validated_entities"] == 46
+        and coverage["total_entities"] == coverage["planned_entities"] == coverage["offline_validated_entities"] == 48
         and coverage["planning_coverage_percent"] == coverage["offline_validation_coverage_percent"] == 100.0
         and coverage["coverage_gaps"] == []
         and coverage["live_transport_entities"] == 1
-        and coverage["live_transport_coverage_percent"] == 2.17
+        and coverage["live_transport_coverage_percent"] == 2.08
         and coverage["live_collection_enabled"] is False
         and coverage["production_readiness_claimed"] is False
     ):
-        print(" [PASS] Fifteen connector families cover all 46 entities without inflating live readiness")
+        print(" [PASS] Fifteen connector families cover all 48 entities without inflating live readiness")
         passed += 1
     else:
         errors.append(f"P6 coverage truthfulness failed: {coverage}")
@@ -62,7 +62,7 @@ def test_p6_phase() -> bool:
     entities = EntityIndexBuilder(base_dir=base_dir).build_index(persist=False)["entities"]
     plans = [registry.build_plan(item["entity_id"]) for item in entities]
     if (
-        len(plans) == 46
+        len(plans) == 48
         and all(item["status"] == "PLANNED_READ_ONLY" for item in plans)
         and all(item["raw_operations_included"] is False for item in plans)
         and all(item["execution_permitted"] is False for item in plans)
@@ -76,7 +76,7 @@ def test_p6_phase() -> bool:
     engine = MultiPlatformConnectorEngine(base_dir=base_dir)
     fixtures = [engine.validate_offline_fixture(item["entity_id"]) for item in entities]
     if (
-        len(fixtures) == 46
+        len(fixtures) == 48
         and all(item["status"] == "SIMULATED_NOT_ACCEPTED" for item in fixtures)
         and all(item["trust_level"] == 0 for item in fixtures)
         and all(item["connection_attempted"] is False for item in fixtures)
@@ -84,7 +84,7 @@ def test_p6_phase() -> bool:
         and all(item["notification_sent"] is False for item in fixtures)
         and all(item["remediation_attempted"] is False for item in fixtures)
     ):
-        print(" [PASS] All 46 injected fixture routes remain trust zero and side-effect free")
+        print(" [PASS] All 48 injected fixture routes remain trust zero and side-effect free")
         passed += 1
     else:
         errors.append("P6 fixture validation boundary failed")
@@ -108,7 +108,7 @@ def test_p6_phase() -> bool:
         pilot["success"]
         and pilot["passed"] == pilot["total"] == 25
         and pilot["connector_families"] == 15
-        and pilot["canonical_entities"] == 46
+        and pilot["canonical_entities"] == 48
         and pilot["planning_coverage_percent"] == pilot["offline_validation_coverage_percent"] == 100.0
         and pilot["live_connections"] == 0
         and pilot["persistence_actions"] == 0

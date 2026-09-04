@@ -14,7 +14,7 @@
 | Performance and scalability groups | 3 / 3 passed | Cold component flow, 1,000-note indexing, and 50 parallel investigations |
 | Complete pytest collection | 21 / 21 passed | Boolean-returning legacy validations are converted into enforceable failures with zero warnings |
 
-Every infrastructure scenario returned `INSUFFICIENT_EVIDENCE`. This is the correct result because all 46 current knowledge notes are explicitly `unverified` and no live transport adapter is configured.
+Every infrastructure scenario returned `INSUFFICIENT_EVIDENCE`. This was the correct result for the then-current 46-note validation set because every note was explicitly `unverified` and no live transport adapter was configured.
 
 ## Observed performance
 

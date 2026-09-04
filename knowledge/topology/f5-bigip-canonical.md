@@ -1,13 +1,13 @@
 ---
 id: "waf-f5-bigip-01"
-name: "F5 BIG-IP Web Application Firewall & ADC"
+name: "F5 BIG-IP r2000 Web Application Firewall & ADC"
 category: "network"
-aliases: ["f5-bigip", "waf-f5", "load-balancer", "172.23.19.5", "f5-waf"]
-hostname: "waf-f5-bigip-01"
-fqdn: "waf-f5-bigip-01.mne.gov.ps"
-ip: "172.23.19.5"
-vlan: "19"
-services: ["waf-protection", "load-balancing", "ssl-offloading", "asm-policy"]
+aliases: ["f5-bigip", "waf-f5", "load-balancer", "172.23.70.89", "f5-waf", "f5-bigip-hq-01"]
+hostname: "f5-bigip-hq-01"
+fqdn: "f5-bigip-hq-01.mne.gov.ps"
+ip: "172.23.70.89"
+vlan: "70"
+services: ["waf-protection", "load-balancing", "ssl-offloading", "asm-policy", "esadad-publishing"]
 owner: "Network & Security Operations Team"
 related_entities: ["fw-fortigate-hq-01", "sw-cisco-core-01"]
 knowledge_status: "unverified"
@@ -23,7 +23,9 @@ freshness_ttl_hours: 720
 > **Last Verified:** 2026-08-01T12:00:00Z
 
 ## 🛡️ Web Application Firewall Details
-- **Hostname:** `waf-f5-bigip-01`
-- **Management IP:** `172.23.19.5`
-- **Product:** F5 BIG-IP i5800 ADC with Advanced WAF (ASM)
-- **Role:** Inbound SSL/TLS offloading, Virtual Server publishing, WAF attack mitigation
+- **Hostname:** `f5-bigip-hq-01`
+- **Management IP:** `172.23.70.89` (VLAN 70 Network Management)
+- **Product:** F5 BIG-IP r2000 Appliance (TMOS v17.5.1.3)
+- **Role:** Web Application Firewall for ESADAD public portal (SQLi, XSS, bot protection), SSL offloading
+- **Trunk Connectivity:** Cisco Core Ports `Twe 1/0/12` (port 1.1) and `Twe 2/0/12` (port 1.2)
+

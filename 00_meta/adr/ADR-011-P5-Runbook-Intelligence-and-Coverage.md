@@ -22,4 +22,4 @@ Promotion to `operationally_reviewed` requires an explicit instruction from `MNE
 
 ## Consequences
 
-The AI receives smaller, more relevant troubleshooting guidance and coverage gaps become measurable. The project can claim 46/46 reviewed procedure coverage, but not device health, current live state, production readiness, live access authorization, or remediation authority.
+The AI receives smaller, more relevant troubleshooting guidance and coverage gaps become measurable. The project can claim 47/47 reviewed procedure coverage, but not device health, current live state, production readiness, live access authorization, or remediation authority.

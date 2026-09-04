@@ -20,6 +20,8 @@
 - Reusable troubleshooting experience belongs in `intelligence/`.
 - Tests use sanitized fixtures under `tests/`; they must not depend on operational artifacts.
 - Profiles, schemas, tasks, and approved action templates define the contracts used by the core implementation.
+- P10 prepared plans, approvals, results, and audit records exist in memory only. They must not be written to `operations/`, canonical knowledge, browser storage, or tracked files.
+- P11 threads, turns, messages, events, external authorizations, tool approvals, and workspace plans are in memory by default. Provider profiles contain credential-reference names only; conversation content never becomes canonical knowledge automatically.
 
 ## Change entry points
 
@@ -27,3 +29,5 @@
 2. Keep live-device work out of the baseline and behind the approved verification policy.
 3. Add an isolated test before claiming a behaviour is verified.
 4. Promote stable facts from `operations/` to `knowledge/` only through a reviewed evidence-backed process.
+5. Treat `config/p10_operation_catalog.yaml`, `config/p10_action_policy.yaml`, ADR-017, and the nine P10 schemas as the write-execution source of truth; the GUI contains no command or risk logic.
+6. Treat ADR-018, the ten P11 schemas, `config/provider_catalog.yaml`, `config/p11_security_policy.yaml`, and `config/p11_tool_policy.yaml` as the conversation/provider/tool source of truth. Infrastructure writes remain impossible outside P10.

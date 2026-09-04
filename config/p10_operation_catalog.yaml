@@ -1,0 +1,526 @@
+version: "1.0"
+phase: P10
+approval_state: OWNER_CONTROLLED
+owner_reference: MNE-BRAIN-OWNER
+
+schema_templates:
+  common_parameters: &common_parameters
+    type: object
+    additionalProperties: false
+    required: [action, resource_name]
+    properties:
+      action: {type: string, pattern: "^[a-z][a-z0-9_]{1,63}$"}
+      resource_name: {type: string, pattern: "^[A-Za-z0-9][A-Za-z0-9_.:/@() +,-]{0,127}$"}
+      value: {type: string, pattern: "^[A-Za-z0-9][A-Za-z0-9_.:/@() +,-]{0,255}$"}
+      secondary_value: {type: string, pattern: "^[A-Za-z0-9][A-Za-z0-9_.:/@() +,-]{0,255}$"}
+      interface: {type: string, pattern: "^[A-Za-z0-9][A-Za-z0-9_.:/-]{0,63}$"}
+      position: {type: integer, minimum: 1, maximum: 100000}
+      size_gb: {type: integer, minimum: 1, maximum: 65536}
+      enabled: {type: boolean}
+      force: {type: boolean}
+
+families:
+  - family_id: fortigate
+    title: FortiGate
+    operations:
+      - &fortigate_defaults
+        operation_id: p10-fortigate-address-object
+        title: FortiGate address object lifecycle
+        platform: fortinet_fortios
+        operation_type: address_object
+        action_variants: [create_address, update_address, delete_address, create_subnet, create_ip_range, create_fqdn, capture_exact_object]
+        template_status: reviewed
+        template_version: "1.0.0"
+        risk_level: 2
+        allowed_bindings: [p7-fortigate-edge, p7-fortigate-bethlehem, p7-fortigate-hebron, p7-fortigate-hebron-gold, p7-fortigate-jenin, p7-fortigate-jericho, p7-fortigate-nablus, p7-fortigate-nablus-gold, p7-fortigate-qalqilya, p7-fortigate-quds, p7-fortigate-ramallah-gold, p7-fortigate-salfeet, p7-fortigate-tubas, p7-fortigate-tulkarem]
+        parameter_schema: *common_parameters
+        command_renderer: FORTIOS_TYPED_OBJECT_V1
+        command_preview: ["Exact canonical FortiOS typed transaction is rendered after validation."]
+        pre_checks: [p10_scope_verified, dependency_check, object_conflict_check]
+        post_checks: [exact_object_state_verified]
+        rollback_strategy: SEPARATE_OWNER_APPROVAL
+        rollback_renderer: FORTIOS_EXACT_OBJECT_ROLLBACK_V1
+        expected_impact: Only the named FortiGate resource may change.
+        prohibited_conditions: [object_conflict, dependency_conflict, unrelated_pending_changes]
+        timeout_seconds: 30
+        transaction_mode: SINGLE_TYPED_OPERATION
+        requires_critical_exception: false
+        supports_dry_run: true
+        maximum_targets: 1
+      - <<: *fortigate_defaults
+        operation_id: p10-fortigate-address-group
+        title: FortiGate address group lifecycle
+        operation_type: address_group
+        action_variants: [create_group, update_group]
+      - <<: *fortigate_defaults
+        operation_id: p10-fortigate-service-catalog
+        title: FortiGate services and service groups
+        operation_type: service_catalog
+        action_variants: [create_service, update_service, create_service_group, update_service_group]
+      - <<: *fortigate_defaults
+        operation_id: p10-fortigate-nat-objects
+        title: FortiGate VIP and IP pool lifecycle
+        operation_type: nat_objects
+        action_variants: [create_vip, update_vip, create_ip_pool, update_ip_pool]
+        pre_checks: [p10_scope_verified, dependency_check, object_conflict_check, backend_reachability_check]
+      - <<: *fortigate_defaults
+        operation_id: p10-fortigate-policy-lifecycle
+        title: FortiGate reviewed policy lifecycle and position
+        operation_type: firewall_policy
+        action_variants: [create_disabled_policy, modify_exact_fields, enable_policy, disable_policy, position_policy]
+        risk_level: 3
+        expected_impact: Only the exact reviewed policy and displayed position may change; new policy remains disabled.
+        prohibited_conditions: [broad_policy_scope, core_policy, unrelated_policy_reorder, unrelated_pending_changes]
+      - <<: *fortigate_defaults
+        operation_id: p10-fortigate-static-route
+        title: FortiGate static route lifecycle
+        operation_type: static_route
+        action_variants: [create_route, update_route, delete_route]
+        risk_level: 3
+        pre_checks: [p10_scope_verified, route_conflict_check, interface_state_check, backend_reachability_check]
+        prohibited_conditions: [management_route, default_route, core_route, unrelated_pending_changes]
+      - <<: *fortigate_defaults
+        operation_id: p10-fortigate-sslvpn
+        title: FortiGate SSL-VPN address portal and policy objects
+        operation_type: sslvpn_objects
+        action_variants: [create_address, update_address, create_portal, update_portal, create_disabled_policy, update_policy]
+        risk_level: 3
+        prohibited_conditions: [broad_vpn_scope, management_access_risk, core_policy, unrelated_pending_changes]
+      - <<: *fortigate_defaults
+        operation_id: p10-fortigate-backup-rollback
+        title: FortiGate configuration backup and exact-object rollback capture
+        operation_type: backup_rollback_capture
+        action_variants: [create_backup, capture_exact_object_rollback]
+        risk_level: 1
+        expected_impact: Creates a bounded backup or in-memory exact-object rollback representation.
+
+  - family_id: f5_bigip
+    title: F5 BIG-IP
+    operations:
+      - &f5_defaults
+        operation_id: p10-f5-node
+        title: BIG-IP node lifecycle
+        platform: f5_bigip
+        operation_type: node
+        action_variants: [create_node, update_node, delete_node]
+        template_status: reviewed
+        template_version: "1.0.0"
+        risk_level: 2
+        allowed_bindings: [p7-f5]
+        parameter_schema: *common_parameters
+        command_renderer: F5_TYPED_TRANSACTION_V1
+        command_preview: ["Exact canonical BIG-IP transaction is rendered after validation."]
+        pre_checks: [p10_scope_verified, dependency_check, backend_reachability_check]
+        post_checks: [f5_config_verified, exact_object_state_verified]
+        rollback_strategy: PLATFORM_ABORT_THEN_SEPARATE_COMMITTED_ROLLBACK
+        rollback_renderer: F5_TYPED_ROLLBACK_V1
+        expected_impact: Only the named BIG-IP object may change.
+        prohibited_conditions: [dependency_conflict, unrelated_pending_changes]
+        timeout_seconds: 30
+        transaction_mode: PLATFORM_NATIVE_TRANSACTION
+        requires_critical_exception: false
+        supports_dry_run: true
+        maximum_targets: 1
+      - <<: *f5_defaults
+        operation_id: p10-f5-pool-member
+        title: BIG-IP pool and member lifecycle
+        operation_type: pool_member
+        action_variants: [create_pool, update_pool, add_member, drain_member, disable_member, enable_member]
+      - <<: *f5_defaults
+        operation_id: p10-f5-health-monitor
+        title: BIG-IP health monitor lifecycle
+        operation_type: health_monitor
+        action_variants: [create_monitor, update_monitor, delete_monitor]
+      - <<: *f5_defaults
+        operation_id: p10-f5-virtual-server
+        title: BIG-IP disabled virtual server lifecycle
+        operation_type: virtual_server
+        action_variants: [create_disabled_virtual_server, update_virtual_server, delete_virtual_server, enable_virtual_server]
+        pre_checks: [p10_scope_verified, backend_reachability_check, pool_health_check, exposure_sequence_check]
+        prohibited_conditions: [backend_unreachable, pool_unhealthy, dns_cutover_not_final, unrelated_pending_changes]
+      - <<: *f5_defaults
+        operation_id: p10-f5-profile
+        title: BIG-IP profile lifecycle
+        operation_type: profile
+        action_variants: [create_profile, update_profile, delete_profile]
+      - <<: *f5_defaults
+        operation_id: p10-f5-traffic-services
+        title: BIG-IP SNAT and persistence
+        operation_type: traffic_services
+        action_variants: [create_snat, update_snat, create_persistence, update_persistence]
+      - <<: *f5_defaults
+        operation_id: p10-f5-ssl
+        title: BIG-IP SSL profiles and certificates
+        operation_type: ssl
+        action_variants: [install_certificate, create_ssl_profile, update_ssl_profile]
+      - <<: *f5_defaults
+        operation_id: p10-f5-waf-attachment
+        title: BIG-IP WAF policy attachment
+        operation_type: waf_attachment
+        action_variants: [attach_waf_policy, detach_waf_policy]
+        risk_level: 4
+        requires_critical_exception: true
+        prohibited_conditions: [waf_policy_unverified, public_exposure_risk, unrelated_pending_changes]
+      - <<: *f5_defaults
+        operation_id: p10-f5-irule
+        title: BIG-IP reviewed iRule lifecycle
+        operation_type: irule
+        action_variants: [create_reviewed_irule, update_reviewed_irule, attach_reviewed_irule]
+        risk_level: 4
+        requires_critical_exception: true
+        prohibited_conditions: [irule_unreviewed, public_exposure_risk, unrelated_pending_changes]
+
+  - family_id: fmc_ftd
+    title: Cisco FMC and managed FTD
+    operations:
+      - &fmc_defaults
+        operation_id: p10-fmc-network-object
+        title: FMC network object lifecycle
+        platform: cisco_fmc
+        operation_type: network_object
+        action_variants: [create_network, create_host, create_range, create_fqdn, create_port]
+        template_status: reviewed
+        template_version: "1.0.0"
+        risk_level: 2
+        allowed_bindings: [p7-fmc-rest]
+        parameter_schema: *common_parameters
+        command_renderer: FMC_REST_TYPED_TRANSACTION_V1
+        command_preview: ["Exact canonical FMC REST method, path, and body are rendered after validation."]
+        pre_checks: [p10_scope_verified, fmc_rest_identity_check, dependency_check]
+        post_checks: [fmc_object_state_verified]
+        rollback_strategy: SEPARATE_OWNER_APPROVAL
+        rollback_renderer: FMC_REST_TYPED_ROLLBACK_V1
+        expected_impact: Only the named FMC object may change; direct managed-FTD CLI writes are prohibited.
+        prohibited_conditions: [direct_ftd_cli, dependency_conflict, unrelated_pending_changes]
+        timeout_seconds: 30
+        transaction_mode: SINGLE_TYPED_OPERATION
+        requires_critical_exception: false
+        supports_dry_run: true
+        maximum_targets: 1
+      - <<: *fmc_defaults
+        operation_id: p10-fmc-object-group
+        title: FMC object group lifecycle
+        operation_type: object_group
+        action_variants: [create_group, update_group, delete_group]
+      - <<: *fmc_defaults
+        operation_id: p10-fmc-access-rule
+        title: FMC access-control rule lifecycle
+        operation_type: access_rule
+        action_variants: [create_disabled_rule, modify_exact_rule, enable_rule, disable_rule]
+        risk_level: 3
+        prohibited_conditions: [core_policy, segmentation_change, unrelated_pending_changes]
+      - <<: *fmc_defaults
+        operation_id: p10-fmc-nat-rule
+        title: FMC NAT rule lifecycle
+        operation_type: nat_rule
+        action_variants: [create_nat_rule, modify_exact_nat_rule, disable_nat_rule]
+        risk_level: 4
+        requires_critical_exception: true
+        prohibited_conditions: [core_nat, segmentation_change, unrelated_pending_changes]
+      - <<: *fmc_defaults
+        operation_id: p10-fmc-deployment
+        title: FMC deployment preparation and explicit deployment
+        operation_type: deployment
+        action_variants: [prepare_deployment, deploy_exact_scope]
+        risk_level: 4
+        requires_critical_exception: true
+        pre_checks: [p10_scope_verified, fmc_rest_identity_check, complete_pending_scope_check, unrelated_changes_check]
+        post_checks: [deployment_status_verified, policy_state_verified]
+        prohibited_conditions: [unrelated_pending_changes, incomplete_deployment_scope, deployment_conflict]
+
+  - family_id: windows_powershell
+    title: Windows PowerShell IIS DNS AD and Exchange
+    operations:
+      - &windows_defaults
+        operation_id: p10-windows-service
+        title: Approved Windows service operation
+        platform: windows_powershell
+        operation_type: windows_service
+        action_variants: [start_service, restart_service]
+        template_status: reviewed
+        template_version: "1.0.0"
+        risk_level: 3
+        allowed_bindings: [p7-ad-primary, p7-ad-secondary, p7-exchange-primary, p7-exchange-ps]
+        parameter_schema: *common_parameters
+        command_renderer: POWERSHELL_TYPED_CMDLET_V1
+        command_preview: ["Exact allowlisted PowerShell cmdlet and typed parameter map are rendered after validation."]
+        pre_checks: [p10_scope_verified, kerberos_identity_check, powershell_allowlist_check]
+        post_checks: [windows_state_verified]
+        rollback_strategy: SEPARATE_OWNER_APPROVAL
+        rollback_renderer: POWERSHELL_TYPED_ROLLBACK_V1
+        expected_impact: Only the exact named Windows resource may change.
+        prohibited_conditions: [invoke_expression, encoded_command, cmd_shell, downloaded_script, unvalidated_script_block, unrelated_pending_changes]
+        timeout_seconds: 30
+        transaction_mode: SINGLE_TYPED_OPERATION
+        requires_critical_exception: false
+        supports_dry_run: true
+        maximum_targets: 1
+      - <<: *windows_defaults
+        operation_id: p10-windows-iis
+        title: IIS sites application pools and bindings
+        operation_type: iis
+        action_variants: [start_site, stop_site, start_app_pool, restart_app_pool, create_binding, update_binding]
+      - <<: *windows_defaults
+        operation_id: p10-windows-firewall
+        title: Windows firewall rule lifecycle
+        operation_type: windows_firewall
+        action_variants: [create_rule, update_rule, remove_rule]
+      - <<: *windows_defaults
+        operation_id: p10-windows-dns
+        title: Windows DNS record lifecycle
+        operation_type: dns_record
+        action_variants: [create_a, create_aaaa, create_cname, create_ptr, update_record]
+        risk_level: 2
+      - <<: *windows_defaults
+        operation_id: p10-windows-file-config
+        title: Controlled Windows file and configuration changes
+        operation_type: file_config
+        action_variants: [update_managed_file, replace_managed_config, restore_bounded_backup]
+        pre_checks: [p10_scope_verified, kerberos_identity_check, path_allowlist_check, checksum_check]
+      - <<: *windows_defaults
+        operation_id: p10-windows-ad
+        title: Approved Active Directory operational commands
+        operation_type: active_directory
+        action_variants: [unlock_user, enable_user, disable_user, reset_service_account, move_exact_object]
+        risk_level: 3
+        prohibited_conditions: [domain_change, forest_change, schema_change, unrelated_pending_changes]
+      - <<: *windows_defaults
+        operation_id: p10-windows-exchange
+        title: Exchange queue retry and transport operations
+        operation_type: exchange
+        action_variants: [retry_queue, resume_queue, restart_transport, redirect_exact_message]
+        risk_level: 3
+        prohibited_conditions: [dag_change, database_change, domain_change, forest_change, unrelated_pending_changes]
+
+  - family_id: vmware
+    title: VMware vCenter
+    operations:
+      - &vmware_defaults
+        operation_id: p10-vmware-power
+        title: Exact VM power operations
+        platform: vmware_vcenter
+        operation_type: vm_power
+        action_variants: [power_on, power_off, restart_guest]
+        template_status: reviewed
+        template_version: "1.0.0"
+        risk_level: 3
+        allowed_bindings: [p7-vcenter-rest]
+        parameter_schema: *common_parameters
+        command_renderer: VCENTER_TYPED_API_V1
+        command_preview: ["Exact canonical vCenter API operation and typed body are rendered after validation."]
+        pre_checks: [p10_scope_verified, vcenter_authorization_check, vm_identity_check, vm_state_check, capacity_check]
+        post_checks: [vm_state_verified]
+        rollback_strategy: SEPARATE_OWNER_APPROVAL
+        rollback_renderer: VCENTER_TYPED_ROLLBACK_V1
+        expected_impact: Only the exact VM or named virtual resource may change.
+        prohibited_conditions: [authorization_missing, capacity_insufficient, identity_conflict, production_cluster_change, unrelated_pending_changes]
+        timeout_seconds: 60
+        transaction_mode: SINGLE_TYPED_OPERATION
+        requires_critical_exception: false
+        supports_dry_run: true
+        maximum_targets: 1
+      - <<: *vmware_defaults
+        operation_id: p10-vmware-create-clone
+        title: Create or clone exact VM
+        operation_type: vm_create_clone
+        action_variants: [create_vm, clone_vm]
+      - <<: *vmware_defaults
+        operation_id: p10-vmware-compute
+        title: VM CPU and RAM changes
+        operation_type: vm_compute
+        action_variants: [change_cpu, change_memory]
+      - <<: *vmware_defaults
+        operation_id: p10-vmware-disk
+        title: VM disk operations
+        operation_type: vm_disk
+        action_variants: [add_disk, resize_disk, attach_disk]
+        pre_checks: [p10_scope_verified, vcenter_authorization_check, vm_identity_check, datastore_capacity_check]
+      - <<: *vmware_defaults
+        operation_id: p10-vmware-network
+        title: VM network adapter operations
+        operation_type: vm_network
+        action_variants: [add_adapter, change_adapter, select_portgroup]
+        prohibited_conditions: [distributed_switch_change, management_network_change, identity_conflict, unrelated_pending_changes]
+      - <<: *vmware_defaults
+        operation_id: p10-vmware-snapshot
+        title: Bounded VM snapshot lifecycle
+        operation_type: vm_snapshot
+        action_variants: [create_snapshot, remove_snapshot]
+        pre_checks: [p10_scope_verified, vcenter_authorization_check, vm_identity_check, snapshot_sprawl_check, datastore_capacity_check]
+        prohibited_conditions: [snapshot_sprawl, capacity_insufficient, unrelated_pending_changes]
+      - <<: *vmware_defaults
+        operation_id: p10-vmware-placement
+        title: Controlled VM host placement
+        operation_type: vm_placement
+        action_variants: [place_on_host, migrate_to_host]
+        risk_level: 4
+        requires_critical_exception: true
+        prohibited_conditions: [production_cluster_change, host_capacity_risk, datastore_change, distributed_switch_change, unrelated_pending_changes]
+
+  - family_id: switching
+    title: Cisco and Fujitsu switching
+    operations:
+      - &cisco_switch_defaults
+        operation_id: p10-cisco-vlan
+        title: Cisco VLAN lifecycle
+        platform: cisco_switching
+        operation_type: vlan
+        action_variants: [create_vlan, update_vlan]
+        template_status: reviewed
+        template_version: "1.0.0"
+        risk_level: 2
+        allowed_bindings: [p7-cisco-core, p7-router-tulkarm]
+        parameter_schema: *common_parameters
+        command_renderer: CISCO_TYPED_CONFIG_V1
+        command_preview: ["Exact ordered Cisco configuration transaction is rendered after validation."]
+        pre_checks: [p10_scope_verified, vlan_state_check, trunk_state_check, stp_state_check, port_channel_state_check, uplink_classification_check]
+        post_checks: [switch_state_verified]
+        rollback_strategy: SEPARATE_OWNER_APPROVAL
+        rollback_renderer: CISCO_TYPED_ROLLBACK_V1
+        expected_impact: Only the exact named VLAN interface or port may change.
+        prohibited_conditions: [management_uplink, fortigate_uplink, ftd_uplink, f5_uplink, esxi_uplink, san_uplink, fabric_uplink, unrelated_pending_changes]
+        timeout_seconds: 30
+        transaction_mode: EXPLICIT_ORDERED_BUNDLE
+        requires_critical_exception: false
+        supports_dry_run: true
+        maximum_targets: 1
+      - <<: *cisco_switch_defaults
+        operation_id: p10-cisco-description
+        title: Cisco interface description
+        operation_type: interface_description
+        action_variants: [set_description]
+      - <<: *cisco_switch_defaults
+        operation_id: p10-cisco-access-vlan
+        title: Cisco access VLAN assignment
+        operation_type: access_vlan
+        action_variants: [assign_access_vlan]
+      - <<: *cisco_switch_defaults
+        operation_id: p10-cisco-trunk
+        title: Cisco controlled trunk changes
+        operation_type: trunk
+        action_variants: [add_allowed_vlan, remove_allowed_vlan, set_native_vlan]
+        risk_level: 4
+        requires_critical_exception: true
+      - <<: *cisco_switch_defaults
+        operation_id: p10-cisco-port-recovery
+        title: Cisco port recovery and shutdown state
+        operation_type: port_recovery
+        action_variants: [recover_port, shutdown_port, no_shutdown_port]
+      - <<: *cisco_switch_defaults
+        operation_id: p10-cisco-port-channel
+        title: Cisco port-channel membership
+        operation_type: port_channel
+        action_variants: [add_member, remove_member, update_channel]
+        risk_level: 4
+        requires_critical_exception: true
+      - <<: *cisco_switch_defaults
+        operation_id: p10-cisco-routing-interface
+        title: Cisco approved routing and interface configuration
+        operation_type: routing_interface
+        action_variants: [configure_svi, update_routed_interface, update_route]
+        risk_level: 4
+        requires_critical_exception: true
+      - &fujitsu_switch_defaults
+        <<: *cisco_switch_defaults
+        operation_id: p10-fujitsu-vlan
+        title: Fujitsu VLAN lifecycle
+        platform: fujitsu_switching
+        operation_type: vlan
+        action_variants: [create_vlan, update_vlan]
+        allowed_bindings: [p7-fujitsu-sw1]
+        command_renderer: FUJITSU_TYPED_CONFIG_V1
+        rollback_renderer: FUJITSU_TYPED_ROLLBACK_V1
+        command_preview: ["Exact ordered Fujitsu configuration transaction is rendered after validation."]
+      - <<: *fujitsu_switch_defaults
+        operation_id: p10-fujitsu-description
+        title: Fujitsu interface description
+        operation_type: interface_description
+        action_variants: [set_description]
+      - <<: *fujitsu_switch_defaults
+        operation_id: p10-fujitsu-access-vlan
+        title: Fujitsu access VLAN assignment
+        operation_type: access_vlan
+        action_variants: [assign_access_vlan]
+      - <<: *fujitsu_switch_defaults
+        operation_id: p10-fujitsu-trunk
+        title: Fujitsu controlled trunk changes
+        operation_type: trunk
+        action_variants: [add_allowed_vlan, remove_allowed_vlan, set_native_vlan]
+        risk_level: 4
+        requires_critical_exception: true
+      - <<: *fujitsu_switch_defaults
+        operation_id: p10-fujitsu-port-recovery
+        title: Fujitsu port recovery and shutdown state
+        operation_type: port_recovery
+        action_variants: [recover_port, shutdown_port, no_shutdown_port]
+      - <<: *fujitsu_switch_defaults
+        operation_id: p10-fujitsu-port-channel
+        title: Fujitsu link-aggregation membership
+        operation_type: port_channel
+        action_variants: [add_member, remove_member, update_channel]
+        risk_level: 4
+        requires_critical_exception: true
+      - <<: *fujitsu_switch_defaults
+        operation_id: p10-fujitsu-routing-interface
+        title: Fujitsu approved routing and interface configuration
+        operation_type: routing_interface
+        action_variants: [configure_svi, update_routed_interface, update_route]
+        risk_level: 4
+        requires_critical_exception: true
+
+  - family_id: linux
+    title: Linux
+    operations:
+      - &linux_defaults
+        operation_id: p10-linux-service
+        title: Approved Linux service operation
+        platform: linux_host
+        operation_type: linux_service
+        action_variants: [start_service, restart_service]
+        template_status: reviewed
+        template_version: "1.0.0"
+        risk_level: 3
+        allowed_bindings: [p7-linux-greenunit]
+        parameter_schema: *common_parameters
+        command_renderer: LINUX_TYPED_OPERATION_V1
+        command_preview: ["Exact allowlisted Linux operation and typed arguments are rendered after validation."]
+        pre_checks: [p10_scope_verified, path_allowlist_check, checksum_check, configuration_syntax_check]
+        post_checks: [linux_state_verified]
+        rollback_strategy: SEPARATE_OWNER_APPROVAL
+        rollback_renderer: LINUX_TYPED_ROLLBACK_V1
+        expected_impact: Only the exact named service package user rule or managed path may change.
+        prohibited_conditions: [arbitrary_shell, path_outside_allowlist, syntax_invalid, backup_unavailable, unrelated_pending_changes]
+        timeout_seconds: 60
+        transaction_mode: SINGLE_TYPED_OPERATION
+        requires_critical_exception: false
+        supports_dry_run: true
+        maximum_targets: 1
+      - <<: *linux_defaults
+        operation_id: p10-linux-config-file
+        title: Managed Linux configuration-file changes
+        operation_type: config_file
+        action_variants: [update_managed_file, replace_managed_config, restore_bounded_backup]
+      - <<: *linux_defaults
+        operation_id: p10-linux-firewall
+        title: Linux firewall rule lifecycle
+        operation_type: firewall_rule
+        action_variants: [create_rule, update_rule, remove_rule]
+        risk_level: 3
+        prohibited_conditions: [management_access_risk, authentication_change, network_core_change, unrelated_pending_changes]
+      - <<: *linux_defaults
+        operation_id: p10-linux-package
+        title: Linux package operations
+        operation_type: package
+        action_variants: [install_package, update_package, remove_package, rollback_package]
+      - <<: *linux_defaults
+        operation_id: p10-linux-deployment
+        title: Linux user and service deployment
+        operation_type: deployment
+        action_variants: [create_service_user, deploy_service, rollback_deployment]
+        prohibited_conditions: [authentication_change, downloaded_script, arbitrary_shell, unrelated_pending_changes]
+      - <<: *linux_defaults
+        operation_id: p10-linux-application-config
+        title: Linux application configuration
+        operation_type: application_config
+        action_variants: [update_application_config, validate_application_config, restart_application]
+        prohibited_conditions: [boot_change, disk_change, database_change, network_core_change, authentication_change, unrelated_pending_changes]

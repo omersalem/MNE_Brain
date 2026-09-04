@@ -9,11 +9,16 @@ import os
 import sys
 import json
 import hashlib
+import re
+import socket
+import threading
+import time
 import yaml
 import jsonschema
 import urllib.parse
 from datetime import datetime, timezone
 from http.server import HTTPServer, BaseHTTPRequestHandler
+from socketserver import ThreadingMixIn
 from pathlib import Path
 from typing import Dict, Any, List
 
@@ -32,44 +37,172 @@ from core.incidents.intake import IncidentIntakeService
 from core.incidents.workflow_governance import IncidentWorkflowGovernance
 from core.llm.llm_adapter import LLMAdapter
 from core.remediation.remediation_engine import RemediationEngine
+from core.execution.p10_engine import OWNER_REFERENCE, P10ExecutionEngine, P10SafetyError
+from core.execution.p10_readiness import P10ReadinessService
+from core.infrastructure.coverage import InfrastructureCoverageService
+from core.api.p10_local import P10LocalAPIContext
+from core.api.security import OwnerCredentialVerifier, OwnerSessionError, OwnerSessionManager
+from core.conversation.engine import ConversationEngine
+from core.conversation.thread_store import ThreadStoreError
+from core.codex.app_server import CODEX_PROVIDER_ID, CodexAppServerError
+from core.opencode import OPENCODE_PROVIDER_ID, OpenCodeError
+from core.opencode.custom_providers import CustomProviderError
+from core.credentials import CredentialStore
+from core.llm.external_authorization import ExternalAuthorizationError
+from core.llm.gateway import ProviderGateway
+from core.llm.registry import ProviderRegistry, ProviderRegistryError
+from core.tools.broker import ToolBroker, ToolBrokerError
 from core.runbooks.registry import RunbookRegistry
-from core.llm.chatgpt_oauth import ChatGPTOAuthEngine
 from core.observability.tracer import ObservabilityTracer
 from integrations.n8n.webhook_listener import WebhookAlertListener
 
-keys_storage_file = base_dir / "config" / "api_keys_storage.json"
+security_policy = yaml.safe_load((base_dir / "config/p11_security_policy.yaml").read_text(encoding="utf-8")) or {}
+owner_policy = security_policy.get("owner_session", {})
+credential_store = CredentialStore(base_dir)
+owner_credentials = OwnerCredentialVerifier(
+    username=credential_store.get(str(owner_policy.get("username_ref", "MNE_OWNER_USERNAME"))),
+    password_hash=credential_store.get(str(owner_policy.get("password_hash_ref", "MNE_OWNER_PASSWORD_HASH"))),
+)
+owner_sessions = OwnerSessionManager(
+    inactivity_seconds=int(owner_policy.get("inactivity_seconds", 900)),
+    nonce_ttl_seconds=int(owner_policy.get("nonce_ttl_seconds", 300)),
+    max_sessions=int(owner_policy.get("max_sessions", 8)),
+    cookie_name=str(owner_policy.get("cookie_name", "mne_owner_session")),
+    credential_verifier=owner_credentials,
+    maximum_failures=int(owner_policy.get("maximum_failures", 5)),
+    lockout_seconds=int(owner_policy.get("lockout_seconds", 300)),
+)
+provider_registry = ProviderRegistry(base_dir)
+provider_gateway = ProviderGateway(
+    base_dir,
+    registry=provider_registry,
+    credentials=credential_store,
+    external_calls_enabled=bool(security_policy.get("execution", {}).get("external_provider_calls_enabled", False)),
+)
+tool_broker = ToolBroker(
+    base_dir,
+    p7_live_enabled=bool(security_policy.get("execution", {}).get("p7_live_reads_enabled", False)),
+    p7_scoped_available=bool(security_policy.get("execution", {}).get("p7_owner_scoped_live_reads_available", False)),
+    p10_execution_enabled=bool(security_policy.get("execution", {}).get("p10_writes_enabled", False)),
+)
+conversation_engine = ConversationEngine(
+    base_dir,
+    gateway=provider_gateway,
+    tool_broker=tool_broker,
+    auto_authorize_external_redacted_context=bool(
+        security_policy.get("external_data", {}).get("auto_authorize_redacted_conversation", False)
+    ),
+)
+p10_api = P10LocalAPIContext(tool_broker.p10)
+p10_readiness = P10ReadinessService(base_dir)
+owner_full_control = InfrastructureCoverageService(base_dir)
 
-def load_persistent_keys():
-    if keys_storage_file.exists():
+
+def _codex_readiness(*, start_process: bool = False) -> Dict[str, Any]:
+    """Return a secret-free readiness summary for the presentation layer."""
+    result = conversation_engine.codex.readiness(start_process=start_process)
+    try:
+        transport = TransportRegistry(base_dir=base_dir).public_status()
+        bindings = transport.get("credential_bindings", {})
+        result["p7"] = {
+            "owner_scoped_available": tool_broker.p7_scoped_available,
+            "globally_enabled": tool_broker.p7_live_enabled,
+            "active_bindings": int(bindings.get("active_bindings", 0)),
+            "identity_conflicts": (
+                transport.get("identity_conflicts", 0)
+                if isinstance(transport.get("identity_conflicts", 0), int)
+                else len(transport.get("identity_conflicts", []))
+            ),
+        }
+    except (OSError, ValueError, KeyError, yaml.YAMLError):
+        result["p7"] = {"owner_scoped_available": tool_broker.p7_scoped_available, "status": "CONFIGURATION_ERROR"}
+    try:
+        p10 = p10_readiness.status()
+        result["p10"] = {
+            "execution_enabled": tool_broker.p10.execution_enabled,
+            "status": p10.get("status", "UNKNOWN"),
+            "platforms": [
+                {
+                    "platform": item.get("platform"),
+                    "live_status": item.get("live_status"),
+                    "write_credentials": item.get("write_credentials"),
+                }
+                for item in p10.get("platforms", [])
+            ],
+        }
+    except (OSError, ValueError, KeyError, yaml.YAMLError, jsonschema.ValidationError):
+        result["p10"] = {"execution_enabled": tool_broker.p10.execution_enabled, "status": "CONFIGURATION_ERROR"}
+    result["fallback_provider_id"] = "prv_local_deterministic"
+    result["fallback_label"] = "Limited deterministic fallback"
+    return result
+
+
+def _opencode_readiness(*, start_process: bool = False) -> Dict[str, Any]:
+    """Return a secret-free OpenCode server/provider readiness summary."""
+    result = conversation_engine.opencode.readiness(start_process=start_process)
+    result["p7"] = {"owner_scoped_available": tool_broker.p7_scoped_available, "globally_enabled": tool_broker.p7_live_enabled}
+    result["p10"] = {"execution_enabled": tool_broker.p10.execution_enabled, "writes_require_exact_approval": True}
+    return result
+
+
+def _engine_catalog(*, start_process: bool = False) -> Dict[str, Any]:
+    codex = _codex_readiness(start_process=start_process)
+    opencode = _opencode_readiness(start_process=start_process)
+    opencode_catalog = conversation_engine.opencode.catalog(start_process=False)
+    return {
+        "engines": [
+            {"engine_id": "codex", "provider_id": CODEX_PROVIDER_ID, "label": "Codex App Server", "authentication": "ChatGPT session", "status": codex["status"], "models": [{"id": "codex-account-default", "label": "ChatGPT account default"}], "default_model": "codex-account-default", "details": codex},
+            {"engine_id": "opencode", "provider_id": OPENCODE_PROVIDER_ID, "label": "OpenCode", "authentication": "Dynamic provider connection", "status": opencode["status"], "models": [{"id": item["selection_id"], "label": f"{item['display_name']} · {item['provider_id']} · {item['cost_classification']}", **item} for item in opencode_catalog["models"] if item["connected"]], "default_model": opencode["default_model"], "details": opencode},
+        ],
+        "switch_policy": "PINNED_PER_CONVERSATION_AFTER_FIRST_TURN",
+        "silent_fallback": False,
+        "secrets_returned": False,
+    }
+
+
+class BoundedThreadingHTTPServer(ThreadingMixIn, HTTPServer):
+    """Concurrent SSE-capable server with a hard worker bound."""
+
+    daemon_threads = True
+    allow_reuse_address = False
+
+    def server_bind(self):
+        if hasattr(socket, "SO_EXCLUSIVEADDRUSE"):
+            self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_EXCLUSIVEADDRUSE, 1)
+        super().server_bind()
+
+    def __init__(self, server_address, handler_class, *, max_workers: int = 16):
+        self._worker_slots = threading.BoundedSemaphore(max(1, max_workers))
+        super().__init__(server_address, handler_class)
+
+    def get_request(self):
+        request, client_address = super().get_request()
+        request.settimeout(float(security_policy.get("http", {}).get("request_timeout_seconds", 30)))
+        return request, client_address
+
+    def process_request(self, request, client_address):
+        if not self._worker_slots.acquire(blocking=False):
+            try:
+                request.sendall(b"HTTP/1.1 503 Service Unavailable\r\nConnection: close\r\nContent-Length: 0\r\n\r\n")
+            finally:
+                self.shutdown_request(request)
+            return
         try:
-            with open(keys_storage_file, "r", encoding="utf-8") as f:
-                data = json.load(f)
-                for k, v in data.items():
-                    if v:
-                        os.environ[k] = v
+            super().process_request(request, client_address)
         except Exception:
-            pass
+            self._worker_slots.release()
+            raise
 
-def save_persistent_keys(keys_dict: Dict[str, str]):
-    existing = {}
-    if keys_storage_file.exists():
+    def process_request_thread(self, request, client_address):
         try:
-            with open(keys_storage_file, "r", encoding="utf-8") as f:
-                existing = json.load(f)
-        except Exception:
-            existing = {}
-    for k, v in keys_dict.items():
-        if v:
-            existing[k] = v
-            os.environ[k] = v
-    keys_storage_file.parent.mkdir(parents=True, exist_ok=True)
-    with open(keys_storage_file, "w", encoding="utf-8") as f:
-        json.dump(existing, f, indent=2)
-
-load_persistent_keys()
+            super().process_request_thread(request, client_address)
+        finally:
+            self._worker_slots.release()
 
 class MNEBrainAPIHandler(BaseHTTPRequestHandler):
     gui_dir = base_dir / "gui"
+    server_version = "MNEBrainP11/2"
+    protocol_version = "HTTP/1.0"
 
     def _resolve_gui_asset(self, request_path: str) -> Path | None:
         """Resolve a same-directory static asset and reject traversal or directories."""
@@ -83,30 +216,55 @@ class MNEBrainAPIHandler(BaseHTTPRequestHandler):
             return None
         return candidate if candidate.is_file() else None
 
-    def _set_headers(self, status_code: int = 200, content_type: str = "application/json"):
+    def _set_headers(self, status_code: int = 200, content_type: str = "application/json", *, extra_headers: Dict[str, str] | None = None, content_length: int | None = None):
         self.send_response(status_code)
-        self.send_header("Access-Control-Allow-Origin", "*")
-        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-        self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization")
         self.send_header("Content-Type", content_type)
-        self.send_header("Content-Security-Policy", "default-src 'self'; connect-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'")
+        if content_length is not None:
+            self.send_header("Content-Length", str(content_length))
+        self.send_header("Content-Security-Policy", "default-src 'self'; connect-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'")
         self.send_header("Referrer-Policy", "no-referrer")
         self.send_header("X-Content-Type-Options", "nosniff")
         self.send_header("X-Frame-Options", "DENY")
+        self.send_header("Cache-Control", "no-store")
+        for key, value in (extra_headers or {}).items():
+            self.send_header(key, value)
         self.end_headers()
 
     def do_OPTIONS(self):
-        self._set_headers(204)
+        if not owner_sessions.is_loopback(self._client_host()) or not owner_sessions.same_origin_loopback(self.headers.get("Host"), self.headers.get("Origin")):
+            self._json_response(403, {"error": "Same-origin loopback request required."})
+            return
+        self._set_headers(204, content_length=0)
 
     def _read_json_body(self) -> Dict[str, Any]:
-        try:
-            length = int(self.headers.get("Content-Length", 0))
-            if length > 0:
-                raw_body = self.rfile.read(length).decode("utf-8")
-                return json.loads(raw_body)
-        except Exception:
-            pass
-        return {}
+        length = int(self.headers.get("Content-Length", 0))
+        max_bytes = int(security_policy.get("http", {}).get("max_request_bytes", 1048576))
+        if length < 0 or length > max_bytes:
+            raise ValueError("Request body size rejected.")
+        if not length:
+            return {}
+        raw_body = self.rfile.read(length).decode("utf-8")
+        body = json.loads(raw_body)
+        if not isinstance(body, dict):
+            raise ValueError("JSON request body must be an object.")
+        return body
+
+    def _client_host(self) -> str:
+        return self.client_address[0] if self.client_address else ""
+
+    def _json_response(self, status_code: int, payload: Any, *, extra_headers: Dict[str, str] | None = None) -> None:
+        raw = json.dumps(payload, indent=2, ensure_ascii=False).encode("utf-8")
+        self._set_headers(status_code, "application/json; charset=utf-8", extra_headers=extra_headers, content_length=len(raw))
+        self.wfile.write(raw)
+
+    def _require_owner(self):
+        return owner_sessions.require(client_host=self._client_host(), host_header=self.headers.get("Host"), origin_header=self.headers.get("Origin"), cookie_header=self.headers.get("Cookie"))
+
+    def _authorize_mutation(self, body: Dict[str, Any]):
+        return owner_sessions.authorize_mutation(
+            client_host=self._client_host(), host_header=self.headers.get("Host"), origin_header=self.headers.get("Origin"),
+            cookie_header=self.headers.get("Cookie"), csrf_token=self.headers.get("X-CSRF-Token"), nonce=body.get("request_nonce"),
+        )
 
     def do_GET(self):
         parsed_url = urllib.parse.urlparse(self.path)
@@ -121,14 +279,39 @@ class MNEBrainAPIHandler(BaseHTTPRequestHandler):
                 ext = file_path.suffix.lower()
                 ct = "text/html" if ext == ".html" else ("application/javascript" if ext in [".js", ".mjs"] else ("text/css" if ext == ".css" else "text/plain"))
                 try:
-                    with open(file_path, "rb") as f:
-                        self._set_headers(200, ct)
-                        self.wfile.write(f.read())
+                    raw = file_path.read_bytes()
+                    self._set_headers(200, ct, content_length=len(raw))
+                    self.wfile.write(raw)
                     return
                 except Exception:
                     pass
 
         # REST API Endpoints
+        if path == "/api/v2/session":
+            try:
+                session = self._require_owner()
+                self._json_response(200, owner_sessions.describe(session))
+            except OwnerSessionError as exc:
+                self._json_response(401, {
+                    "error": str(exc),
+                    "code": "AUTHENTICATION_REQUIRED",
+                    "owner_credentials_configured": owner_credentials.configured,
+                    "local_interface_only": True,
+                })
+            return
+        if path.startswith("/api"):
+            try:
+                self._require_owner()
+            except OwnerSessionError as exc:
+                self._json_response(401, {"error": str(exc), "code": "AUTHENTICATION_REQUIRED"})
+                return
+        if path.startswith("/api/v2/"):
+            try:
+                self._handle_v2_get(path, params)
+            except (ThreadStoreError, ProviderRegistryError, ToolBrokerError, OpenCodeError, CustomProviderError, ValueError, KeyError) as exc:
+                self._json_response(404, {"error": str(exc)})
+            return
+
         if path == "/api/status" or path == "/api/dashboard":
             self._handle_dashboard()
         elif path == "/api/devices":
@@ -145,12 +328,8 @@ class MNEBrainAPIHandler(BaseHTTPRequestHandler):
             self._handle_logs(params)
         elif path == "/api/settings":
             self._handle_settings_get()
-        elif path == "/api/oauth/chatgpt/url":
-            self._handle_oauth_url()
-        elif path == "/api/oauth/chatgpt/status":
-            self._handle_oauth_status()
-        elif path == "/api/oauth/callback" or path == "/auth/callback":
-            self._handle_oauth_callback(params)
+        elif path.startswith("/api/oauth/chatgpt") or path == "/auth/callback":
+            self._json_response(410, {"status": "QUARANTINED", "error": "ChatGPT OAuth is disabled; use a server-side OpenAI Platform credential reference."})
         elif path == "/api/search":
             self._handle_search(params)
         elif path == "/api/incidents/workflow/status":
@@ -165,6 +344,16 @@ class MNEBrainAPIHandler(BaseHTTPRequestHandler):
             self._handle_p8_status()
         elif path == "/api/troubleshooting/p9/status":
             self._handle_p9_status()
+        elif path == "/api/p10/session":
+            self._handle_p10_session()
+        elif path == "/api/p10/operations":
+            self._handle_p10_operations()
+        elif path == "/api/p10/readiness":
+            self._handle_p10_readiness()
+        elif path.startswith("/api/p10/plans/"):
+            self._handle_p10_plan_get(path.rsplit("/", 1)[-1])
+        elif path.startswith("/api/p10/results/"):
+            self._handle_p10_result_get(path.rsplit("/", 1)[-1])
         else:
             self._set_headers(404)
             self.wfile.write(json.dumps({"error": f"Endpoint {path} not found"}).encode("utf-8"))
@@ -172,7 +361,41 @@ class MNEBrainAPIHandler(BaseHTTPRequestHandler):
     def do_POST(self):
         parsed_url = urllib.parse.urlparse(self.path)
         path = parsed_url.path
-        body = self._read_json_body()
+        if path == "/api/v2/login":
+            try:
+                body = self._read_json_body()
+                if set(body) != {"username", "password"}:
+                    raise ValueError("Exact owner username and password are required.")
+                payload, cookie = owner_sessions.login(
+                    username=body["username"], password=body["password"],
+                    client_host=self._client_host(), host_header=self.headers.get("Host"), origin_header=self.headers.get("Origin"),
+                )
+                self._json_response(200, payload, extra_headers={"Set-Cookie": cookie})
+            except ValueError as exc:
+                self._json_response(400, {"error": str(exc)})
+            except OwnerSessionError as exc:
+                self._json_response(401, {"error": str(exc), "code": "OWNER_LOGIN_FAILED"})
+            return
+        try:
+            body = self._read_json_body()
+            owner_session = self._authorize_mutation(body)
+        except (ValueError, json.JSONDecodeError) as exc:
+            self._json_response(400, {"error": str(exc)})
+            return
+        except OwnerSessionError as exc:
+            self._json_response(403, {"error": str(exc)})
+            return
+
+        if path.startswith("/api/v2/"):
+            try:
+                if path == "/api/v2/logout":
+                    cookie = owner_sessions.logout(cookie_header=self.headers.get("Cookie"))
+                    self._json_response(200, {"status": "SIGNED_OUT"}, extra_headers={"Set-Cookie": cookie})
+                    return
+                self._handle_v2_post(path, body, owner_session)
+            except (ThreadStoreError, ProviderRegistryError, ExternalAuthorizationError, ToolBrokerError, P10SafetyError, CodexAppServerError, OpenCodeError, CustomProviderError, ValueError, KeyError, jsonschema.ValidationError) as exc:
+                self._json_response(409, {"error": str(exc)})
+            return
 
         if path == "/api/chat":
             self._handle_chat(body)
@@ -184,8 +407,8 @@ class MNEBrainAPIHandler(BaseHTTPRequestHandler):
             self._handle_knowledge_promote(body)
         elif path == "/api/automation/trigger":
             self._handle_automation_trigger(body)
-        elif path == "/api/oauth/chatgpt/token":
-            self._handle_oauth_token(body)
+        elif path.startswith("/api/oauth/chatgpt"):
+            self._json_response(410, {"status": "QUARANTINED", "error": "ChatGPT OAuth is disabled."})
         elif path == "/api/settings":
             self._handle_settings_post(body)
         elif path == "/api/settings/auto":
@@ -194,11 +417,499 @@ class MNEBrainAPIHandler(BaseHTTPRequestHandler):
             self._handle_p8_plan(body)
         elif path == "/api/troubleshooting/p9/plan":
             self._handle_p9_plan(body)
+        elif path == "/api/p10/plans/prepare":
+            self._handle_p10_prepare(body)
+        elif path == "/api/p10/plans/prepare-critical":
+            self._handle_p10_prepare_critical(body)
+        elif path.startswith("/api/p10/plans/") and path.endswith("/approve"):
+            self._handle_p10_approve(path.split("/")[-2], body)
+        elif path.startswith("/api/p10/plans/") and path.endswith("/execute"):
+            self._handle_p10_execute(path.split("/")[-2], body)
+        elif path.startswith("/api/p10/plans/") and path.endswith("/rollback/prepare"):
+            self._handle_p10_rollback_prepare(path.split("/")[-3], body)
         else:
             self._set_headers(404)
             self.wfile.write(json.dumps({"error": f"Endpoint {path} not found"}).encode("utf-8"))
 
     # Handler Implementation Methods
+    def _handle_v2_get(self, path: str, params: Dict[str, Any]) -> None:
+        if path == "/api/v2/threads":
+            query = (params.get("search") or [""])[0]
+            self._json_response(200, {"threads": conversation_engine.store.list_threads(query), "retention": "IN_MEMORY_ONLY"})
+            return
+        match = re.fullmatch(r"/api/v2/threads/(thr_[A-Za-z0-9_-]{16,64})", path)
+        if match:
+            self._json_response(200, conversation_engine.store.get_thread(match.group(1)))
+            return
+        match = re.fullmatch(r"/api/v2/threads/(thr_[A-Za-z0-9_-]{16,64})/export", path)
+        if match:
+            self._json_response(200, conversation_engine.store.export_thread(match.group(1)))
+            return
+        match = re.fullmatch(r"/api/v2/diagnostics/(diag_[A-Za-z0-9_-]{16,64})", path)
+        if match:
+            self._json_response(200, conversation_engine.diagnostics.get(match.group(1)))
+            return
+        match = re.fullmatch(r"/api/v2/turns/(trn_[A-Za-z0-9_-]{16,64})/events", path)
+        if match:
+            self._stream_turn_events(match.group(1))
+            return
+        if path == "/api/v2/providers":
+            profiles = provider_registry.list_profiles(include_disabled=True)
+            for profile in profiles:
+                ref = profile.get("credential_ref")
+                profile["credential_status"] = credential_store.status(ref)["status"] if ref else "NOT_REQUIRED"
+            self._json_response(200, {"profiles": profiles, "secrets_returned": False})
+            return
+        if path == "/api/v2/engines":
+            self._json_response(200, _engine_catalog(start_process=True))
+            return
+        if path == "/api/v2/tools":
+            self._json_response(200, {"tools": tool_broker.registry.list()})
+            return
+        if path == "/api/v2/owner-full-control/status":
+            self._json_response(200, owner_full_control.status())
+            return
+        if path == "/api/v2/codex/readiness":
+            self._json_response(200, _codex_readiness(start_process=True))
+            return
+        if path == "/api/v2/opencode/readiness":
+            self._json_response(200, _opencode_readiness(start_process=True))
+            return
+        if path == "/api/v2/opencode/providers":
+            conversation_engine.opencode.refresh_catalog(start_process=True)
+            self._json_response(200, conversation_engine.opencode.catalog(start_process=False))
+            return
+        if path == "/api/v2/settings":
+            self._json_response(200, {
+                "permission_mode": "OWNER_DIRECT",
+                "owner_direct": {"enabled": True, "read_identity_mode": "COLLECT_UNVERIFIED", "write_confirmation": "FINAL_UI_CONFIRMATION_ONLY"},
+                "bind_host": security_policy.get("bind_host", "127.0.0.1"),
+                "external_provider_calls_enabled": provider_gateway.external_calls_enabled,
+                "auto_authorize_redacted_conversation": conversation_engine.auto_authorize_external_redacted_context,
+                "explicit_authorization_required_for_live_evidence": bool(security_policy.get("external_data", {}).get("explicit_authorization_required_for_live_evidence", True)),
+                "p7_live_reads_enabled": tool_broker.p7_live_enabled,
+                "p7_owner_scoped_live_reads_available": tool_broker.p7_scoped_available,
+                "p10_writes_enabled": tool_broker.p10.execution_enabled,
+                "credential_storage": "KEYRING_PREFERRED_ENV_FALLBACK",
+                "secrets_returned": False,
+                "codex": _codex_readiness(start_process=True),
+                "opencode": _opencode_readiness(start_process=True),
+            })
+            return
+        raise ThreadStoreError("P11 endpoint not found.")
+
+    def _stream_turn_events(self, turn_id: str) -> None:
+        terminal_types = {"turn.completed", "turn.cancelled", "turn.failed"}
+        terminal_statuses = {"COMPLETED", "CANCELLED", "FAILED"}
+        last_event_id = self.headers.get("Last-Event-ID")
+        heartbeat = float(security_policy.get("http", {}).get("sse_heartbeat_seconds", 15))
+        self.send_response(200)
+        self.send_header("Content-Type", "text/event-stream")
+        self.send_header("Cache-Control", "no-store")
+        self.send_header("X-Accel-Buffering", "no")
+        # One response remains open for the full turn, then closes cleanly
+        # after its terminal event so clients never enter reconnect polling.
+        self.send_header("Connection", "close")
+        self.end_headers()
+        try:
+            while True:
+                events = conversation_engine.events.list_after(turn_id, last_event_id)
+                if not events:
+                    turn = conversation_engine.store.get_turn(turn_id)
+                    if turn["status"] in terminal_statuses:
+                        return
+                    events = conversation_engine.events.wait_after(turn_id, last_event_id, timeout=heartbeat)
+                if not events:
+                    self.wfile.write(b": heartbeat\n\n")
+                    self.wfile.flush()
+                    continue
+                for event in events:
+                    self.wfile.write(conversation_engine.events.encode_sse(event))
+                    self.wfile.flush()
+                    last_event_id = event["event_id"]
+                    if event["event_type"] in terminal_types:
+                        return
+        except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError, socket.timeout):
+            return
+
+    def _handle_v2_post(self, path: str, body: Dict[str, Any], owner_session) -> None:
+        payload = {key: value for key, value in body.items() if key != "request_nonce"}
+        if path == "/api/v2/threads":
+            allowed = {"title", "provider_id", "engine_id", "model_id", "permission_mode"}
+            if set(payload).difference(allowed):
+                raise ValueError("Unknown thread fields rejected.")
+            codex_ready = conversation_engine.codex.readiness(start_process=True)["status"] == "READY"
+            requested_engine = str(payload.get("engine_id", "codex" if codex_ready else "opencode"))
+            engine_providers = {"codex": CODEX_PROVIDER_ID, "opencode": OPENCODE_PROVIDER_ID}
+            if requested_engine not in engine_providers:
+                raise ValueError("Only Codex App Server and OpenCode are selectable AI engines.")
+            provider_id = str(payload.get("provider_id", engine_providers[requested_engine]))
+            profile = provider_registry.get(provider_id)
+            selected_model = str(payload.get("model_id") or profile["model_id"])
+            if requested_engine == "opencode":
+                ready = conversation_engine.opencode.readiness(start_process=True)
+                selected_model = str(payload.get("model_id") or ready.get("default_model") or "select-model")
+                if selected_model != "select-model":
+                    conversation_engine.opencode._selected_model(selected_model)
+            item = conversation_engine.create_thread(
+                title=str(payload.get("title", "New conversation")),
+                provider_id=provider_id,
+                engine_id=requested_engine,
+                model_id=selected_model,
+                permission_mode=str(payload.get("permission_mode", "OWNER_DIRECT")),
+            )
+            self._json_response(201, item)
+            return
+        if path == "/api/v2/threads/import":
+            serialized = json.dumps(payload.get("conversation"), ensure_ascii=False)
+            if len(serialized.encode("utf-8")) > 2_000_000:
+                raise ValueError("Conversation import exceeds the safe size limit.")
+            self._json_response(201, conversation_engine.import_thread(payload["conversation"]))
+            return
+        match = re.fullmatch(r"/api/v2/threads/(thr_[A-Za-z0-9_-]{16,64})/turns", path)
+        if match:
+            if not isinstance(payload.get("content"), str) or not payload["content"].strip():
+                raise ValueError("Turn content is required.")
+            item = conversation_engine.start_turn(match.group(1), content=payload["content"], external_authorization_id=payload.get("external_authorization_id"), evidence=payload.get("evidence", []), owner_session_digest=owner_sessions.digest(owner_session), run_async=True)
+            self._json_response(202, item)
+            return
+        match = re.fullmatch(r"/api/v2/threads/(thr_[A-Za-z0-9_-]{16,64})/external-authorizations", path)
+        if match:
+            item = conversation_engine.prepare_external_authorization(
+                match.group(1), prompt=payload["prompt"], evidence_context=payload.get("evidence_context", []),
+                evidence_sources=payload.get("evidence_sources", []), data_classification=payload.get("data_classification", "INTERNAL_REDACTED"),
+                includes_live_evidence=payload.get("includes_live_evidence") is True,
+            )
+            self._json_response(201, item)
+            return
+        match = re.fullmatch(r"/api/v2/threads/(thr_[A-Za-z0-9_-]{16,64})/provider", path)
+        if match:
+            provider_registry.get(payload["provider_id"])
+            self._json_response(200, conversation_engine.store.switch_provider(match.group(1), payload["provider_id"]))
+            return
+        match = re.fullmatch(r"/api/v2/threads/(thr_[A-Za-z0-9_-]{16,64})/engine", path)
+        if match:
+            engine_id = str(payload["engine_id"])
+            provider_id = {"codex": CODEX_PROVIDER_ID, "opencode": OPENCODE_PROVIDER_ID}.get(engine_id)
+            if not provider_id:
+                raise ValueError("Only Codex App Server and OpenCode are selectable AI engines.")
+            profile = provider_registry.get(provider_id)
+            model_id = str(payload.get("model_id", profile["model_id"]))
+            if engine_id == "opencode":
+                conversation_engine.opencode.refresh_catalog(start_process=True)
+                conversation_engine.opencode._selected_model(model_id)
+                current = conversation_engine.store.get_thread(match.group(1), include_items=False)
+                if current["turn_ids"]:
+                    available = {item["selection_id"] for item in conversation_engine.opencode.catalog(start_process=False)["models"] if item["connected"] and item["availability"] != "DEPRECATED"}
+                    if current["model_id"] in available:
+                        raise ThreadStoreError("Engine and model are pinned after the first turn. Create a new conversation to switch models.")
+                    self._json_response(200, conversation_engine.store.recover_unavailable_opencode_model(match.group(1), model_id))
+                    return
+            self._json_response(200, conversation_engine.store.pin_engine(match.group(1), provider_id=provider_id, engine_id=engine_id, model_id=model_id))
+            return
+        match = re.fullmatch(r"/api/v2/threads/(thr_[A-Za-z0-9_-]{16,64})/permission", path)
+        if match:
+            self._json_response(200, conversation_engine.store.set_permission_mode(match.group(1), payload["permission_mode"]))
+            return
+        match = re.fullmatch(r"/api/v2/turns/(trn_[A-Za-z0-9_-]{16,64})/cancel", path)
+        if match:
+            self._json_response(202, conversation_engine.cancel(match.group(1)))
+            return
+        if path == "/api/v2/providers":
+            self._json_response(201, provider_registry.add_profile(payload["profile"]))
+            return
+        match = re.fullmatch(r"/api/v2/providers/(prv_[A-Za-z0-9_-]{3,64})/(enable|disable|test|connect)", path)
+        if match:
+            provider_id, action = match.groups()
+            if provider_id == CODEX_PROVIDER_ID and action in {"test", "connect"}:
+                result = conversation_engine.codex.readiness(start_process=action == "connect")
+                result.update({"provider_id": provider_id, "network_attempted": False, "credential_status": "CHATGPT_SESSION", "secrets_returned": False})
+            elif provider_id == OPENCODE_PROVIDER_ID and action in {"test", "connect"}:
+                result = conversation_engine.opencode.readiness(start_process=True)
+                result.update({"provider_id": provider_id, "network_attempted": False, "credential_status": "MANAGED_BY_OPENCODE", "secrets_returned": False})
+            elif action == "test":
+                profile = provider_registry.get(provider_id, require_enabled=False)
+                ref = profile.get("credential_ref")
+                credential_status = credential_store.status(ref)["status"] if ref else "NOT_REQUIRED"
+                result = {"provider_id": provider_id, "status": "CONFIG_VALID", "credential_status": credential_status, "model_id": profile["model_id"], "network_attempted": False, "secrets_returned": False}
+            elif action == "connect":
+                profile = provider_registry.get(provider_id)
+                events = list(provider_gateway.stream(provider_id, [{"role": "user", "content": "hello"}]))
+                failure = next((event.payload for event in events if event.event_type == "failed"), None)
+                completed = any(event.event_type == "completed" for event in events)
+                text_received = any(event.event_type == "text_delta" and event.payload.get("text") for event in events)
+                if failure:
+                    result = {"provider_id": provider_id, "status": "CONNECTION_FAILED", "code": failure["code"], "message": failure["message"], "retryable": failure["retryable"], "network_attempted": failure["code"] != "EXTERNAL_CALLS_DISABLED", "secrets_returned": False}
+                elif completed and text_received:
+                    result = {"provider_id": provider_id, "status": "NETWORK_VALID", "model_id": profile["model_id"], "credential_status": "VALID", "network_attempted": True, "streaming_validated": True, "secrets_returned": False}
+                else:
+                    result = {"provider_id": provider_id, "status": "CONNECTION_FAILED", "code": "PROVIDER_STREAM_INCOMPLETE", "message": "The provider stream ended before completion.", "retryable": True, "network_attempted": True, "secrets_returned": False}
+            else:
+                result = provider_registry.set_enabled(provider_id, action == "enable")
+            self._json_response(200, result)
+            return
+        match = re.fullmatch(r"/api/v2/codex/approvals/(cappr_[A-Za-z0-9_-]{16,64})/(approve|deny)", path)
+        if match:
+            approval_id, decision = match.groups()
+            item = conversation_engine.codex.decide_approval(
+                approval_id,
+                phrase=payload.get("approval_phrase"),
+                owner_session_digest=owner_sessions.digest(owner_session),
+                approve=decision == "approve",
+            )
+            self._json_response(200, item)
+            return
+        if path == "/api/v2/opencode/providers/refresh":
+            self._json_response(200, conversation_engine.opencode.refresh_catalog(start_process=True))
+            return
+        if path == "/api/v2/opencode/providers/connect-api":
+            provider_id = str(payload.get("provider_id", ""))
+            api_key = payload.pop("api_key", None)
+            body.pop("api_key", None)
+            try:
+                result = conversation_engine.opencode.connect_api_key(provider_id, api_key)
+            finally:
+                api_key = None
+            self._json_response(200, result)
+            return
+        if path == "/api/v2/opencode/providers/oauth/start":
+            inputs = payload.pop("inputs", None)
+            body.pop("inputs", None)
+            try:
+                result = conversation_engine.opencode.oauth_start(str(payload.get("provider_id", "")), int(payload.get("method", -1)), inputs)
+            finally:
+                inputs = None
+            self._json_response(200, result)
+            return
+        if path == "/api/v2/opencode/providers/oauth/callback":
+            code = payload.pop("code", None)
+            body.pop("code", None)
+            try:
+                result = conversation_engine.opencode.oauth_callback(str(payload.get("provider_id", "")), int(payload.get("method", -1)), code)
+            finally:
+                code = None
+            self._json_response(200, result)
+            return
+        if path == "/api/v2/opencode/providers/disconnect":
+            self._json_response(200, conversation_engine.opencode.disconnect(str(payload.get("provider_id", ""))))
+            return
+        if path == "/api/v2/opencode/providers/test":
+            self._json_response(200, conversation_engine.opencode.test_provider(str(payload.get("provider_id", "")), payload.get("model_id")))
+            return
+        if path == "/api/v2/opencode/custom-providers/save":
+            self._json_response(200, conversation_engine.opencode.upsert_custom_provider(payload.get("provider")))
+            return
+        if path == "/api/v2/opencode/custom-providers/remove":
+            self._json_response(200, conversation_engine.opencode.remove_custom_provider(str(payload.get("provider_id", ""))))
+            return
+        if path == "/api/v2/opencode/restart":
+            self._json_response(200, conversation_engine.opencode.restart())
+            return
+        match = re.fullmatch(r"/api/v2/credentials/([A-Z][A-Z0-9_]{2,80})", path)
+        if match:
+            ref = match.group(1)
+            if payload.get("delete") is True:
+                credential_store.delete(ref)
+                self._json_response(200, {"credential_ref": ref, "status": "DELETED", "secrets_returned": False})
+            else:
+                storage = credential_store.set(ref, payload["value"])
+                self._json_response(200, {"credential_ref": ref, "status": "CONFIGURED", "storage": storage, "secrets_returned": False})
+            return
+        if path == "/api/v2/tool-calls":
+            item = tool_broker.propose(thread_id=payload["thread_id"], turn_id=payload["turn_id"], tool_name=payload["tool_name"], arguments=payload.get("arguments", {}), permission_mode=payload["permission_mode"])
+            self._json_response(201, item)
+            return
+        if path == "/api/v2/owner-direct/discover":
+            self._json_response(200, tool_broker.owner_direct.discover(**payload))
+            return
+        if path == "/api/v2/owner-direct/writes/prepare":
+            self._json_response(201, tool_broker.owner_direct.prepare_write(**payload))
+            return
+        match = re.fullmatch(r"/api/v2/owner-direct/writes/(odplan_[A-Za-z0-9_-]{16,64})/confirm", path)
+        if match:
+            self._json_response(200, tool_broker.owner_direct.confirm_write(match.group(1), owner_session_digest=owner_sessions.digest(owner_session)))
+            return
+        if path == "/api/v2/owner-direct/identity-audit":
+            self._json_response(200, tool_broker.owner_direct.identity_audit(**payload))
+            return
+        match = re.fullmatch(r"/api/v2/tool-calls/(tcall_[A-Za-z0-9_-]{16,64})/invoke", path)
+        if match:
+            self._json_response(200, tool_broker.invoke(match.group(1), owner_session_digest=owner_sessions.digest(owner_session)))
+            return
+        match = re.fullmatch(r"/api/v2/live-reads/(lread_[A-Za-z0-9_-]{16,64})/approve", path)
+        if match:
+            item = tool_broker.approve_live_read(
+                match.group(1),
+                payload["approval_phrase"],
+                owner_session_digest=owner_sessions.digest(owner_session),
+            )
+            self._json_response(200, item)
+            return
+        match = re.fullmatch(r"/api/v2/live-reads/(lread_[A-Za-z0-9_-]{16,64})/execute", path)
+        if match:
+            item = tool_broker.execute_live_read(
+                match.group(1),
+                payload["approval_id"],
+                owner_session_digest=owner_sessions.digest(owner_session),
+            )
+            self._json_response(200, item)
+            return
+        match = re.fullmatch(r"/api/v2/workspace/plans/(wplan_[A-Za-z0-9_-]{16,64})/approve", path)
+        if match:
+            item = tool_broker.approve_patch(match.group(1), payload["approval_phrase"], owner_session_digest=owner_sessions.digest(owner_session))
+            self._json_response(200, item)
+            return
+        match = re.fullmatch(r"/api/v2/workspace/plans/(wplan_[A-Za-z0-9_-]{16,64})/execute", path)
+        if match:
+            item = tool_broker.apply_approved_patch(match.group(1), payload["approval_id"], owner_session_digest=owner_sessions.digest(owner_session))
+            self._json_response(200, item)
+            return
+        match = re.fullmatch(r"/api/v2/workspace/plans/(wplan_[A-Za-z0-9_-]{16,64})/rollback/prepare", path)
+        if match:
+            self._json_response(200, tool_broker.prepare_patch_rollback(match.group(1)))
+            return
+        match = re.fullmatch(r"/api/v2/workspace/rollbacks/(wrollback_[A-Za-z0-9_-]{16,64})/approve", path)
+        if match:
+            item = tool_broker.approve_patch_rollback(match.group(1), payload["approval_phrase"], owner_session_digest=owner_sessions.digest(owner_session))
+            self._json_response(200, item)
+            return
+        match = re.fullmatch(r"/api/v2/workspace/rollbacks/(wrollback_[A-Za-z0-9_-]{16,64})/execute", path)
+        if match:
+            item = tool_broker.apply_approved_rollback(match.group(1), payload["approval_id"], owner_session_digest=owner_sessions.digest(owner_session))
+            self._json_response(200, item)
+            return
+        match = re.fullmatch(r"/api/v2/p10/plans/(p10-(?:[a-f0-9]{20}|rb-[a-f0-9]{16}))/approve", path)
+        if match:
+            item = tool_broker.p10.approve(
+                match.group(1), payload["approval_phrase"], owner_reference=OWNER_REFERENCE,
+                source="local", owner_session_digest=owner_sessions.digest(owner_session),
+            )
+            self._json_response(200, item)
+            return
+        match = re.fullmatch(r"/api/v2/p10/plans/(p10-(?:[a-f0-9]{20}|rb-[a-f0-9]{16}))/execute", path)
+        if match:
+            item = tool_broker.p10.execute(match.group(1), owner_session_digest=owner_sessions.digest(owner_session))
+            self._json_response(200, item)
+            return
+        match = re.fullmatch(r"/api/v2/p10/plans/(p10-(?:[a-f0-9]{20}|rb-[a-f0-9]{16}))/cancel", path)
+        if match:
+            self._json_response(200, tool_broker.p10.request_cancel(match.group(1)))
+            return
+        match = re.fullmatch(r"/api/v2/p10/plans/(p10-(?:[a-f0-9]{20}|rb-[a-f0-9]{16}))/rollback/prepare", path)
+        if match:
+            item = tool_broker.p10.prepare_rollback(match.group(1))
+            self._json_response(200, item)
+            return
+        raise ValueError("P11 endpoint not found.")
+
+    def _p10_client_host(self) -> str:
+        return self.client_address[0] if self.client_address else ""
+
+    def _p10_require_local(self) -> None:
+        if not p10_api.is_local(self._p10_client_host()):
+            raise P10SafetyError("P10 endpoints are available only from the local interface.")
+        if not p10_api.is_same_origin_loopback(self.headers.get("Host"), self.headers.get("Origin")):
+            raise P10SafetyError("P10 endpoints require a same-origin loopback host.")
+
+    def _p10_authorize_mutation(self, body: Dict[str, Any]) -> None:
+        p10_api.authorize_mutation(
+            client_host=self._p10_client_host(),
+            csrf_token=self.headers.get("X-P10-CSRF"),
+            nonce=body.get("request_nonce"),
+            host_header=self.headers.get("Host"),
+            origin_header=self.headers.get("Origin"),
+        )
+
+    def _p10_response(self, callback, *, success_code: int = 200):
+        try:
+            payload = callback()
+        except (P10SafetyError, ValueError, KeyError, jsonschema.ValidationError) as exc:
+            self._set_headers(409)
+            self.wfile.write(json.dumps({"status": "P10_REJECTED", "error": str(exc), "live_connection_attempted": False, "persistence_attempted": False}).encode("utf-8"))
+            return
+        self._set_headers(success_code)
+        self.wfile.write(json.dumps(payload, indent=2).encode("utf-8"))
+
+    def _handle_p10_session(self):
+        self._p10_response(lambda: (self._p10_require_local(), p10_api.session_metadata())[1])
+
+    def _handle_p10_operations(self):
+        self._p10_response(lambda: (self._p10_require_local(), p10_api.engine.catalog.list_metadata())[1])
+
+    def _handle_p10_readiness(self):
+        self._p10_response(lambda: (self._p10_require_local(), p10_readiness.status())[1])
+
+    def _handle_p10_plan_get(self, plan_id: str):
+        self._p10_response(lambda: (self._p10_require_local(), p10_api.engine.get_plan(plan_id))[1])
+
+    def _handle_p10_result_get(self, execution_id: str):
+        self._p10_response(lambda: (self._p10_require_local(), p10_api.engine.get_result(execution_id))[1])
+
+    def _handle_p10_prepare(self, body: Dict[str, Any]):
+        def action():
+            self._p10_authorize_mutation(body)
+            session_digest = owner_sessions.digest(self._require_owner())
+            allowed = {"operation_id", "binding_id", "target", "identity_pin", "parameters", "evidence", "owner_reference", "request_nonce"}
+            if set(body).difference(allowed):
+                raise P10SafetyError("Unknown P10 prepare request fields were rejected.")
+            return p10_api.engine.prepare(
+                body.get("operation_id", ""), binding_id=body.get("binding_id", ""), target=body.get("target", ""),
+                identity_pin=body.get("identity_pin", ""), parameters=body.get("parameters"), evidence=body.get("evidence"),
+                owner_reference=body.get("owner_reference", ""),
+                owner_session_digest=session_digest,
+            )
+        self._p10_response(action, success_code=201)
+
+    def _handle_p10_prepare_critical(self, body: Dict[str, Any]):
+        def action():
+            self._p10_authorize_mutation(body)
+            session_digest = owner_sessions.digest(self._require_owner())
+            allowed = {"platform", "protocol", "binding_id", "target", "identity_pin", "commands", "rollback_commands", "evidence", "warning", "irreversible", "owner_reference", "request_nonce"}
+            if set(body).difference(allowed):
+                raise P10SafetyError("Unknown critical prepare request fields were rejected.")
+            return p10_api.engine.prepare_critical_exception(
+                platform=body.get("platform", ""), protocol=body.get("protocol", ""), binding_id=body.get("binding_id", ""), target=body.get("target", ""),
+                identity_pin=body.get("identity_pin", ""), commands=body.get("commands"), rollback_commands=body.get("rollback_commands", []),
+                evidence=body.get("evidence"), warning=body.get("warning"), irreversible=body.get("irreversible") is True,
+                owner_reference=body.get("owner_reference", ""),
+                owner_session_digest=session_digest,
+            )
+        self._p10_response(action, success_code=201)
+
+    def _handle_p10_approve(self, plan_id: str, body: Dict[str, Any]):
+        def action():
+            self._p10_authorize_mutation(body)
+            session_digest = owner_sessions.digest(self._require_owner())
+            if set(body) != {"approval_phrase", "owner_reference", "request_nonce"}:
+                raise P10SafetyError("Approval request fields do not match the exact contract.")
+            p10_api.engine._validate_contract("p10-approval-request.schema.json", {
+                "plan_id": plan_id, "owner_reference": body["owner_reference"],
+                "approval_phrase": body["approval_phrase"], "csrf_token": self.headers.get("X-P10-CSRF"),
+                "request_nonce": body["request_nonce"],
+            })
+            return p10_api.engine.approve(
+                plan_id, body["approval_phrase"], owner_reference=body["owner_reference"],
+                source="local", owner_session_digest=session_digest,
+            )
+        self._p10_response(action)
+
+    def _handle_p10_execute(self, plan_id: str, body: Dict[str, Any]):
+        def action():
+            self._p10_authorize_mutation(body)
+            session_digest = owner_sessions.digest(self._require_owner())
+            if set(body) != {"request_nonce"}:
+                raise P10SafetyError("Execute request fields do not match the exact contract.")
+            return p10_api.engine.execute(plan_id, owner_session_digest=session_digest)
+        self._p10_response(action)
+
+    def _handle_p10_rollback_prepare(self, plan_id: str, body: Dict[str, Any]):
+        def action():
+            self._p10_authorize_mutation(body)
+            if set(body) != {"request_nonce"}:
+                raise P10SafetyError("Rollback prepare request fields do not match the exact contract.")
+            return p10_api.engine.prepare_rollback(plan_id)
+        self._p10_response(action, success_code=201)
+
     def _handle_p8_status(self):
         try:
             payload = P8TroubleshootingEngine(base_dir=base_dir).status()
@@ -549,146 +1260,40 @@ class MNEBrainAPIHandler(BaseHTTPRequestHandler):
         self.wfile.write(json.dumps({"audit_logs": audit_logs[-50:]}, indent=2).encode("utf-8"))
 
     def _handle_settings_get(self):
-        def mask_key(k_name):
-            val = os.getenv(k_name, "")
-            if not val:
-                return "NOT_CONFIGURED"
-            return f"CONFIGURED ({val[:4]}...{val[-4:] if len(val)>8 else ''})"
-
+        refs = ["OPENAI_API_KEY", "ANTHROPIC_API_KEY", "LOCAL_OPENAI_COMPATIBLE_KEY"]
         res = {
-            "llm_provider": os.getenv("LLM_PROVIDER", "local_fallback"),
+            "llm_provider": os.getenv("LLM_PROVIDER", "prv_local_deterministic"),
             "evidence_token_limit": 1500,
             "policy_enforcement": "STRICT",
             "zero_auto_overwrite": True,
-            "api_keys": {
-                "OPENAI_API_KEY": mask_key("OPENAI_API_KEY"),
-                "ANTHROPIC_API_KEY": mask_key("ANTHROPIC_API_KEY"),
-                "DEEPSEEK_API_KEY": mask_key("DEEPSEEK_API_KEY"),
-                "GEMINI_API_KEY": mask_key("GEMINI_API_KEY")
-            },
-            "base_urls": {
-                "OPENAI_BASE_URL": os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1"),
-                "ANTHROPIC_BASE_URL": os.getenv("ANTHROPIC_BASE_URL", "https://api.anthropic.com/v1"),
-                "DEEPSEEK_BASE_URL": os.getenv("DEEPSEEK_BASE_URL", "https://api.deepseek.com/v1"),
-                "GEMINI_BASE_URL": os.getenv("GEMINI_BASE_URL", "https://generativelanguage.googleapis.com/v1beta")
-            },
-            "credentials_status": {
-                "FORTIGATE_SSH": "CONFIGURED" if os.getenv("FORTIGATE_SSH_USER") else "NOT_CONFIGURED",
-                "CISCO_SSH": "CONFIGURED" if os.getenv("SSH_USER") else "NOT_CONFIGURED",
-                "VMWARE_VCENTER": "CONFIGURED" if os.getenv("VMWARE_VCENTER_USER") else "NOT_CONFIGURED",
-                "WINRM": "CONFIGURED" if os.getenv("WINRM_USER") else "NOT_CONFIGURED"
-            }
+            "credentials_status": {ref: credential_store.status(ref)["status"] for ref in refs},
+            "credential_storage": "KEYRING_PREFERRED_ENV_FALLBACK",
+            "secrets_returned": False,
         }
-        self._set_headers(200)
-        self.wfile.write(json.dumps(res, indent=2).encode("utf-8"))
+        self._json_response(200, res)
 
     def _handle_settings_post(self, body: Dict[str, Any]):
-        provider = body.get("llm_provider")
-        if provider:
-            os.environ["LLM_PROVIDER"] = provider
-
-        to_save = {}
-        if body.get("openai_api_key"):
-            to_save["OPENAI_API_KEY"] = body["openai_api_key"]
-        if body.get("openai_base_url"):
-            to_save["OPENAI_BASE_URL"] = body["openai_base_url"]
-
-        if body.get("anthropic_api_key"):
-            to_save["ANTHROPIC_API_KEY"] = body["anthropic_api_key"]
-        if body.get("anthropic_base_url"):
-            to_save["ANTHROPIC_BASE_URL"] = body["anthropic_base_url"]
-
-        if body.get("deepseek_api_key"):
-            to_save["DEEPSEEK_API_KEY"] = body["deepseek_api_key"]
-
-        if body.get("gemini_api_key"):
-            to_save["GEMINI_API_KEY"] = body["gemini_api_key"]
-        if body.get("gemini_base_url"):
-            to_save["GEMINI_BASE_URL"] = body["gemini_base_url"]
-
-        save_persistent_keys(to_save)
-
-        self._set_headers(200)
-        self.wfile.write(json.dumps({
-            "status": "UPDATED",
-            "llm_provider": os.getenv("LLM_PROVIDER"),
-            "message": "LLM Provider and API Credentials updated successfully."
-        }).encode("utf-8"))
+        provider = body.get("llm_provider", "prv_local_deterministic")
+        provider_registry.get(provider)
+        os.environ["LLM_PROVIDER"] = provider
+        self._json_response(200, {"status": "UPDATED", "llm_provider": provider, "secrets_returned": False})
 
     def _handle_settings_auto(self):
-        # Auto-detect best available credentials
-        provider = "local_fallback"
-        msg = "Auto-configured Local Fallback Mode."
-
-        if os.getenv("OPENAI_API_KEY"):
-            provider = "openai"
-            msg = "Auto-configured OpenAI API (GPT-4o) using OPENAI_API_KEY."
-        elif os.getenv("CHATGPT_OAUTH_ACCESS_TOKEN"):
-            provider = "chatgpt_oauth"
-            msg = "Auto-configured ChatGPT Account OAuth Token."
-        elif os.getenv("ANTHROPIC_API_KEY"):
-            provider = "anthropic"
-            msg = "Auto-configured Anthropic API using ANTHROPIC_API_KEY."
-        elif os.getenv("DEEPSEEK_API_KEY"):
-            provider = "deepseek"
-            msg = "Auto-configured DeepSeek API."
-
+        provider = "prv_local_deterministic"
         os.environ["LLM_PROVIDER"] = provider
-        self._set_headers(200)
-        self.wfile.write(json.dumps({
-            "status": "SUCCESS",
-            "llm_provider": provider,
-            "message": msg
-        }).encode("utf-8"))
+        self._json_response(200, {"status": "SUCCESS", "llm_provider": provider, "message": "Selected deterministic local fallback; external providers require explicit enablement and data authorization."})
 
     def _handle_oauth_url(self):
-        oauth_engine = ChatGPTOAuthEngine(base_dir=base_dir)
-        info = oauth_engine.get_authorization_url()
-        self._set_headers(200)
-        self.wfile.write(json.dumps(info, indent=2).encode("utf-8"))
+        self._json_response(410, {"status": "QUARANTINED"})
 
     def _handle_oauth_status(self):
-        oauth_engine = ChatGPTOAuthEngine(base_dir=base_dir)
-        token = oauth_engine.get_access_token()
-        res = {
-            "status": "CONNECTED" if token else "NOT_CONNECTED",
-            "access_token": f"{token[:8]}...{token[-6:]}" if token and len(token)>14 else ("CONFIGURED" if token else None)
-        }
-        self._set_headers(200)
-        self.wfile.write(json.dumps(res, indent=2).encode("utf-8"))
+        self._json_response(410, {"status": "QUARANTINED", "secrets_returned": False})
 
     def _handle_oauth_token(self, body: Dict[str, Any]):
-        oauth_engine = ChatGPTOAuthEngine(base_dir=base_dir)
-        code = body.get("code")
-        verifier = body.get("code_verifier")
-        token = body.get("access_token")
+        self._json_response(410, {"status": "QUARANTINED"})
 
-        if token:
-            oauth_engine.save_tokens({"access_token": token, "token_type": "Bearer", "source": "User Registered ChatGPT Account Token"})
-            os.environ["LLM_PROVIDER"] = "chatgpt_oauth"
-            self._set_headers(200)
-            self.wfile.write(json.dumps({"status": "SUCCESS", "message": "ChatGPT Account OAuth Token Registered Successfully."}).encode("utf-8"))
-        elif code and verifier:
-            res = oauth_engine.exchange_code_for_token(code, verifier)
-            os.environ["LLM_PROVIDER"] = "chatgpt_oauth"
-            self._set_headers(200)
-            self.wfile.write(json.dumps(res, indent=2).encode("utf-8"))
     def _handle_oauth_callback(self, params: Dict[str, Any]):
-        codes = params.get("code", [])
-        code = codes[0] if codes else None
-        if code:
-            oauth_engine = ChatGPTOAuthEngine(base_dir=base_dir)
-            oauth_engine.save_tokens({
-                "access_token": f"chatgpt-oauth-code-{code[:12]}",
-                "code": code,
-                "token_type": "Bearer",
-                "source": "ChatGPT OAuth Callback Code Authorized"
-            })
-            os.environ["LLM_PROVIDER"] = "chatgpt_oauth"
-
-        self.send_response(302)
-        self.send_header("Location", "/?oauth=success")
-        self.end_headers()
+        self._json_response(410, {"status": "QUARANTINED"})
 
     def _handle_search(self, params):
         q = params.get("q", [""])[0].lower()
@@ -841,46 +1446,36 @@ class MNEBrainAPIHandler(BaseHTTPRequestHandler):
         self._set_headers(response_code)
         self.wfile.write(json.dumps(res, indent=2).encode("utf-8"))
 
-    def _handle_settings_post(self, body: Dict[str, Any]):
-        provider = body.get("llm_provider")
-        if provider:
-            os.environ["LLM_PROVIDER"] = provider
-        self._set_headers(200)
-        self.wfile.write(json.dumps({"status": "UPDATED", "llm_provider": os.getenv("LLM_PROVIDER")}).encode("utf-8"))
-
-def run_api_server(port: int = 8080):
-    import threading
-
-    # Start background listener on port 1455 for ChatGPT OAuth redirect callbacks
-    def start_oauth_port_1455():
-        try:
-            srv1455 = HTTPServer(("", 1455), MNEBrainAPIHandler)
-            print("ChatGPT OAuth Redirect Callback Listener active on port 1455...")
-            srv1455.serve_forever()
-        except Exception:
-            pass
-
-    t1455 = threading.Thread(target=start_oauth_port_1455, daemon=True)
-    t1455.start()
-
-    ports_to_try = [port, 8080, 8088, 8085, 8090]
-    bound_server = None
-    selected_port = port
-
-    for p in ports_to_try:
-        try:
-            server_address = ("", p)
-            bound_server = HTTPServer(server_address, MNEBrainAPIHandler)
-            selected_port = p
-            break
-        except Exception:
-            continue
-
-    if bound_server:
-        print(f"MNE_Brain Release 2 REST API Server running on port {selected_port}...")
+def run_api_server(port: int | None = None, host: str | None = None):
+    bind_host = host or str(security_policy.get("bind_host", "127.0.0.1"))
+    if not owner_sessions.is_loopback(bind_host):
+        raise ValueError("The P11 GUI server binds to loopback only by default and rejects non-loopback hosts.")
+    configured = os.getenv("MNE_BRAIN_PORT", str(security_policy.get("bind_port", 8080)))
+    try:
+        selected_port = int(configured) if port is None else int(port)
+    except (TypeError, ValueError) as exc:
+        raise ValueError("MNE_BRAIN_PORT must be a valid TCP port number.") from exc
+    if not 0 <= selected_port <= 65535:
+        raise ValueError("The configured GUI port is outside the valid TCP port range.")
+    try:
+        bound_server = BoundedThreadingHTTPServer(
+            (bind_host, selected_port), MNEBrainAPIHandler,
+            max_workers=int(security_policy.get("http", {}).get("max_workers", 16)),
+        )
+    except OSError as exc:
+        raise OSError(f"GUI port {selected_port} on {bind_host} is unavailable; stop the conflicting process or configure MNE_BRAIN_PORT.") from exc
+    selected_port = int(bound_server.server_address[1])
+    readiness = _codex_readiness(start_process=True)
+    opencode_readiness = _opencode_readiness(start_process=True)
+    print(f"MNE_Brain P11 REST API Server running on http://{bind_host}:{selected_port} (bounded concurrent mode)...")
+    print(f"Codex App Server readiness: {readiness['status']} (ChatGPT session, service tier {readiness['service_tier']}).")
+    print(f"OpenCode readiness: {opencode_readiness['status']} (protected loopback HTTP/SSE server).")
+    try:
         bound_server.serve_forever()
-    else:
-        print("ERROR: Could not bind API Server to any available port.")
+    finally:
+        conversation_engine.codex.stop(cleanup_workspaces=True)
+        conversation_engine.opencode.stop()
+        bound_server.server_close()
 
 if __name__ == "__main__":
     run_api_server()

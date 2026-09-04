@@ -36,7 +36,8 @@ risk_levels:
     
   level_4:
     name: "Emergency Core Change"
-    policy: "strictly_prohibited"
-    requires_owner_instruction: false
-    prohibited: true
+    policy: "critical_exception_only"
+    requires_owner_instruction: true
+    requires_exact_critical_or_irreversible_phrase: true
+    prohibited_from_cataloged_path: true
     examples: ["core firewall change", "san lun deletion", "exchange dag change"]

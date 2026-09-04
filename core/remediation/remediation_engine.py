@@ -81,7 +81,7 @@ class RemediationEngine:
             is_live_verification=risk_level == 0,
         )
         policy_status = policy_decision.get("policy_status")
-        prohibited = policy_status == "STRICTLY_PROHIBITED" or policy_decision.get("prohibited") is True
+        prohibited = policy_decision.get("prohibited") is True
         policy_valid = (
             policy_decision.get("approved") is True
             if risk_level == 0
@@ -192,9 +192,9 @@ class RemediationEngine:
         rollback_command = str(action_data.get("rollback_command", ""))
         risk_level = action_data["risk_level"]
         policy_status = evaluation["questions"]["q3_risk_policy"]["decision"].get("policy_status")
-        if risk_level == 4 or policy_status == "STRICTLY_PROHIBITED":
-            plan_status = "PROHIBITED"
-            reason = "Level 4 remediation is prohibited and cannot advance."
+        if risk_level == 4 or policy_status == "CRITICAL_EXCEPTION_ONLY":
+            plan_status = "CRITICAL_EXCEPTION_REQUIRED"
+            reason = "Level 4 cannot use the legacy cataloged path; prepare it through P10 critical or irreversible approval."
         elif evaluation["all_passed"]:
             plan_status = "READY_FOR_SEPARATE_EXECUTION_GATE"
             reason = "All planning checks passed; this component still cannot execute the action."

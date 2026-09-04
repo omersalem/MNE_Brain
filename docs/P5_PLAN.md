@@ -15,11 +15,11 @@ P5 performs no live collection, external AI call, notification, persistence, tic
 | Process procedures | P2 verification, P3 investigation, and P4 handoff reviewed under the same boundary |
 | Selection | Exact entity, service, and controlled category matching; maximum three deterministic candidates |
 | Context minimization | Metadata only; Markdown bodies, commands, credentials, addresses, and raw output are excluded |
-| Coverage | 46/46 entities have context and a coverage-eligible owner-reviewed procedure |
+| Coverage | 48/48 entities have context and a coverage-eligible owner-reviewed procedure |
 | Presentation | Read-only `/api/runbooks` endpoint, dashboard metrics, and GUI readiness view |
 
 ## Completion boundary
 
 `operationally_reviewed` means the troubleshooting procedure and its stop conditions were reviewed by the sole owner. It does not mean a device is reachable, healthy, current, or production-certified. All canonical knowledge entities remain `unverified` until fresh attributable evidence is collected after the owner explicitly says `proceed` for an exact read-only scope.
 
-All 12 runbooks validate uniquely, all 46 entities are covered, unknown and malformed input fails closed, handoffs remain bounded, bodies remain excluded, and production readiness remains explicitly unclaimed.
+All 12 runbooks validate uniquely, all 48 entities are covered, unknown and malformed input fails closed, handoffs remain bounded, bodies remain excluded, and production readiness remains explicitly unclaimed.

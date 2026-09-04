@@ -1,0 +1,80 @@
+catalog_version: P11-2026-08-31
+refresh_policy: MANUAL_REVIEW_REQUIRED
+profiles:
+  - provider_id: prv_codex_app_server
+    provider_type: codex_app_server
+    adapter_type: codex_app_server_jsonrpc
+    model_id: codex-account-default
+    credential_ref: null
+    base_url: stdio://codex-app-server
+    capabilities: {streaming: true, tool_calling: true, structured_output: true, vision: true, local_execution: true, owner_direct: true}
+    limits: {context_tokens: 1000000, output_tokens: 128000, timeout_seconds: 600, max_cost_usd: 0}
+    classification: LOCAL
+    enabled: true
+    reviewed_at: '2026-08-30T00:00:00Z'
+  - provider_id: prv_opencode
+    provider_type: opencode
+    adapter_type: opencode_http_sse
+    model_id: select-model
+    credential_ref: null
+    base_url: http://127.0.0.1:4096
+    capabilities: {streaming: true, tool_calling: true, structured_output: true, vision: true, local_execution: true, owner_direct: true}
+    limits: {context_tokens: 1000000, output_tokens: 128000, timeout_seconds: 600, max_cost_usd: 0}
+    classification: LOCAL
+    enabled: true
+    reviewed_at: '2026-08-31T00:00:00Z'
+  - provider_id: prv_local_deterministic
+    provider_type: deterministic_local
+    adapter_type: deterministic_local
+    model_id: mne-deterministic-v1
+    credential_ref: null
+    base_url: local://deterministic
+    capabilities: {streaming: true, tool_calling: true, structured_output: true, vision: false, local_execution: true, owner_direct: true}
+    limits: {context_tokens: 32768, output_tokens: 4096, timeout_seconds: 15, max_cost_usd: 0}
+    classification: LOCAL
+    enabled: true
+    reviewed_at: '2026-08-20T00:00:00Z'
+  - provider_id: prv_ollama_local
+    provider_type: ollama
+    adapter_type: ollama
+    model_id: qwen3
+    credential_ref: null
+    base_url: http://127.0.0.1:11434/v1
+    capabilities: {streaming: true, tool_calling: true, structured_output: true, vision: false, local_execution: true, owner_direct: true}
+    limits: {context_tokens: 32768, output_tokens: 4096, timeout_seconds: 120, max_cost_usd: 0}
+    classification: LOCAL
+    enabled: false
+    reviewed_at: '2026-08-20T00:00:00Z'
+  - provider_id: prv_openai_compatible_local
+    provider_type: openai_compatible
+    adapter_type: openai_compatible
+    model_id: local-reviewed-model
+    credential_ref: LOCAL_OPENAI_COMPATIBLE_KEY
+    base_url: http://127.0.0.1:8000/v1
+    capabilities: {streaming: true, tool_calling: true, structured_output: true, vision: false, local_execution: true, owner_direct: true}
+    limits: {context_tokens: 32768, output_tokens: 4096, timeout_seconds: 120, max_cost_usd: 0}
+    classification: LOCAL
+    enabled: false
+    reviewed_at: '2026-08-20T00:00:00Z'
+  - provider_id: prv_openai_platform
+    provider_type: openai
+    adapter_type: openai_responses
+    model_id: gpt-5.6-sol
+    credential_ref: OPENAI_API_KEY
+    base_url: https://api.openai.com/v1
+    capabilities: {streaming: true, tool_calling: true, structured_output: true, vision: true, local_execution: false, owner_direct: true}
+    limits: {context_tokens: 1000000, output_tokens: 128000, timeout_seconds: 120, max_cost_usd: 5}
+    classification: EXTERNAL
+    enabled: false
+    reviewed_at: '2026-08-20T00:00:00Z'
+  - provider_id: prv_anthropic_platform
+    provider_type: anthropic
+    adapter_type: anthropic_messages
+    model_id: claude-opus-5
+    credential_ref: ANTHROPIC_API_KEY
+    base_url: https://api.anthropic.com/v1
+    capabilities: {streaming: true, tool_calling: true, structured_output: true, vision: true, local_execution: false, owner_direct: true}
+    limits: {context_tokens: 1000000, output_tokens: 128000, timeout_seconds: 120, max_cost_usd: 5}
+    classification: EXTERNAL
+    enabled: false
+    reviewed_at: '2026-08-20T00:00:00Z'

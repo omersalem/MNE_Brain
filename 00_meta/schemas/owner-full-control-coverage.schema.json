@@ -1,0 +1,18 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Owner Full Control Infrastructure Coverage",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["mode", "loopback_only", "automatic_safe_reads", "writes_require_one_exact_approval", "total_entities", "coverage_counts", "credential_readiness_counts", "read_status_values", "entities", "identity_conflicts", "engine_capabilities", "secrets_returned", "connection_attempted"],
+  "properties": {
+    "mode": {"const": "OWNER_FULL_CONTROL"}, "loopback_only": {"const": true},
+    "automatic_safe_reads": {"const": true}, "writes_require_one_exact_approval": {"const": true},
+    "total_entities": {"type": "integer", "minimum": 1},
+    "coverage_counts": {"type": "object", "additionalProperties": {"type": "integer", "minimum": 0}},
+    "credential_readiness_counts": {"type": "object", "additionalProperties": {"type": "integer", "minimum": 0}},
+    "read_status_values": {"type": "array", "uniqueItems": true, "items": {"enum": ["DOCUMENTED", "REACHABLE", "AUTHENTICATED", "LIVE_VERIFIED", "CONFLICT", "FAILED", "NOT_RUN"]}},
+    "entities": {"type": "array", "minItems": 1, "items": {"type": "object", "required": ["entity_id", "name", "platform", "role", "documented_management_ip", "documented_hostname", "documented_fqdn", "status", "binding_ids", "bindings", "read_status", "blocker"], "additionalProperties": true}},
+    "identity_conflicts": {"type": "array", "items": {"type": "object"}},
+    "engine_capabilities": {"type": "object"}, "secrets_returned": {"const": false}, "connection_attempted": {"const": false}
+  }
+}

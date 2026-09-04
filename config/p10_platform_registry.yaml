@@ -1,0 +1,69 @@
+version: "1.0"
+phase: P10
+default_enabled: false
+write_credentials_must_be_separate: true
+platforms:
+  fortinet_fortios:
+    transport: ssh_cli
+    p7_platforms: [fortinet_fortios]
+    auth_probe: "get system status"
+    privilege_probe: "show system admin"
+    precheck: "show full-configuration"
+    postcheck: "show full-configuration"
+    abort: process_only
+  f5_bigip:
+    transport: ssh_cli
+    p7_platforms: [f5_bigip]
+    auth_probe: "tmsh -q -c 'show sys version'"
+    privilege_probe: "tmsh -q -c 'list auth user'"
+    precheck: "tmsh -q -c 'list ltm one-line'"
+    postcheck: "tmsh -q -c 'list ltm one-line'"
+    abort: process_only
+  cisco_fmc:
+    transport: fmc_rest
+    p7_platforms: [cisco_fmc]
+    auth_probe: "GET /api/fmc_platform/v1/info/serverversion"
+    privilege_probe: "GET /api/fmc_platform/v1/auth/roles"
+    precheck: "GET exact typed resource"
+    postcheck: "GET exact typed resource"
+    abort: unavailable
+  windows_powershell:
+    transport: winrm_powershell
+    p7_platforms: [windows_identity, microsoft_exchange]
+    auth_probe: "Get-CimInstance Win32_OperatingSystem"
+    privilege_probe: "whoami /groups"
+    precheck: "Get-* exact resource"
+    postcheck: "Get-* exact resource"
+    abort: process_only
+  vmware_vcenter:
+    transport: vcenter_rest
+    p7_platforms: [vmware_vcenter]
+    auth_probe: "GET /api/vcenter/host"
+    privilege_probe: "GET /api/session"
+    precheck: "GET exact typed resource"
+    postcheck: "GET exact typed resource"
+    abort: unavailable
+  cisco_switching:
+    transport: ssh_cli
+    p7_platforms: [cisco_iosxe, cisco_router]
+    auth_probe: "show version"
+    privilege_probe: "show privilege"
+    precheck: "show running-config exact scope"
+    postcheck: "show running-config exact scope"
+    abort: process_only
+  fujitsu_switching:
+    transport: ssh_cli
+    p7_platforms: [fujitsu_switch]
+    auth_probe: "show version"
+    privilege_probe: "show privilege"
+    precheck: "show running-config exact scope"
+    postcheck: "show running-config exact scope"
+    abort: process_only
+  linux_host:
+    transport: ssh_cli
+    p7_platforms: [linux_host]
+    auth_probe: "hostnamectl --static"
+    privilege_probe: "sudo -n -l"
+    precheck: "read exact service, file, firewall, or package state"
+    postcheck: "read exact service, file, firewall, or package state"
+    abort: process_only

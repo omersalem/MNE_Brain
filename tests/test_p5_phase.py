@@ -85,16 +85,16 @@ def test_p5_phase() -> bool:
     entities = entity_builder.build_index(persist=False)["entities"]
     coverage = registry.coverage_report(entities)
     if (
-        coverage["total_entities"] == 46
-        and coverage["context_covered_entities"] == 46
+        coverage["total_entities"] == 48
+        and coverage["context_covered_entities"] == 48
         and coverage["context_coverage_percent"] == 100.0
-        and coverage["operationally_covered_entities"] == 46
+        and coverage["operationally_covered_entities"] == 48
         and coverage["operational_coverage_percent"] == 100.0
         and coverage["operational_gaps"] == []
         and coverage["operational_runbook_readiness"] is True
         and coverage["production_readiness_claimed"] is False
     ):
-        print(" [PASS] All 46 entities have reviewed procedures without a production-readiness claim")
+        print(" [PASS] All 48 entities have reviewed procedures without a production-readiness claim")
         passed += 1
     else:
         errors.append(f"Runbook coverage truthfulness failed: {coverage}")
@@ -141,7 +141,7 @@ def test_p5_phase() -> bool:
         pilot["success"]
         and pilot["passed"] == pilot["total"] == 18
         and pilot["runbooks"] == 12
-        and pilot["canonical_entities"] == 46
+        and pilot["canonical_entities"] == 48
         and pilot["context_coverage_percent"] == 100.0
         and pilot["operational_coverage_percent"] == 100.0
         and pilot["production_readiness_claimed"] is False

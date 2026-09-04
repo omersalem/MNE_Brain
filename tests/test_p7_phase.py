@@ -18,8 +18,8 @@ ROOT = Path(__file__).resolve().parent.parent
 def test_p7_catalog_covers_every_entity_and_is_disabled():
     registry = TransportRegistry(base_dir=ROOT)
     status = registry.public_status()
-    assert status["total_entities"] == 46
-    assert status["transport_implementation_coverage"] == 46
+    assert status["total_entities"] == 48
+    assert status["transport_implementation_coverage"] == 48
     assert status["transport_implementation_coverage_percent"] == 100.0
     assert len(status["drivers"]) == 7
     assert all(driver["default_enabled"] is False for driver in status["drivers"])
@@ -29,13 +29,13 @@ def test_p7_catalog_covers_every_entity_and_is_disabled():
     assert status["persistence_enabled"] is False
     assert status["remediation_enabled"] is False
     bindings = status["credential_bindings"]
-    assert bindings["total_bindings"] == 32
-    assert bindings["active_bindings"] == 31
+    assert bindings["total_bindings"] == 62
+    assert bindings["active_bindings"] == 61
     assert bindings["owner_excluded_bindings"] == 1
-    assert bindings["identity_pinned_bindings"] == 27
-    assert bindings["host_key_pinned_bindings"] == 25
-    assert bindings["tls_pinned_bindings"] == 2
-    assert bindings["kerberos_bindings"] == 4
+    assert bindings["identity_pinned_bindings"] == 50
+    assert bindings["host_key_pinned_bindings"] == 44
+    assert bindings["tls_pinned_bindings"] == 6
+    assert bindings["kerberos_bindings"] == 8
     assert bindings["permanent_mapping_complete"] is True
     assert bindings["operations_included"] is False
     assert bindings["environment_references_included"] is False
@@ -60,7 +60,7 @@ def test_all_device_preflight_is_owner_gated_and_trust_zero():
     assert calls == []
     result = validator.validate_all(owner_proceed=True)
     assert result["status"] == "COMPLETE"
-    assert result["total_entities"] == 46
+    assert result["total_entities"] == 48
     assert all(item["trust_level"] == 0 and item["evidence_accepted"] is False for item in result["results"])
     assert result["persistence_attempted"] is False
     assert result["notifications_sent"] is False
@@ -94,12 +94,12 @@ def test_transport_api_is_redacted_and_non_connecting():
     payload = json.loads(handler.wfile.getvalue().decode("utf-8"))
     serialized = json.dumps(payload, sort_keys=True).casefold()
     assert statuses == [200]
-    assert payload["transport_implementation_coverage"] == payload["total_entities"] == 46
+    assert payload["transport_implementation_coverage"] == payload["total_entities"] == 48
     assert payload["live_connection_attempted"] is False
     assert payload["credentials_included"] is False
     assert payload["raw_output_included"] is False
     assert payload["authenticated_validation_results_persisted"] is False
-    assert payload["credential_bindings"]["active_bindings"] == 31
+    assert payload["credential_bindings"]["active_bindings"] == 61
     assert payload["credential_bindings"]["owner_excluded_bindings"] == 1
     assert not any(marker in serialized for marker in ("password", "credential_reference", "canonical_target", "candidate_target", "172.23.", "10.60."))
 
@@ -131,5 +131,50 @@ def test_authenticated_baseline_is_owner_gated_without_connections():
     result = AuthenticatedBaselineRunner(base_dir=ROOT).run(owner_proceed=False)
     assert result["status"] == "NOT_RUN"
     assert result["reason"] == "OWNER_PROCEED_REQUIRED"
-    assert result["total_bindings"] == 31
+    assert result["total_bindings"] == 61
     assert result["results"] == []
+
+
+def test_exact_authenticated_scope_uses_one_transport_attempt(monkeypatch):
+    runner = AuthenticatedBaselineRunner(base_dir=ROOT)
+    monkeypatch.setattr(runner.credentials, "value", lambda key: "10.165.18.3" if key == "MNE_SWITCH_TULKARM_HOST" else "")
+    calls = []
+    def collect(binding, *, single_attempt=False):
+        calls.append((binding["binding_id"], single_attempt))
+        return runner._result(binding["binding_id"], "SUCCESS", attempted=True, output="bounded fixture")
+    monkeypatch.setattr(runner, "_execute", collect)
+    result = runner.run_exact(owner_proceed=True, binding_id="p7-switch-tulkarm", target="10.165.18.3", check_id="ip_interface_brief")
+    assert result["status"] == "COMPLETE" and result["status_counts"] == {"SUCCESS": 1}
+    assert calls == [("p7-switch-tulkarm", True)]
+
+
+def test_credential_scope_can_be_separate_from_asset_identity(monkeypatch, tmp_path):
+    """A shared reader account must not make a per-device host-key pin optional."""
+    runner = AuthenticatedBaselineRunner(base_dir=ROOT)
+    runner.plink = tmp_path / "plink.exe"
+    runner.plink.write_bytes(b"fixture")
+    values = {
+        "MNE_DEVICE_HOST": "192.0.2.40",
+        "MNE_DEVICE_SSH_HOSTKEY": "ssh-ed25519 255 SHA256:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
+        "MNE_SHARED_USERNAME": "reader",
+        "MNE_SHARED_PASSWORD": "fixture-password",
+    }
+    monkeypatch.setattr(runner.credentials, "value", lambda key: values.get(key, ""))
+    observed = []
+
+    class Completed:
+        returncode = 0
+        stdout = "Version: fixture\n"
+        stderr = ""
+
+    def run(arguments, **kwargs):
+        observed.extend(arguments)
+        return Completed()
+
+    monkeypatch.setattr("scripts.run_p7_authenticated_baseline.subprocess.run", run)
+    result = runner._ssh({
+        "binding_id": "p7-fixture", "env_prefix": "MNE_DEVICE", "credential_env_prefix": "MNE_SHARED",
+        "target": "192.0.2.40", "check_id": "version", "operation": "show version", "platform": "cisco_iosxe",
+    }, allow_interactive_fallback=False)
+    assert result["status"] == "SUCCESS"
+    assert observed[observed.index("-l") + 1] == "reader"

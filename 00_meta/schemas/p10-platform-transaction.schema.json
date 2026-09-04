@@ -1,0 +1,6 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#", "$id": "https://mne-brain.local/schemas/p10-platform-transaction.schema.json",
+  "title": "P10 Platform Transaction", "type": "object", "additionalProperties": false,
+  "required": ["transaction_version", "platform", "operation_id", "operation_type", "renderer", "target", "action", "arguments", "transaction_mode", "rollback"],
+  "properties": {"transaction_version": {"const": "1.0"}, "platform": {"type": "string"}, "operation_id": {"type": "string"}, "operation_type": {"type": "string"}, "renderer": {"type": "string"}, "target": {"type": "string"}, "action": {"type": "string"}, "arguments": {"type": "object"}, "transaction_mode": {"type": "string"}, "rollback": {"type": "boolean"}}
+}

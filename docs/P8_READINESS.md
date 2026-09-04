@@ -2,7 +2,7 @@
 
 ## Implemented
 
-- Schema-validated catalog with 32/32 P7 binding reconciliations.
+- Schema-validated catalog with 33/33 P7 binding reconciliations.
 - Eight deterministic troubleshooting scenario families.
 - Exact target and scenario validation with a three-binding maximum.
 - Fresh trust-5 evidence validation and compact AI handoff.

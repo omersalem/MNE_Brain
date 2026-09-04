@@ -6,7 +6,7 @@ Accepted for Release 2 on 2026-08-16.
 
 ## Decision
 
-P7 implements minimal SSH, HTTPS REST, PowerShell/WinRM, VMware REST, SNMP-readiness, and TCP preflight boundaries for all 46 canonical entities. Every transport is disabled at rest and requires the sole owner to say `proceed` for an exact read-only entity/check scope.
+P7 implements minimal SSH, HTTPS REST, PowerShell/WinRM, VMware REST, SNMP-readiness, and TCP preflight boundaries for all 47 canonical entities. Every transport is disabled at rest and requires the sole owner to say `proceed` for an exact read-only entity/check scope.
 
 Permanent local bindings are schema-governed separately from canonical knowledge. Twenty-seven bindings are active and one binding—the Ramallah Gold switch—is excluded by explicit owner instruction. SSH host-key and TLS certificate pins remain only in the ignored credential environment file; AD and Exchange use exact Kerberos FQDNs.
 

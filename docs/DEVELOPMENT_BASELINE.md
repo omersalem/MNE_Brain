@@ -1,6 +1,6 @@
 # Release 2 Development Baseline
 
-**Status:** P1-P6 implementation accepted offline, including reviewed runbooks and 46/46 multi-platform connector planning; production use and live collection remain disabled.
+**Status:** P1-P6 implementation accepted offline, including reviewed runbooks and 48/48 multi-platform connector planning; production use and live collection remain disabled.
 
 ## Purpose
 
@@ -9,7 +9,7 @@ Release 2 is the active implementation target for MNE_Brain. Release 1 remains a
 ## Completed P1 boundaries
 
 - P1 established a reproducible source layout, evidence boundaries, non-executing adapters, and an offline validation workflow.
-- P6 adds 15 exact multi-platform connector families and validates all 46 entity routes through trust-0 injected fixtures.
+- P6 adds 15 exact multi-platform connector families and validates all 48 entity routes through trust-0 injected fixtures.
 - It does not run live infrastructure checks, perform remediation, or certify production readiness.
 - Simplified P0 Git containment is complete; it intentionally does not add a vault or rotation workflow.
 - Operational output and persistent credentials are local-only and must never be committed.

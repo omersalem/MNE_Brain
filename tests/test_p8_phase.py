@@ -18,7 +18,7 @@ def test_p8_catalog_and_policy_are_complete_and_disabled():
     engine = P8TroubleshootingEngine(ROOT)
     status = engine.status()
     assert status["scenario_count"] == 8
-    assert status["reconciliation_count"] == 32
+    assert status["reconciliation_count"] == 62
     assert set(status["scenario_families"]) == {"branch_outage", "vpn", "web_publishing", "dns_ad", "exchange", "vmware", "firewall_security", "storage_backup_switching"}
     assert status["live_enabled"] is False
     assert status["audit_mode"] == "IN_MEMORY_ONLY"

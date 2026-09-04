@@ -13,6 +13,8 @@ reconciliations:
   - {binding_id: p7-fmc, disposition: MATCHED_CANONICAL, canonical_entity_id: fmc-cisco-hq-01, canonical_promotion_allowed: false, note: "Identity matches; operational SSH differs from the documented connector protocol."}
   - {binding_id: p7-fmc-rest, disposition: MATCHED_CANONICAL, canonical_entity_id: fmc-cisco-hq-01, canonical_promotion_allowed: false, note: "Pinned REST endpoint for policy, deployment, and managed-device evidence."}
   - {binding_id: p7-fortigate-edge, disposition: MATCHED_CANONICAL, canonical_entity_id: fw-fortigate-edge-01, canonical_promotion_allowed: false, note: "Exact operational identity match."}
+  - {binding_id: p7-fortigate-edge-addresses, disposition: MATCHED_CANONICAL, canonical_entity_id: fw-fortigate-edge-01, canonical_promotion_allowed: false, note: "Exact immutable read-only address-object inventory on the pinned edge firewall."}
+  - {binding_id: p7-fortigate-edge-policies, disposition: MATCHED_CANONICAL, canonical_entity_id: fw-fortigate-edge-01, canonical_promotion_allowed: false, note: "Exact immutable read-only firewall-policy inventory on the pinned edge firewall."}
   - {binding_id: p7-fortigate-bethlehem, disposition: CANONICAL_UPDATE_CANDIDATE, canonical_entity_id: fw-fortigate-bethlehem-01, canonical_promotion_allowed: false, note: "Operational target differs; owner review required."}
   - {binding_id: p7-fortigate-hebron, disposition: MATCHED_CANONICAL, canonical_entity_id: fw-fortigate-hebron-01, canonical_promotion_allowed: false, note: "Exact operational identity match."}
   - {binding_id: p7-fortigate-hebron-gold, disposition: ADDITIONAL_OPERATIONAL_ASSET, canonical_entity_id: null, canonical_promotion_allowed: false, note: "Live operational asset without a canonical entity."}
@@ -28,14 +30,42 @@ reconciliations:
   - {binding_id: p7-fortigate-tulkarem, disposition: CANONICAL_UPDATE_CANDIDATE, canonical_entity_id: fw-fortigate-tulkarm-01, canonical_promotion_allowed: false, note: "Operational target and spelling differ; owner review required."}
   - {binding_id: p7-ftd, disposition: MATCHED_CANONICAL, canonical_entity_id: ftd-cisco-hq-01, canonical_promotion_allowed: false, note: "Exact operational identity match."}
   - {binding_id: p7-linux-greenunit, disposition: MATCHED_CANONICAL, canonical_entity_id: web-greenunit-ubuntu-01, canonical_promotion_allowed: false, note: "Exact operational identity match."}
-  - {binding_id: p7-router-tulkarm, disposition: ADDITIONAL_OPERATIONAL_ASSET, canonical_entity_id: null, canonical_promotion_allowed: false, note: "Live operational asset without a canonical entity."}
+  - {binding_id: p7-router-tulkarm, disposition: MATCHED_CANONICAL, canonical_entity_id: rtr-tulkarm-01, canonical_promotion_allowed: false, note: "Exact operational binding for the documented Tulkarm router; live evidence remains separately owner-gated."}
   - {binding_id: p7-fujitsu-sw1, disposition: ADDITIONAL_OPERATIONAL_ASSET, canonical_entity_id: null, canonical_promotion_allowed: false, note: "Endpoint is explicitly treated as Fujitsu SW1, not as a SAN controller or canonical storage array."}
   - {binding_id: p7-sophos, disposition: ADDITIONAL_OPERATIONAL_ASSET, canonical_entity_id: null, canonical_promotion_allowed: false, note: "Live operational asset without a canonical entity."}
   - {binding_id: p7-switch-hebron-gold, disposition: ADDITIONAL_OPERATIONAL_ASSET, canonical_entity_id: null, canonical_promotion_allowed: false, note: "Live operational asset without a canonical entity."}
   - {binding_id: p7-switch-nablus-gold, disposition: ADDITIONAL_OPERATIONAL_ASSET, canonical_entity_id: null, canonical_promotion_allowed: false, note: "Live operational asset without a canonical entity."}
+  - {binding_id: p7-switch-tulkarm, disposition: MATCHED_CANONICAL, canonical_entity_id: sw-cisco-tulkarm-01, canonical_promotion_allowed: false, note: "Exact owner-gated P7 binding for the documented Tulkarm access switch."}
   - {binding_id: p7-switch-ramallah-gold, disposition: AMBIGUOUS_DO_NOT_PROMOTE, canonical_entity_id: null, canonical_promotion_allowed: false, note: "Owner-excluded asset; do not retry or promote."}
   - {binding_id: p7-vcenter, disposition: CANONICAL_UPDATE_CANDIDATE, canonical_entity_id: vc-vmware-hq-01, canonical_promotion_allowed: false, note: "Operational target differs; owner review required."}
   - {binding_id: p7-vcenter-rest, disposition: CANONICAL_UPDATE_CANDIDATE, canonical_entity_id: vc-vmware-hq-01, canonical_promotion_allowed: false, note: "Pinned REST endpoint shares the operational target; canonical changes remain owner-reviewed."}
+  - {binding_id: p7-app-apdct, disposition: MATCHED_CANONICAL, canonical_entity_id: app-apdct-web-01, canonical_promotion_allowed: false, note: "Exact pinned application endpoint binding."}
+  - {binding_id: p7-app-auction-test, disposition: MATCHED_CANONICAL, canonical_entity_id: app-auction-test-01, canonical_promotion_allowed: false, note: "Exact pinned application endpoint binding."}
+  - {binding_id: p7-backup-veeam, disposition: MATCHED_CANONICAL, canonical_entity_id: backup-veeam-hq-01, canonical_promotion_allowed: false, note: "Exact Kerberos Veeam read binding."}
+  - {binding_id: p7-ad-legacy-primary, disposition: MATCHED_CANONICAL, canonical_entity_id: dc-windows-ad-01, canonical_promotion_allowed: false, note: "Exact Kerberos identity binding."}
+  - {binding_id: p7-ad-legacy-secondary, disposition: MATCHED_CANONICAL, canonical_entity_id: dc-windows-ad-02, canonical_promotion_allowed: false, note: "Exact Kerberos identity binding."}
+  - {binding_id: p7-esxi-node-01, disposition: CANONICAL_UPDATE_CANDIDATE, canonical_entity_id: esxi-node-hq-01, canonical_promotion_allowed: false, note: "Pinned host binding remains blocked by the recorded identity conflict."}
+  - {binding_id: p7-esxi-node-02, disposition: CANONICAL_UPDATE_CANDIDATE, canonical_entity_id: esxi-node-hq-02, canonical_promotion_allowed: false, note: "Pinned host binding remains blocked by the recorded identity conflict."}
+  - {binding_id: p7-exchange-secondary, disposition: MATCHED_CANONICAL, canonical_entity_id: ex-windows-mail-02, canonical_promotion_allowed: false, note: "Exact Kerberos Exchange PowerShell binding."}
+  - {binding_id: p7-fortigate-hq, disposition: MATCHED_CANONICAL, canonical_entity_id: fw-fortigate-hq-01, canonical_promotion_allowed: false, note: "Exact canonical management binding."}
+  - {binding_id: p7-fortigate-gaza, disposition: MATCHED_CANONICAL, canonical_entity_id: fw-fortigate-gaza-01, canonical_promotion_allowed: false, note: "Exact canonical management binding."}
+  - {binding_id: p7-fortigate-khanyounis, disposition: MATCHED_CANONICAL, canonical_entity_id: fw-fortigate-khanyounis-01, canonical_promotion_allowed: false, note: "Exact canonical management binding."}
+  - {binding_id: p7-fortigate-rafah, disposition: MATCHED_CANONICAL, canonical_entity_id: fw-fortigate-rafah-01, canonical_promotion_allowed: false, note: "Exact canonical management binding."}
+  - {binding_id: p7-fortigate-ramallah, disposition: CANONICAL_UPDATE_CANDIDATE, canonical_entity_id: fw-fortigate-ramallah-01, canonical_promotion_allowed: false, note: "Binding remains blocked by the recorded identity conflict."}
+  - {binding_id: p7-linux-n8n, disposition: MATCHED_CANONICAL, canonical_entity_id: n8n-automation-server-01, canonical_promotion_allowed: false, note: "Exact pinned Linux host binding."}
+  - {binding_id: p7-printer-jenin, disposition: MATCHED_CANONICAL, canonical_entity_id: prt-jenin-office-01, canonical_promotion_allowed: false, note: "Exact SNMPv3 identity-bound printer scope."}
+  - {binding_id: p7-san-fujitsu, disposition: MATCHED_CANONICAL, canonical_entity_id: san-fujitsu-01, canonical_promotion_allowed: false, note: "Exact SNMPv3 identity-bound storage scope."}
+  - {binding_id: p7-san-greenunit, disposition: CANONICAL_UPDATE_CANDIDATE, canonical_entity_id: san-greenunit-01, canonical_promotion_allowed: false, note: "Storage binding remains blocked by the recorded identity conflict."}
+  - {binding_id: p7-switch-floor-1, disposition: MATCHED_CANONICAL, canonical_entity_id: sw-cisco-floor-1, canonical_promotion_allowed: false, note: "Exact pinned access-switch scope."}
+  - {binding_id: p7-switch-floor-2, disposition: MATCHED_CANONICAL, canonical_entity_id: sw-cisco-floor-2, canonical_promotion_allowed: false, note: "Exact pinned access-switch scope."}
+  - {binding_id: p7-switch-floor-3, disposition: MATCHED_CANONICAL, canonical_entity_id: sw-cisco-floor-3, canonical_promotion_allowed: false, note: "Exact pinned access-switch scope."}
+  - {binding_id: p7-switch-floor-4, disposition: MATCHED_CANONICAL, canonical_entity_id: sw-cisco-floor-4, canonical_promotion_allowed: false, note: "Exact pinned access-switch scope."}
+  - {binding_id: p7-switch-floor-5, disposition: MATCHED_CANONICAL, canonical_entity_id: sw-cisco-floor-5, canonical_promotion_allowed: false, note: "Exact pinned access-switch scope."}
+  - {binding_id: p7-switch-floor-6, disposition: MATCHED_CANONICAL, canonical_entity_id: sw-cisco-floor-6, canonical_promotion_allowed: false, note: "Exact pinned access-switch scope."}
+  - {binding_id: p7-switch-floor-b1, disposition: MATCHED_CANONICAL, canonical_entity_id: sw-cisco-floor-b1, canonical_promotion_allowed: false, note: "Exact pinned access-switch scope."}
+  - {binding_id: p7-switch-floor-gnd, disposition: MATCHED_CANONICAL, canonical_entity_id: sw-cisco-floor-gnd, canonical_promotion_allowed: false, note: "Exact pinned access-switch scope."}
+  - {binding_id: p7-switch-floor-svc, disposition: MATCHED_CANONICAL, canonical_entity_id: sw-cisco-floor-svc, canonical_promotion_allowed: false, note: "Exact pinned access-switch scope."}
+  - {binding_id: p7-switch-jenin, disposition: MATCHED_CANONICAL, canonical_entity_id: sw-cisco-jenin-01, canonical_promotion_allowed: false, note: "Exact pinned branch access-switch scope."}
 scenarios:
   - scenario_id: p8-branch-outage
     title: Branch connectivity outage

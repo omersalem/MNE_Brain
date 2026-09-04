@@ -2,7 +2,7 @@
 id: "fmc-cisco-hq-01"
 name: "Cisco Firepower Management Center (FMC)"
 category: "network"
-aliases: ["cisco-fmc", "fmc-hq", "firepower-mgmt", "172.23.70.77"]
+aliases: ["fmc", "cisco-fmc", "fmc-hq", "firepower-mgmt", "172.23.70.77"]
 hostname: "fmc-cisco-hq-01"
 fqdn: "fmc-cisco-hq-01.mne.gov.ps"
 ip: "172.23.70.77"

@@ -2,8 +2,8 @@
 id: "fw-fortigate-edge-01"
 name: "FortiGate Edge Firewall & SSL-VPN Gateway"
 category: "network"
-aliases: ["fortigate-edge", "edge-firewall", "172.23.70.4", "vpn-gateway"]
-hostname: "fw-fortigate-edge-01"
+aliases: ["main fortigate", "fortigate-edge", "edge-firewall", "172.23.70.4", "vpn-gateway"]
+hostname: "FG-MNE"
 fqdn: "fw-fortigate-edge-01.mne.gov.ps"
 ip: "172.23.70.4"
 vlan: "70"
@@ -23,7 +23,7 @@ freshness_ttl_hours: 720
 > **Last Verified:** 2026-08-01T12:00:00Z
 
 ## 🛡️ Edge Security & Gateway Details
-- **Hostname:** `fw-fortigate-edge-01`
+- **Hostname:** `FG-MNE`
 - **Management IP:** `172.23.70.4`
 - **Public WAN IP:** `213.6.17.30`
 - **Services:** FortiClient SSL-VPN, Perimeter Firewall, SD-WAN, Dynamic IPSec Tunnels

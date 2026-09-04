@@ -96,10 +96,10 @@ def test_milestone_4() -> bool:
         not level_two["approved"]
         and level_two["policy_status"] == "OWNER_INSTRUCTION_REQUIRED"
         and not level_four["approved"]
-        and level_four["policy_status"] == "STRICTLY_PROHIBITED"
+        and level_four["policy_status"] == "CRITICAL_EXCEPTION_ONLY"
         and invalid["policy_status"] == "INVALID_RISK_LEVEL"
     ):
-        print(" [PASS] Sole-owner instruction, prohibition, and risk input validation enforced")
+        print(" [PASS] Sole-owner instruction, P10 critical exception routing, and risk input validation enforced")
         passed += 1
     else:
         errors.append(f"Action policy enforcement failed: L2={level_two}, L4={level_four}, invalid={invalid}")

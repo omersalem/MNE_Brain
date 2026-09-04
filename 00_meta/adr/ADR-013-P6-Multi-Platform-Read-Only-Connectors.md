@@ -22,4 +22,4 @@ P6 contains no troubleshooting or remediation logic. The runbook and AI layers d
 
 ## Consequences
 
-Offline connector planning and fixture coverage can reach 46/46 entities without claiming live readiness. Only the existing FortiGate edge transport is implemented for owner-gated live use; all other transports remain unregistered. Broad approval cannot activate a platform fleet, and fixture success cannot become verified evidence.
+Offline connector planning and fixture coverage can reach 47/47 entities without claiming live readiness. Only the existing FortiGate edge transport is implemented for owner-gated live use; all other transports remain unregistered. Broad approval cannot activate a platform fleet, and fixture success cannot become verified evidence.

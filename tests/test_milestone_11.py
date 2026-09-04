@@ -67,10 +67,10 @@ def test_milestone_11() -> bool:
     if (
         legacy_boolean_bypass["status"] == "BLOCKED"
         and level_four["status"] == "BLOCKED"
-        and level_four["remediation_plan"]["status"] == "PROHIBITED"
+        and level_four["remediation_plan"]["status"] == "CRITICAL_EXCEPTION_REQUIRED"
         and not driver_calls
     ):
-        print(" [PASS] Boolean root-cause shortcuts fail and Level 4 remains hard-blocked without driver calls")
+        print(" [PASS] Boolean shortcuts fail and legacy Level 4 redirects to P10 without driver calls")
         passed += 1
     else:
         errors.append(f"Hard-blocking failed: legacy={legacy_boolean_bypass}, level4={level_four}, calls={driver_calls}")

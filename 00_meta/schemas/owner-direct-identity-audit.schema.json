@@ -1,0 +1,12 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Owner Direct Identity Audit",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["mode", "audit_status", "attempts", "rows", "proposed_correction_enrollment_batch", "canonical_documents_updated", "pins_updated", "bindings_updated", "indexes_updated"],
+  "properties": {
+    "mode": {"const": "OWNER_DIRECT"}, "audit_status": {"const": "COMPLETE"}, "attempts": {"type": "integer", "minimum": 0},
+    "rows": {"type": "array"}, "proposed_correction_enrollment_batch": {"type": "array"},
+    "canonical_documents_updated": {"const": false}, "pins_updated": {"const": false}, "bindings_updated": {"const": false}, "indexes_updated": {"const": false}
+  }
+}

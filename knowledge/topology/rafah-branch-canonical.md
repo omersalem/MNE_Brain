@@ -27,4 +27,4 @@ freshness_ttl_hours: 720
 - **Gateway IP:** `10.235.18.1`
 - **Subnet:** `10.235.18.0/24` (Rafah Regional Directorate)
 - **Switch IP:** `10.235.18.2` (sw-cisco-rafah-01)
-- **IPSec Tunnel:** Connected to HQ FortiGate (`172.23.19.1`) via WAN
+- **IPSec Tunnel:** Connected to HQ FortiGate (`172.23.70.4` / `172.23.13.201`) via WAN

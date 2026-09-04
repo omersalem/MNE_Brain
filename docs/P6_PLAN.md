@@ -9,7 +9,7 @@ P6 completes deterministic read-only connector planning for every canonical Mini
 | Workstream | Result |
 |---|---|
 | Connector contract | Schema fixes sole owner, exact targeting, read-only checks, technical review sources, and disabled side effects |
-| Catalog | 15 connector families covering 46/46 entities exactly once |
+| Catalog | 15 connector families covering 48/48 entities exactly once |
 | Planning | Redacted plans expose check IDs, evidence objectives, and operation fingerprints only |
 | Adapter boundary | All families reuse the injected evidence adapter for budgets, redaction, provenance, and trust |
 | Offline validation | Every entity passes fixture routing; all fixture evidence remains simulated trust 0 |

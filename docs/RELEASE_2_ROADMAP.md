@@ -80,7 +80,7 @@ Milestone 13: Validation, Benchmarks & End-to-End MNE_Brain Verification
 ### 🚩 Milestone 5: Live Verification Engine
 * **Objective:** Build read-only CLI/API verification adapters for live device telemetry collection.
 * **Deliverables:** Generic verification engine, schema-governed P6 connector catalog, injected adapter boundary, data normalization, and 5-tier trust attribution.
-* **Current acceptance:** 15 connector families provide exact offline plans and trust-0 fixture validation for 46/46 entities. Only the FortiGate edge transport has completed an owner-gated live read; all live policies remain disabled.
+* **Current acceptance:** 15 connector families provide exact offline plans and trust-0 fixture validation for 48/48 entities. Historical live reads remain point-in-time evidence; all live policies remain disabled at rest.
 * **Final live acceptance:** Each remaining platform requires a separate exact owner-controlled transport validation before it may return trust-level-5 evidence.
 
 ---
@@ -94,7 +94,7 @@ Milestone 13: Validation, Benchmarks & End-to-End MNE_Brain Verification
 
 ### 🚩 Milestone 7: LLM Adapter & Provider Abstraction Layer
 * **Objective:** Implement a vendor-neutral LLM provider layer.
-* **Deliverables:** Provider interface (`core/llm/`) supporting OpenAI, Anthropic, Google Gemini, Ollama, DeepSeek.
+* **Deliverables:** Provider interface (`core/llm/`) plus Codex primary and OpenCode secondary engines; OpenCode supplies its live vendor and model catalog.
 * **Acceptance Criteria:** MNE_Brain core flow executes identically across 3 distinct LLM backends.
 
 ---
@@ -123,7 +123,7 @@ Milestone 13: Validation, Benchmarks & End-to-End MNE_Brain Verification
 ### 🚩 Milestone 11: Controlled Remediation Planning Engine
 * **Objective:** Implement fail-closed safety gates and redacted plans without enabling write execution.
 * **Deliverables:** Pre-remediation 6-question criteria enforcement (`tasks/remediate.md`), governed action-template metadata, rollback-plan verification, explicit sole-owner instruction, and a non-executing API boundary.
-* **Acceptance Criteria:** Level 4 (Emergency Core Change) is hard-blocked; Level 2 requires evidence, policy, and explicit `MNE-BRAIN-OWNER` instruction before planning readiness; no remediation driver can be invoked.
+* **Acceptance Criteria:** The legacy path invokes no driver. P10 supersedes the universal Level 4 block by routing it exclusively to exact critical or irreversible approval; a Boolean instruction remains insufficient.
 
 ---
 
@@ -139,3 +139,20 @@ Milestone 13: Validation, Benchmarks & End-to-End MNE_Brain Verification
 * **Objective:** Execute a deterministic offline quality gate and Ministry-domain evidence-flow benchmarks without implying operational readiness.
 * **Deliverables:** 15-step non-executing validation suite (`scripts/validate_brain.py`), 11 infrastructure evidence-flow scenarios, isolated failure and recovery fixtures, and bounded scalability checks.
 * **Acceptance Criteria:** All 15 gates and 11 scenarios pass; unsupported cases remain `INSUFFICIENT_EVIDENCE`; validation performs no network, command, remediation, or project-state mutation; performance budgets are recorded separately from safety results.
+
+---
+
+### P10: Owner-Controlled Write Execution
+* **Objective:** Add exact, expiring, single-use sole-owner execution without automatic approval or unrestricted shell access.
+* **Deliverables:** ADR-017, nine schemas, action policy and catalog, prepare/approve/execute/rollback engine, eight platform adapters, local API, presentation GUI, 42 focused tests, 23-scenario pilot, and CI/master-gate integration.
+* **Offline acceptance:** Seven families, 56 templates, and 176 action variants validate; all P10 tests and pilot scenarios pass with zero live connections and zero persistent audit.
+* **Live acceptance:** Deliberately incomplete. Every real change requires separate target-specific validation and exact owner approval.
+
+---
+
+### P11: Conversation, Provider, and Tool Control Plane
+* **Objective:** Provide a Codex-like local conversation client with provider choice and deterministic owner-controlled tools without weakening P7 or P10.
+* **Deliverables:** ADR-018, eleven schemas, owner-session API containment, in-memory threads/turns/events/diagnostics, seven provider profiles, Codex primary and OpenCode secondary runtimes, automatic sanitized-context digests with explicit live-evidence authorization, tool broker, verified workspace diffs and separately approved rollback, conversation export/import, modular GUI, tests, pilot, and master gate 22.
+* **Offline acceptance:** Complete. Local deterministic conversations, typed provider contracts, safe errors, cancellation, concurrency control, exact permission modes, workspace boundaries, rollback, API attacks, GUI modules, P10 regressions, and all full gates pass.
+* **OpenCode acceptance:** Local authenticated server startup, live provider/model/auth discovery, exact model pinning, provider-neutral conversation events, cancellation, timeout, bounded restart, governed MCP routing, custom-endpoint validation, and credential non-disclosure are covered. Provider-account inference is not a live Ministry check.
+* **Remaining live gates:** Provider-specific response validation, one exact P7 read, and any P10 write each require their own authorization and evidence. None is implied by OpenCode readiness.

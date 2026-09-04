@@ -70,25 +70,25 @@ def run_p5_offline_pilot() -> dict[str, Any]:
     def context_coverage() -> tuple[bool, str, dict[str, Any]]:
         coverage = registry.coverage_report(entities)
         passed = (
-            coverage["total_entities"] == 46
-            and coverage["context_covered_entities"] == 46
+            coverage["total_entities"] == 48
+            and coverage["context_covered_entities"] == 48
             and coverage["context_coverage_percent"] == 100.0
             and coverage["context_gaps"] == []
         )
-        return passed, "all 46 canonical entities have bounded offline context", coverage
+        return passed, "all 48 canonical entities have bounded offline context", coverage
 
     scenario("p5-02", context_coverage)
 
     def operational_coverage() -> tuple[bool, str, dict[str, Any]]:
         coverage = registry.coverage_report(entities)
         passed = (
-            coverage["operationally_covered_entities"] == 46
+            coverage["operationally_covered_entities"] == 48
             and coverage["operational_coverage_percent"] == 100.0
             and coverage["operational_gaps"] == []
             and coverage["operational_runbook_readiness"] is True
             and coverage["production_readiness_claimed"] is False
         )
-        return passed, "all 46 entities have owner-reviewed procedures; live state remains unverified", coverage
+        return passed, "all 48 entities have owner-reviewed procedures; live state remains unverified", coverage
 
     scenario("p5-03", operational_coverage)
 
@@ -202,7 +202,7 @@ def run_p5_offline_pilot() -> dict[str, Any]:
         "passed": passed_count,
         "total": len(results),
         "runbooks": 12,
-        "canonical_entities": 46,
+        "canonical_entities": 48,
         "context_coverage_percent": 100.0,
         "operational_coverage_percent": 100.0,
         "production_readiness_claimed": False,

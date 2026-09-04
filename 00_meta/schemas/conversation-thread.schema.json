@@ -1,0 +1,16 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#", "title": "P11 Conversation Thread",
+  "type": "object", "additionalProperties": false,
+  "required": ["thread_id", "title", "created_at", "updated_at", "status", "permission_mode", "provider_id", "engine_id", "model_id", "turn_ids"],
+  "properties": {
+    "thread_id": {"type": "string", "pattern": "^thr_[A-Za-z0-9_-]{16,64}$"},
+    "title": {"type": "string", "minLength": 1, "maxLength": 160},
+    "created_at": {"type": "string", "format": "date-time"}, "updated_at": {"type": "string", "format": "date-time"},
+    "status": {"enum": ["ACTIVE", "ARCHIVED"]},
+    "permission_mode": {"enum": ["OWNER_DIRECT", "OWNER_FULL_CONTROL", "OWNER_AUTONOMOUS", "ANSWER_ONLY", "WORKSPACE_READ", "WORKSPACE_WRITE", "LIVE_READ", "INFRASTRUCTURE_WRITE"]},
+    "provider_id": {"type": "string", "pattern": "^prv_[A-Za-z0-9_-]{3,64}$"},
+    "engine_id": {"enum": ["codex", "opencode", "gemini", "deterministic", "provider"]},
+    "model_id": {"type": "string", "minLength": 1, "maxLength": 512},
+    "turn_ids": {"type": "array", "maxItems": 1000, "items": {"type": "string", "pattern": "^trn_[A-Za-z0-9_-]{16,64}$"}}
+  }
+}
