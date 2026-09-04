@@ -6,7 +6,7 @@
     "turn_id": {"type": "string", "pattern": "^trn_[A-Za-z0-9_-]{16,64}$"},
     "thread_id": {"type": "string", "pattern": "^thr_[A-Za-z0-9_-]{16,64}$"},
     "provider_id": {"type": "string", "pattern": "^prv_[A-Za-z0-9_-]{3,64}$"},
-    "engine_id": {"enum": ["codex", "opencode", "gemini", "deterministic", "provider"]},
+    "engine_id": {"enum": ["codex", "opencode", "antigravity", "gemini", "deterministic", "provider"]},
     "model_id": {"type": "string", "minLength": 1, "maxLength": 512},
     "permission_mode": {"enum": ["OWNER_DIRECT", "OWNER_FULL_CONTROL", "OWNER_AUTONOMOUS", "ANSWER_ONLY", "WORKSPACE_READ", "WORKSPACE_WRITE", "LIVE_READ", "INFRASTRUCTURE_WRITE"]},
     "status": {"enum": ["QUEUED", "RUNNING", "COMPLETED", "CANCELLED", "FAILED", "AUTHORIZATION_REQUIRED"]},

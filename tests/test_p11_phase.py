@@ -193,7 +193,7 @@ def test_credential_store_returns_status_not_fragments(tmp_path, monkeypatch):
 def test_provider_catalog_and_ssrf_policy():
     registry = ProviderRegistry(BASE)
     profiles = registry.list_profiles()
-    assert {item["provider_type"] for item in profiles} == {"codex_app_server", "opencode", "deterministic_local", "ollama", "openai_compatible", "openai", "anthropic"}
+    assert {item["provider_type"] for item in profiles} == {"codex_app_server", "opencode", "antigravity_cli", "deterministic_local", "ollama", "openai_compatible", "openai", "anthropic"}
     assert all("latest" not in item["model_id"].lower() for item in profiles)
     bad = registry.get("prv_openai_platform", require_enabled=False)
     bad["provider_id"] = "prv_bad_external"

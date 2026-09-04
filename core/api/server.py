@@ -47,6 +47,7 @@ from core.conversation.thread_store import ThreadStoreError
 from core.codex.app_server import CODEX_PROVIDER_ID, CodexAppServerError
 from core.opencode import OPENCODE_PROVIDER_ID, OpenCodeError
 from core.opencode.custom_providers import CustomProviderError
+from core.antigravity import ANTIGRAVITY_PROVIDER_ID, AntigravityCliError
 from core.credentials import CredentialStore
 from core.llm.external_authorization import ExternalAuthorizationError
 from core.llm.gateway import ProviderGateway
@@ -145,14 +146,26 @@ def _opencode_readiness(*, start_process: bool = False) -> Dict[str, Any]:
     return result
 
 
+def _antigravity_readiness(*, start_process: bool = False) -> Dict[str, Any]:
+    """Return a secret-free Antigravity CLI readiness summary."""
+    result = conversation_engine.antigravity.readiness(start_process=start_process)
+    result["p7"] = {"owner_scoped_available": tool_broker.p7_scoped_available, "globally_enabled": tool_broker.p7_live_enabled}
+    result["p10"] = {"execution_enabled": tool_broker.p10.execution_enabled, "writes_require_exact_approval": True}
+    result["unrestricted_read"] = True
+    result["write_governance"] = "RISK_AND_ROLLBACK_REVIEW_REQUIRED"
+    return result
+
+
 def _engine_catalog(*, start_process: bool = False) -> Dict[str, Any]:
     codex = _codex_readiness(start_process=start_process)
     opencode = _opencode_readiness(start_process=start_process)
     opencode_catalog = conversation_engine.opencode.catalog(start_process=False)
+    antigravity = _antigravity_readiness(start_process=start_process)
     return {
         "engines": [
             {"engine_id": "codex", "provider_id": CODEX_PROVIDER_ID, "label": "Codex App Server", "authentication": "ChatGPT session", "status": codex["status"], "models": [{"id": "codex-account-default", "label": "ChatGPT account default"}], "default_model": "codex-account-default", "details": codex},
             {"engine_id": "opencode", "provider_id": OPENCODE_PROVIDER_ID, "label": "OpenCode", "authentication": "Dynamic provider connection", "status": opencode["status"], "models": [{"id": item["selection_id"], "label": f"{item['display_name']} · {item['provider_id']} · {item['cost_classification']}", **item} for item in opencode_catalog["models"] if item["connected"]], "default_model": opencode["default_model"], "details": opencode},
+            {"engine_id": "antigravity", "provider_id": ANTIGRAVITY_PROVIDER_ID, "label": "Antigravity CLI (1.1.26)", "authentication": "Google AI session", "status": antigravity["status"], "models": antigravity["models"], "default_model": antigravity["default_model"], "details": antigravity},
         ],
         "switch_policy": "PINNED_PER_CONVERSATION_AFTER_FIRST_TURN",
         "silent_fallback": False,
@@ -308,7 +321,7 @@ class MNEBrainAPIHandler(BaseHTTPRequestHandler):
         if path.startswith("/api/v2/"):
             try:
                 self._handle_v2_get(path, params)
-            except (ThreadStoreError, ProviderRegistryError, ToolBrokerError, OpenCodeError, CustomProviderError, ValueError, KeyError) as exc:
+            except (ThreadStoreError, ProviderRegistryError, ToolBrokerError, OpenCodeError, CustomProviderError, AntigravityCliError, ValueError, KeyError) as exc:
                 self._json_response(404, {"error": str(exc)})
             return
 
@@ -393,7 +406,7 @@ class MNEBrainAPIHandler(BaseHTTPRequestHandler):
                     self._json_response(200, {"status": "SIGNED_OUT"}, extra_headers={"Set-Cookie": cookie})
                     return
                 self._handle_v2_post(path, body, owner_session)
-            except (ThreadStoreError, ProviderRegistryError, ExternalAuthorizationError, ToolBrokerError, P10SafetyError, CodexAppServerError, OpenCodeError, CustomProviderError, ValueError, KeyError, jsonschema.ValidationError) as exc:
+            except (ThreadStoreError, ProviderRegistryError, ExternalAuthorizationError, ToolBrokerError, P10SafetyError, CodexAppServerError, OpenCodeError, CustomProviderError, AntigravityCliError, ValueError, KeyError, jsonschema.ValidationError) as exc:
                 self._json_response(409, {"error": str(exc)})
             return
 
@@ -479,6 +492,12 @@ class MNEBrainAPIHandler(BaseHTTPRequestHandler):
             conversation_engine.opencode.refresh_catalog(start_process=True)
             self._json_response(200, conversation_engine.opencode.catalog(start_process=False))
             return
+        if path == "/api/v2/antigravity/readiness":
+            self._json_response(200, _antigravity_readiness(start_process=True))
+            return
+        if path == "/api/v2/antigravity/models":
+            self._json_response(200, conversation_engine.antigravity.models())
+            return
         if path == "/api/v2/settings":
             self._json_response(200, {
                 "permission_mode": "OWNER_DIRECT",
@@ -494,6 +513,7 @@ class MNEBrainAPIHandler(BaseHTTPRequestHandler):
                 "secrets_returned": False,
                 "codex": _codex_readiness(start_process=True),
                 "opencode": _opencode_readiness(start_process=True),
+                "antigravity": _antigravity_readiness(start_process=True),
             })
             return
         raise ThreadStoreError("P11 endpoint not found.")
@@ -539,10 +559,12 @@ class MNEBrainAPIHandler(BaseHTTPRequestHandler):
             if set(payload).difference(allowed):
                 raise ValueError("Unknown thread fields rejected.")
             codex_ready = conversation_engine.codex.readiness(start_process=True)["status"] == "READY"
-            requested_engine = str(payload.get("engine_id", "codex" if codex_ready else "opencode"))
-            engine_providers = {"codex": CODEX_PROVIDER_ID, "opencode": OPENCODE_PROVIDER_ID}
+            antigravity_ready = conversation_engine.antigravity.readiness(start_process=True)["status"] == "READY"
+            default_engine = "codex" if codex_ready else ("antigravity" if antigravity_ready else "opencode")
+            requested_engine = str(payload.get("engine_id", default_engine))
+            engine_providers = {"codex": CODEX_PROVIDER_ID, "opencode": OPENCODE_PROVIDER_ID, "antigravity": ANTIGRAVITY_PROVIDER_ID}
             if requested_engine not in engine_providers:
-                raise ValueError("Only Codex App Server and OpenCode are selectable AI engines.")
+                raise ValueError("Only Codex App Server, OpenCode, and Antigravity CLI are selectable AI engines.")
             provider_id = str(payload.get("provider_id", engine_providers[requested_engine]))
             profile = provider_registry.get(provider_id)
             selected_model = str(payload.get("model_id") or profile["model_id"])
@@ -551,6 +573,9 @@ class MNEBrainAPIHandler(BaseHTTPRequestHandler):
                 selected_model = str(payload.get("model_id") or ready.get("default_model") or "select-model")
                 if selected_model != "select-model":
                     conversation_engine.opencode._selected_model(selected_model)
+            elif requested_engine == "antigravity":
+                ready = conversation_engine.antigravity.readiness(start_process=True)
+                selected_model = str(payload.get("model_id") or ready.get("default_model") or "gemini-3.8-flash-high")
             item = conversation_engine.create_thread(
                 title=str(payload.get("title", "New conversation")),
                 provider_id=provider_id,
@@ -590,9 +615,9 @@ class MNEBrainAPIHandler(BaseHTTPRequestHandler):
         match = re.fullmatch(r"/api/v2/threads/(thr_[A-Za-z0-9_-]{16,64})/engine", path)
         if match:
             engine_id = str(payload["engine_id"])
-            provider_id = {"codex": CODEX_PROVIDER_ID, "opencode": OPENCODE_PROVIDER_ID}.get(engine_id)
+            provider_id = {"codex": CODEX_PROVIDER_ID, "opencode": OPENCODE_PROVIDER_ID, "antigravity": ANTIGRAVITY_PROVIDER_ID}.get(engine_id)
             if not provider_id:
-                raise ValueError("Only Codex App Server and OpenCode are selectable AI engines.")
+                raise ValueError("Only Codex App Server, OpenCode, and Antigravity CLI are selectable AI engines.")
             profile = provider_registry.get(provider_id)
             model_id = str(payload.get("model_id", profile["model_id"]))
             if engine_id == "opencode":
@@ -605,6 +630,12 @@ class MNEBrainAPIHandler(BaseHTTPRequestHandler):
                         raise ThreadStoreError("Engine and model are pinned after the first turn. Create a new conversation to switch models.")
                     self._json_response(200, conversation_engine.store.recover_unavailable_opencode_model(match.group(1), model_id))
                     return
+            elif engine_id == "antigravity":
+                current = conversation_engine.store.get_thread(match.group(1), include_items=False)
+                if current["turn_ids"]:
+                    available = {item["id"] for item in conversation_engine.antigravity.models()["models"]}
+                    if current["model_id"] in available:
+                        raise ThreadStoreError("Engine and model are pinned after the first turn. Create a new conversation to switch models.")
             self._json_response(200, conversation_engine.store.pin_engine(match.group(1), provider_id=provider_id, engine_id=engine_id, model_id=model_id))
             return
         match = re.fullmatch(r"/api/v2/threads/(thr_[A-Za-z0-9_-]{16,64})/permission", path)
@@ -627,6 +658,9 @@ class MNEBrainAPIHandler(BaseHTTPRequestHandler):
             elif provider_id == OPENCODE_PROVIDER_ID and action in {"test", "connect"}:
                 result = conversation_engine.opencode.readiness(start_process=True)
                 result.update({"provider_id": provider_id, "network_attempted": False, "credential_status": "MANAGED_BY_OPENCODE", "secrets_returned": False})
+            elif provider_id == ANTIGRAVITY_PROVIDER_ID and action in {"test", "connect"}:
+                result = conversation_engine.antigravity.readiness(start_process=True)
+                result.update({"provider_id": provider_id, "network_attempted": False, "credential_status": "LOCAL_CLI_SESSION", "secrets_returned": False})
             elif action == "test":
                 profile = provider_registry.get(provider_id, require_enabled=False)
                 ref = profile.get("credential_ref")

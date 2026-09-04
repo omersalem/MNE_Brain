@@ -6,7 +6,7 @@
   "required": ["provider_id", "provider_type", "adapter_type", "model_id", "credential_ref", "base_url", "capabilities", "limits", "classification", "enabled", "reviewed_at"],
   "properties": {
     "provider_id": {"type": "string", "pattern": "^prv_[A-Za-z0-9_-]{3,64}$"},
-    "provider_type": {"enum": ["codex_app_server", "opencode", "deterministic_local", "ollama", "openai_compatible", "openai", "anthropic"]},
+    "provider_type": {"enum": ["codex_app_server", "opencode", "antigravity_cli", "deterministic_local", "ollama", "openai_compatible", "openai", "anthropic"]},
     "adapter_type": {"type": "string", "minLength": 1, "maxLength": 80},
     "model_id": {"type": "string", "minLength": 1, "maxLength": 160, "not": {"pattern": "(?i)latest"}},
     "credential_ref": {"type": ["string", "null"], "pattern": "^[A-Z][A-Z0-9_]{2,80}$"},

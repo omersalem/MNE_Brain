@@ -23,6 +23,7 @@ from core.observability.diagnostics import DiagnosticStore
 from core.tools.broker import ToolBroker
 from core.codex.app_server import CODEX_PROVIDER_ID, CodexAppServerError, CodexAppServerHarness
 from core.opencode import OPENCODE_PROVIDER_ID, OpenCodeError, OpenCodeRuntime
+from core.antigravity import ANTIGRAVITY_PROVIDER_ID, AntigravityCliError, AntigravityHarness
 
 
 class ConversationEngine:
@@ -40,7 +41,7 @@ class ConversationEngine:
         re.IGNORECASE,
     )
 
-    def __init__(self, base_dir: Path, *, gateway: ProviderGateway | None = None, tool_broker: ToolBroker | None = None, codex_harness: CodexAppServerHarness | None = None, opencode_runtime: OpenCodeRuntime | None = None, external_calls_enabled: bool = False, auto_authorize_external_redacted_context: bool = False):
+    def __init__(self, base_dir: Path, *, gateway: ProviderGateway | None = None, tool_broker: ToolBroker | None = None, codex_harness: CodexAppServerHarness | None = None, opencode_runtime: OpenCodeRuntime | None = None, antigravity_harness: AntigravityHarness | None = None, external_calls_enabled: bool = False, auto_authorize_external_redacted_context: bool = False):
         self.base_dir = base_dir.resolve()
         self.store = ThreadStore(self.base_dir)
         self.events = EventStream(self.base_dir)
@@ -69,6 +70,13 @@ class ConversationEngine:
             event_sink=self._opencode_event,
             completion_sink=self._opencode_completed,
             failure_sink=self._opencode_failed,
+        )
+        self.antigravity = antigravity_harness or AntigravityHarness(
+            self.base_dir,
+            tool_broker=self.tool_broker,
+            event_sink=self._antigravity_event,
+            completion_sink=self._antigravity_completed,
+            failure_sink=self._antigravity_failed,
         )
 
     def create_thread(self, **kwargs: Any) -> dict[str, Any]:
@@ -207,13 +215,15 @@ class ConversationEngine:
         thread = self.store.get_thread(thread_id, include_items=False)
         profile = self.registry.get(thread["provider_id"])
         normalized_evidence = evidence or []
-        if profile["provider_id"] in {CODEX_PROVIDER_ID, OPENCODE_PROVIDER_ID}:
+        if profile["provider_id"] in {CODEX_PROVIDER_ID, OPENCODE_PROVIDER_ID, ANTIGRAVITY_PROVIDER_ID}:
             fast_answer = self._local_fast_answer(content)
             if fast_answer is not None:
                 if not re.fullmatch(r"[0-9a-f]{64}", owner_session_digest or ""):
                     if profile["provider_id"] == CODEX_PROVIDER_ID:
                         raise CodexAppServerError("Authenticated owner session is required for Codex turns.")
-                    raise OpenCodeError("OPENCODE_AUTH_REQUIRED", "Authenticated owner session is required for OpenCode turns.")
+                    if profile["provider_id"] == OPENCODE_PROVIDER_ID:
+                        raise OpenCodeError("OPENCODE_AUTH_REQUIRED", "Authenticated owner session is required for OpenCode turns.")
+                    raise AntigravityCliError("Authenticated owner session is required for Antigravity turns.")
                 return self._start_local_fast_turn(thread, content=content, fast_answer=fast_answer)
         if profile["provider_id"] == CODEX_PROVIDER_ID:
             return self._start_codex_turn(
@@ -224,6 +234,13 @@ class ConversationEngine:
             )
         if profile["provider_id"] == OPENCODE_PROVIDER_ID:
             return self._start_opencode_turn(
+                thread,
+                content=content,
+                owner_session_digest=owner_session_digest,
+                run_async=run_async,
+            )
+        if profile["provider_id"] == ANTIGRAVITY_PROVIDER_ID:
+            return self._start_antigravity_turn(
                 thread,
                 content=content,
                 owner_session_digest=owner_session_digest,
@@ -511,6 +528,127 @@ class ConversationEngine:
             self._owner_session_digests.pop(turn_id, None)
             self._active_threads.discard(turn["thread_id"])
 
+    def _start_antigravity_turn(self, thread: dict[str, Any], *, content: str, owner_session_digest: str | None, run_async: bool) -> dict[str, Any]:
+        if not re.fullmatch(r"[0-9a-f]{64}", owner_session_digest or ""):
+            raise AntigravityCliError("Authenticated owner session is required for Antigravity turns.")
+        thread_id = thread["thread_id"]
+        with self._lock:
+            if thread_id in self._active_threads:
+                raise RuntimeError("TURN_ALREADY_ACTIVE")
+            self._active_threads.add(thread_id)
+        try:
+            turn = self.store.create_turn(thread_id)
+            self.store.add_message(turn["turn_id"], role="user", content=content)
+            with self._lock:
+                self._owner_session_digests[turn["turn_id"]] = owner_session_digest
+            worker = threading.Thread(
+                target=self._run_antigravity_turn,
+                args=(turn["turn_id"], content, owner_session_digest),
+                name=f"antigravity-{turn['turn_id']}",
+                daemon=True,
+            )
+            if run_async:
+                worker.start()
+            else:
+                worker.run()
+            return self.store.get_turn(turn["turn_id"])
+        except Exception:
+            with self._lock:
+                self._active_threads.discard(thread_id)
+            raise
+
+    def _run_antigravity_turn(self, turn_id: str, content: str, owner_session_digest: str) -> None:
+        turn = self.store.update_turn(turn_id, "RUNNING")
+        self.events.append(
+            thread_id=turn["thread_id"],
+            turn_id=turn_id,
+            provider_id=ANTIGRAVITY_PROVIDER_ID,
+            event_type="turn.started",
+            status="RUNNING",
+            redacted_payload={"permission_mode": turn["permission_mode"], "agent_harness": "ANTIGRAVITY_CLI", "model_id": turn["model_id"]},
+        )
+        try:
+            self.antigravity.start_turn(
+                gui_thread_id=turn["thread_id"],
+                gui_turn_id=turn_id,
+                content=content,
+                owner_session_digest=owner_session_digest,
+                model_id=turn["model_id"],
+                permission_mode=turn["permission_mode"],
+            )
+        except Exception as exc:
+            self._antigravity_failed(turn_id, f"ANTIGRAVITY_TURN_FAILED")
+
+    def _antigravity_event(self, thread_id: str, turn_id: str, event_type: str, payload: dict[str, Any]) -> None:
+        status = "RUNNING"
+        if event_type == "tool.approval_required":
+            status = "APPROVAL_REQUIRED"
+        elif event_type == "tool.proposed":
+            status = "AUTOMATIC_READ" if payload.get("status") == "AUTOMATIC_READ" else "RUNNING"
+        elif event_type in {"tool.completed", "command.completed", "answer.completed"}:
+            status = "COMPLETED"
+        self.events.append(
+            thread_id=thread_id,
+            turn_id=turn_id,
+            provider_id=ANTIGRAVITY_PROVIDER_ID,
+            event_type=event_type,
+            status=status,
+            redacted_payload=payload,
+        )
+
+    def _antigravity_completed(self, turn_id: str, answer: str | None) -> None:
+        try:
+            turn = self.store.get_turn(turn_id)
+            thread_id = turn["thread_id"]
+            if answer:
+                self.store.add_message(turn_id, role="assistant", content=answer)
+            self.store.update_turn(turn_id, "COMPLETED")
+            self.events.append(
+                thread_id=thread_id,
+                turn_id=turn_id,
+                provider_id=ANTIGRAVITY_PROVIDER_ID,
+                event_type="turn.completed",
+                status="COMPLETED",
+                redacted_payload={"agent_harness": "ANTIGRAVITY_CLI", "answer_chars": len(answer or "")},
+            )
+        finally:
+            with self._lock:
+                self._owner_session_digests.pop(turn_id, None)
+                self._active_threads.discard(turn["thread_id"])
+
+    def _antigravity_failed(self, turn_id: str, code: str) -> None:
+        try:
+            turn = self.store.get_turn(turn_id)
+        except ThreadStoreError:
+            return
+        if turn["status"] in {"COMPLETED", "FAILED", "CANCELLED"}:
+            return
+        cancelled = code == "ANTIGRAVITY_TURN_CANCELLED"
+        if cancelled:
+            self.store.update_turn(turn_id, "CANCELLED")
+            self.events.append(
+                thread_id=turn["thread_id"],
+                turn_id=turn_id,
+                provider_id=ANTIGRAVITY_PROVIDER_ID,
+                event_type="turn.cancelled",
+                status="CANCELLED",
+                redacted_payload={"reason": "OWNER_CANCELLED"},
+            )
+        else:
+            diagnostic = self.diagnostics.record(code=code, phase="stream", provider_id=ANTIGRAVITY_PROVIDER_ID)
+            self.store.update_turn(turn_id, "FAILED", failure_code=diagnostic["code"])
+            self.events.append(
+                thread_id=turn["thread_id"],
+                turn_id=turn_id,
+                provider_id=ANTIGRAVITY_PROVIDER_ID,
+                event_type="turn.failed",
+                status="FAILED",
+                redacted_payload=diagnostic,
+            )
+        with self._lock:
+            self._owner_session_digests.pop(turn_id, None)
+            self._active_threads.discard(turn["thread_id"])
+
     def _run_turn(self, turn_id: str, content: str, evidence: list[dict[str, Any]]) -> None:
         turn = self.store.update_turn(turn_id, "RUNNING")
         token = self._tokens[turn_id]
@@ -793,6 +931,10 @@ class ConversationEngine:
         if turn["provider_id"] == OPENCODE_PROVIDER_ID:
             self.opencode.cancel(turn_id)
             self._opencode_failed(turn_id, "OPENCODE_TURN_CANCELLED")
+            return self.store.get_turn(turn_id)
+        if turn["provider_id"] == ANTIGRAVITY_PROVIDER_ID:
+            self.antigravity.cancel_turn(turn_id)
+            self._antigravity_failed(turn_id, "ANTIGRAVITY_TURN_CANCELLED")
             return self.store.get_turn(turn_id)
         with self._lock:
             token = self._tokens.get(turn_id)

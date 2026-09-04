@@ -49,8 +49,8 @@ class ProviderRegistry:
         ptype = profile["provider_type"]
         if parsed.username or parsed.password or parsed.query or parsed.fragment:
             raise ProviderRegistryError("Provider base URL cannot contain credentials, query, or fragment.")
-        if ptype == "codex_app_server":
-            expected = "codex-app-server"
+        if ptype in {"codex_app_server", "antigravity_cli"}:
+            expected = "codex-app-server" if ptype == "codex_app_server" else "antigravity-cli"
             if parsed.scheme != "stdio" or parsed.netloc != expected or parsed.path.rstrip("/"):
                 raise ProviderRegistryError(f"{ptype} provider must use stdio://{expected}.")
             if profile["classification"] != "LOCAL" or profile.get("credential_ref") is not None:

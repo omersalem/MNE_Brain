@@ -47,6 +47,12 @@ SAFE_PROVIDER_ERRORS: dict[str, tuple[str, bool]] = {
     "OPENCODE_TIMEOUT": ("The OpenCode turn exceeded the governed timeout.", True),
     "OPENCODE_EMPTY_RESPONSE": ("OpenCode completed without returning a final answer.", True),
     "OPENCODE_TURN_CANCELLED": ("The OpenCode turn was cancelled by the owner.", True),
+    "ANTIGRAVITY_NOT_INSTALLED": ("Antigravity CLI ('agy.exe') is not installed for the GUI server user.", False),
+    "ANTIGRAVITY_AUTH_REQUIRED": ("Antigravity CLI requires Google AI authentication. Sign in with `agy` in terminal.", False),
+    "ANTIGRAVITY_TURN_FAILED": ("The Antigravity CLI turn failed before producing a complete answer.", True),
+    "ANTIGRAVITY_TURN_CANCELLED": ("The Antigravity CLI turn was cancelled by the owner.", True),
+    "ANTIGRAVITY_TIMEOUT": ("The Antigravity CLI turn exceeded the governed timeout.", True),
+    "ANTIGRAVITY_EMPTY_RESPONSE": ("Antigravity CLI completed without returning a final answer. Retry the question.", True),
 }
 
 

@@ -22,6 +22,7 @@ class ThreadStoreError(ValueError):
 class ThreadStore:
     LEGACY_GEMINI_PROVIDER_ID = "prv_gemini_cli"
     OPENCODE_PROVIDER_ID = "prv_opencode"
+    ANTIGRAVITY_PROVIDER_ID = "prv_antigravity_cli"
 
     def __init__(self, base_dir: Path):
         schema_dir = base_dir / "00_meta/schemas"
@@ -48,6 +49,8 @@ class ThreadStore:
             return "codex"
         if provider_id == "prv_opencode":
             return "opencode"
+        if provider_id == "prv_antigravity_cli":
+            return "antigravity"
         if provider_id == "prv_local_deterministic":
             return "deterministic"
         return "provider"
@@ -57,7 +60,12 @@ class ThreadStore:
             raise ThreadStoreError("Invalid permission mode.")
         now = self._now()
         resolved_engine = engine_id or self._engine_for_provider(provider_id)
-        default_models = {"codex": "codex-account-default", "opencode": "select-model", "deterministic": "mne-deterministic-v1"}
+        default_models = {
+            "codex": "codex-account-default",
+            "opencode": "select-model",
+            "antigravity": "gemini-3.8-flash-high",
+            "deterministic": "mne-deterministic-v1",
+        }
         item = {"thread_id": self._id("thr_"), "title": (title or "New conversation")[:160], "created_at": now, "updated_at": now, "status": "ACTIVE", "permission_mode": permission_mode, "provider_id": provider_id, "engine_id": resolved_engine, "model_id": model_id or default_models.get(resolved_engine, "provider-default"), "turn_ids": []}
         self._validate("conversation-thread.schema.json", item)
         with self._lock:

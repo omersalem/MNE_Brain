@@ -23,6 +23,17 @@ profiles:
     classification: LOCAL
     enabled: true
     reviewed_at: '2026-08-31T00:00:00Z'
+  - provider_id: prv_antigravity_cli
+    provider_type: antigravity_cli
+    adapter_type: antigravity_cli_process
+    model_id: gemini-3.8-flash-high
+    credential_ref: null
+    base_url: stdio://antigravity-cli
+    capabilities: {streaming: true, tool_calling: true, structured_output: true, vision: true, local_execution: true, owner_direct: true}
+    limits: {context_tokens: 1000000, output_tokens: 128000, timeout_seconds: 600, max_cost_usd: 0}
+    classification: LOCAL
+    enabled: true
+    reviewed_at: '2026-09-04T00:00:00Z'
   - provider_id: prv_local_deterministic
     provider_type: deterministic_local
     adapter_type: deterministic_local
