@@ -2,7 +2,17 @@ import {mutateJSON,setStatus} from './api.js';
 
 const proposals=document.querySelector('#tool-proposals');
 function addText(parent,tag,text,className=''){const node=document.createElement(tag);node.textContent=text;if(className)node.className=className;parent.append(node);return node;}
-function appendCard(card){if(proposals.classList.contains('empty-tools')){proposals.replaceChildren();proposals.classList.remove('empty-tools');}proposals.append(card);}
+function appendCard(card){
+  if(proposals.classList.contains('empty-tools')){proposals.replaceChildren();proposals.classList.remove('empty-tools');}
+  proposals.append(card);
+  const content=document.querySelector('#tool-content');
+  if(content&&content.hidden){
+    content.hidden=false;
+    document.querySelector('#tool-drawer')?.classList.remove('collapsed');
+    const toggle=document.querySelector('#toggle-tools');
+    if(toggle){toggle.setAttribute('aria-expanded','true');toggle.textContent='Collapse';}
+  }
+}
 function renderWorkspacePlan(card,plan){
   const rollback=Boolean(plan.rollback_id);addText(card,'h3',rollback?'Exact proposed reverse diff':'Exact proposed diff');const diff=addText(card,'pre',plan.unified_diff);diff.className='workspace-diff';addText(card,'p',`Direction ${plan.apply_direction||'FORWARD'} - expires ${plan.expires_at} - ${plan.paths.length} path(s)`);
   const label=document.createElement('label');label.textContent='Exact server approval phrase';const phrase=document.createElement('input');phrase.type='text';phrase.autocomplete='off';phrase.spellcheck=false;label.append(phrase);card.append(label);
@@ -154,4 +164,13 @@ document.addEventListener('tool-event',event=>{
   const action=document.createElement('button');action.type='button';action.textContent='Review proposal';action.addEventListener('click',()=>invoke(card,payload,action));card.append(action);
   if(proposals.classList.contains('empty-tools')){proposals.replaceChildren();proposals.classList.remove('empty-tools');}proposals.append(card);
 });
-const toggle=document.querySelector('#toggle-tools');toggle.addEventListener('click',()=>{const content=document.querySelector('#tool-content');const hidden=!content.hidden;content.hidden=hidden;toggle.setAttribute('aria-expanded',String(!hidden));toggle.textContent=hidden?'Expand':'Collapse';});
+const toggle=document.querySelector('#toggle-tools');
+toggle?.addEventListener('click',()=>{
+  const content=document.querySelector('#tool-content');
+  const drawer=document.querySelector('#tool-drawer');
+  const hidden=!content.hidden;
+  content.hidden=hidden;
+  drawer?.classList.toggle('collapsed',hidden);
+  toggle.setAttribute('aria-expanded',String(!hidden));
+  toggle.textContent=hidden?'Expand':'Collapse';
+});

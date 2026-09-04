@@ -8,9 +8,75 @@ let assistantNode;
 let progressNode;
 const turnPrompts=new Map();
 
+function renderInlineMarkdown(parent,text){
+  const pattern=/(`[^`]+`|\*\*[^*]+\*\*|\*[^*]+\*)/g;
+  let lastIndex=0;let match;
+  while((match=pattern.exec(text))!==null){
+    if(match.index>lastIndex)parent.append(document.createTextNode(text.slice(lastIndex,match.index)));
+    const token=match[0];
+    if(token.startsWith('`')&&token.endsWith('`')){
+      const code=document.createElement('code');code.className='inline-code';code.textContent=token.slice(1,-1);parent.append(code);
+    }else if(token.startsWith('**')&&token.endsWith('**')){
+      const strong=document.createElement('strong');strong.className='chat-bold';renderInlineMarkdown(strong,token.slice(2,-2));parent.append(strong);
+    }else if(token.startsWith('*')&&token.endsWith('*')){
+      const em=document.createElement('em');em.textContent=token.slice(1,-1);parent.append(em);
+    }
+    lastIndex=match.index+token.length;
+  }
+  if(lastIndex<text.length)parent.append(document.createTextNode(text.slice(lastIndex)));
+}
+
+function formatMarkdownInto(container,text){
+  container.replaceChildren();if(!text)return;
+  const lines=text.split(/\r?\n/);
+  let inCodeBlock=false;let codeBuffer=[];let codeLang='';let currentList=null;let listType=null;
+  function flushList(){if(currentList){container.append(currentList);currentList=null;listType=null;}}
+  for(let i=0;i<lines.length;i++){
+    const line=lines[i];
+    if(line.trim().startsWith('```')){
+      if(inCodeBlock){
+        flushList();
+        const pre=document.createElement('pre');pre.className='chat-code-block';
+        const header=document.createElement('div');header.className='chat-code-header';
+        const langSpan=document.createElement('span');langSpan.textContent=codeLang||'code';
+        const copyBtn=document.createElement('button');copyBtn.type='button';copyBtn.className='chat-code-copy';copyBtn.textContent='Copy';
+        const fullCode=codeBuffer.join('\n');
+        copyBtn.addEventListener('click',async()=>{try{await navigator.clipboard.writeText(fullCode);copyBtn.textContent='Copied!';setTimeout(()=>{copyBtn.textContent='Copy';},2000);}catch(_){copyBtn.textContent='Failed';}});
+        header.append(langSpan,copyBtn);const codeElem=document.createElement('code');codeElem.textContent=fullCode;pre.append(header,codeElem);container.append(pre);
+        codeBuffer=[];inCodeBlock=false;codeLang='';
+      }else{
+        flushList();inCodeBlock=true;codeLang=line.trim().slice(3).trim();codeBuffer=[];
+      }
+      continue;
+    }
+    if(inCodeBlock){codeBuffer.push(line);continue;}
+    if(!line.trim()){flushList();continue;}
+    const headingMatch=line.match(/^(#{1,4})\s+(.+)$/);
+    if(headingMatch){
+      flushList();const level=headingMatch[1].length;const h=document.createElement(level<=2?'h3':'h4');h.className='chat-heading';renderInlineMarkdown(h,headingMatch[2]);container.append(h);continue;
+    }
+    const numMatch=line.match(/^(\d+)\.\s+(.+)$/);
+    if(numMatch){
+      if(listType!=='ol'){flushList();currentList=document.createElement('ol');currentList.className='chat-list chat-ol';listType='ol';}
+      const li=document.createElement('li');renderInlineMarkdown(li,numMatch[2]);currentList.append(li);continue;
+    }
+    const bulletMatch=line.match(/^[-*•]\s+(.+)$/);
+    if(bulletMatch){
+      if(listType!=='ul'){flushList();currentList=document.createElement('ul');currentList.className='chat-list chat-ul';listType='ul';}
+      const li=document.createElement('li');renderInlineMarkdown(li,bulletMatch[1]);currentList.append(li);continue;
+    }
+    flushList();const p=document.createElement('p');p.className='chat-paragraph';renderInlineMarkdown(p,line);container.append(p);
+  }
+  flushList();
+  if(inCodeBlock&&codeBuffer.length){
+    const pre=document.createElement('pre');pre.className='chat-code-block';const codeElem=document.createElement('code');codeElem.textContent=codeBuffer.join('\n');pre.append(codeElem);container.append(pre);
+  }
+}
+
 function addMessage(role,text){
   document.querySelector('#empty-state')?.setAttribute('hidden','');
-  const item=document.createElement('article');item.className=`message ${role}`;item.textContent=text;
+  const item=document.createElement('article');item.className=`message ${role}`;
+  if(role==='assistant'&&text)formatMarkdownInto(item,text);else item.textContent=text;
   messages.append(item);messages.scrollTop=messages.scrollHeight;return item;
 }
 
@@ -76,7 +142,8 @@ input.addEventListener('keydown',event=>{if(event.key==='Enter'&&!event.shiftKey
 document.addEventListener('answer-delta',event=>{if(!assistantNode)assistantNode=addMessage('assistant','');assistantNode.textContent+=event.detail.text;messages.scrollTop=messages.scrollHeight;});
 document.addEventListener('answer-final',event=>{
   const text=String(event.detail.text||'').trim();if(!text)return;
-  if(!assistantNode)assistantNode=addMessage('assistant','');assistantNode.textContent=text;
+  if(!assistantNode)assistantNode=addMessage('assistant','');
+  formatMarkdownInto(assistantNode,text);
   requestAnimationFrame(()=>{messages.scrollTop=messages.scrollHeight;});
 });
 document.addEventListener('agent-progress',event=>{if(!progressNode)progressNode=addMessage('status','Investigating…');const text=String(event.detail.text||'').trim();if(text)progressNode.textContent=`Investigating · ${text.slice(-1200)}`;setStatus(`${appState().currentThread?.engine_id==='opencode'?'OpenCode':'Codex'} is investigating`);});

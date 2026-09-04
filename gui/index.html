@@ -66,8 +66,18 @@
 
     <section id="conversation" class="conversation-panel" aria-labelledby="conversation-title">
       <header class="conversation-header">
-        <div><span class="eyebrow">Active conversation</span><h1 id="conversation-title">New conversation</h1></div>
-        <button id="cancel-turn" class="danger-quiet" type="button" disabled>Stop response</button>
+        <div class="conversation-title-group">
+          <span class="eyebrow">Active conversation</span>
+          <h1 id="conversation-title">New conversation</h1>
+        </div>
+        <div class="conversation-header-actions">
+          <button id="toggle-evidence" class="evidence-toggle-btn" type="button" aria-expanded="false" title="Toggle Context & Evidence (sources & live telemetry)">
+            <span class="btn-icon" aria-hidden="true">🛡️</span>
+            <span>Context & Evidence</span>
+            <span id="evidence-count-badge" class="evidence-count-badge">0</span>
+          </button>
+          <button id="cancel-turn" class="danger-quiet" type="button" disabled>Stop response</button>
+        </div>
       </header>
       <div id="message-stream" class="message-stream" role="log" aria-live="polite" aria-relevant="additions">
         <section id="empty-state" class="empty-state">
@@ -93,7 +103,7 @@
       </section>
       <form id="composer" class="composer">
         <label for="composer-input"><span class="sr-only">Message</span></label>
-        <textarea id="composer-input" rows="3" maxlength="200000" required placeholder="Ask with an exact target and evidence need…" aria-describedby="composer-hint turn-status"></textarea>
+        <textarea id="composer-input" rows="2" maxlength="200000" required placeholder="Ask with an exact target and evidence need…" aria-describedby="composer-hint turn-status"></textarea>
         <div class="composer-footer">
           <div><span id="turn-status" role="status">Ready</span><span id="composer-hint">Enter to send · Shift+Enter for a new line</span></div>
           <button id="send-turn" class="primary send-button" type="submit">Send <span aria-hidden="true">↑</span></button>
@@ -102,16 +112,25 @@
     </section>
 
     <aside class="evidence-panel" aria-labelledby="evidence-title">
-      <div class="panel-heading"><h2 id="evidence-title">Context & evidence</h2><span class="trust-badge">Truth gated</span></div>
+      <div class="panel-heading">
+        <div class="evidence-heading-title">
+          <span class="panel-icon" aria-hidden="true">🛡️</span>
+          <h2 id="evidence-title">Context & evidence</h2>
+        </div>
+        <div class="evidence-heading-actions">
+          <span class="trust-badge">Truth gated</span>
+          <button id="close-evidence" class="close-evidence-btn" type="button" title="Close evidence panel" aria-label="Close">✕</button>
+        </div>
+      </div>
       <section class="evidence-card"><h3>Sources</h3><ul id="evidence-sources"><li>No attributable source accepted.</li></ul></section>
       <section class="evidence-card"><h3>Unknowns</h3><ul id="evidence-unknowns"><li>No evidence accepted yet.</li></ul></section>
       <section class="evidence-card status-card"><h3>Control status</h3><dl><div><dt>Live reads</dt><dd id="live-status">Loading…</dd></div><div><dt>Codex harness</dt><dd id="codex-status">Loading…</dd></div><div><dt>Provider</dt><dd id="provider-status">Loading…</dd></div></dl></section>
     </aside>
   </main>
 
-  <section id="tool-drawer" class="tool-drawer" aria-labelledby="tool-title">
-    <header><div><span class="eyebrow">Governed operations</span><h2 id="tool-title">Activity details & change approvals</h2></div><button id="toggle-tools" type="button" aria-expanded="true">Collapse</button></header>
-    <div id="tool-content"><p class="approval-policy-summary">Owner Direct reads show live identity evidence. For a real change, the server displays the exact operation and risk warning; one final confirmation sends it once. Unseen future changes are never included.</p><div id="tool-proposals" class="empty-tools" role="status">No tool proposals for this conversation.</div><div id="workspace-diffs"></div><div id="p10-status" class="p10-status">Owner Direct is primary; legacy P10 remains available for existing governed plans.</div></div>
+  <section id="tool-drawer" class="tool-drawer collapsed" aria-labelledby="tool-title">
+    <header><div><span class="eyebrow">Governed operations</span><h2 id="tool-title">Activity details & change approvals</h2></div><button id="toggle-tools" type="button" aria-expanded="false">Expand</button></header>
+    <div id="tool-content" hidden><p class="approval-policy-summary">Owner Direct reads show live identity evidence. For a real change, the server displays the exact operation and risk warning; one final confirmation sends it once. Unseen future changes are never included.</p><div id="tool-proposals" class="empty-tools" role="status">No tool proposals for this conversation.</div><div id="workspace-diffs"></div><div id="p10-status" class="p10-status">Owner Direct is primary; legacy P10 remains available for existing governed plans.</div></div>
   </section>
 
   <dialog id="settings-panel" aria-labelledby="settings-title">
