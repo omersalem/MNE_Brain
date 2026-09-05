@@ -228,6 +228,30 @@ class AntigravityHarness:
             owner_requested=owner_requested,
         )
 
+    def _notify_failure(self, gui_turn_id: str, code: str, accumulated_text: str = "") -> None:
+        try:
+            self.failure_sink(gui_turn_id, code, accumulated_text)
+        except TypeError:
+            self.failure_sink(gui_turn_id, code)
+
+    @staticmethod
+    def _map_error_code(err: str) -> str:
+        lowered = str(err or "").lower()
+        if "timeout" in lowered:
+            return "ANTIGRAVITY_TIMEOUT"
+        if "not installed" in lowered or "not found" in lowered:
+            return "ANTIGRAVITY_NOT_INSTALLED"
+        if "cancel" in lowered:
+            return "ANTIGRAVITY_TURN_CANCELLED"
+        if "auth" in lowered or "login" in lowered or "unauthorized" in lowered:
+            return "ANTIGRAVITY_AUTH_REQUIRED"
+        if "empty" in lowered:
+            return "ANTIGRAVITY_EMPTY_RESPONSE"
+        from core.llm.providers.base import SAFE_PROVIDER_ERRORS
+        if err in SAFE_PROVIDER_ERRORS:
+            return err
+        return "ANTIGRAVITY_TURN_FAILED"
+
     def _run_turn(
         self,
         gui_thread_id: str,
@@ -240,12 +264,12 @@ class AntigravityHarness:
     ) -> None:
         bin_path = self.binary()
         if not bin_path:
-            self.failure_sink(gui_turn_id, "ANTIGRAVITY_NOT_INSTALLED")
+            self._notify_failure(gui_turn_id, "ANTIGRAVITY_NOT_INSTALLED")
             return
 
         with self._lock:
             if gui_turn_id in self._cancelled:
-                self.failure_sink(gui_turn_id, "TURN_CANCELLED")
+                self._notify_failure(gui_turn_id, "ANTIGRAVITY_TURN_CANCELLED")
                 return
             conversation_id = self._conversations.get(gui_thread_id)
 
@@ -263,6 +287,8 @@ class AntigravityHarness:
             "--output-format",
             "stream-json",
             "--dangerously-skip-permissions",
+            "--print-timeout",
+            f"{max(600, timeout_seconds)}s",
         ]
         if conversation_id:
             cmd.extend(["--conversation", conversation_id])
@@ -290,13 +316,13 @@ class AntigravityHarness:
                 for line in proc.stdout:
                     if time.monotonic() > deadline:
                         proc.terminate()
-                        self.failure_sink(gui_turn_id, "TIMEOUT")
+                        self._notify_failure(gui_turn_id, "ANTIGRAVITY_TIMEOUT", accumulated_text)
                         return
 
                     with self._lock:
                         if gui_turn_id in self._cancelled:
                             proc.terminate()
-                            self.failure_sink(gui_turn_id, "TURN_CANCELLED")
+                            self._notify_failure(gui_turn_id, "ANTIGRAVITY_TURN_CANCELLED", accumulated_text)
                             return
 
                     line_str = line.strip()
@@ -340,6 +366,10 @@ class AntigravityHarness:
                                 {"text": f"Running tool: {tname} [{tstate}]"},
                             )
 
+                    elif event_type == "error":
+                        err_val = event_data.get("error", {})
+                        last_error = err_val.get("message") if isinstance(err_val, dict) else str(err_val)
+
                     elif event_type == "result":
                         res = event_data.get("result", {})
                         if res.get("status") == "SUCCESS":
@@ -348,18 +378,19 @@ class AntigravityHarness:
                             return
                         else:
                             last_error = res.get("error") or "Antigravity CLI execution error"
-                            self.failure_sink(gui_turn_id, last_error)
+                            self._notify_failure(gui_turn_id, self._map_error_code(last_error), accumulated_text)
                             return
 
             proc.wait(timeout=15)
-            if proc.returncode == 0 and accumulated_text:
-                self.completion_sink(gui_turn_id, accumulated_text)
-            elif not last_error:
+            if proc.returncode == 0 and (accumulated_text or not last_error):
+                self.completion_sink(gui_turn_id, accumulated_text or "Turn completed.")
+            else:
                 stderr_text = proc.stderr.read() if proc.stderr else ""
-                self.failure_sink(gui_turn_id, stderr_text.strip() or "ANTIGRAVITY_EMPTY_RESPONSE")
+                err_msg = last_error or stderr_text.strip() or "ANTIGRAVITY_EMPTY_RESPONSE"
+                self._notify_failure(gui_turn_id, self._map_error_code(err_msg), accumulated_text)
 
         except Exception as exc:
-            self.failure_sink(gui_turn_id, f"ANTIGRAVITY_EXECUTION_ERROR: {str(exc)}")
+            self._notify_failure(gui_turn_id, "ANTIGRAVITY_TURN_FAILED", accumulated_text)
         finally:
             with self._lock:
                 self._active_processes.pop(gui_turn_id, None)

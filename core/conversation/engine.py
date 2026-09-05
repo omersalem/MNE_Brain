@@ -619,13 +619,15 @@ class ConversationEngine:
                 self._owner_session_digests.pop(turn_id, None)
                 self._active_threads.discard(turn["thread_id"])
 
-    def _antigravity_failed(self, turn_id: str, code: str) -> None:
+    def _antigravity_failed(self, turn_id: str, code: str, partial_answer: str | None = None) -> None:
         try:
             turn = self.store.get_turn(turn_id)
         except ThreadStoreError:
             return
         if turn["status"] in {"COMPLETED", "FAILED", "CANCELLED"}:
             return
+        if partial_answer and partial_answer.strip():
+            self.store.add_message(turn_id, role="assistant", content=partial_answer.strip(), evidence_refs=[])
         cancelled = code == "ANTIGRAVITY_TURN_CANCELLED"
         if cancelled:
             self.store.update_turn(turn_id, "CANCELLED")
