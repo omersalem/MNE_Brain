@@ -592,6 +592,9 @@ def test_workspace_diff_approval_exact_hash_and_replay():
 @pytest.fixture
 def local_api_server(monkeypatch):
     from core.api import server as api_server
+    from core.conversation.engine import ConversationEngine
+    test_engine = ConversationEngine(BASE, storage_dir=None)
+    monkeypatch.setattr(api_server, "conversation_engine", test_engine)
     password_hash = OwnerCredentialVerifier.hash_password("correct horse battery staple", iterations=300_000, salt=b"p11-owner-test-salt-00001")
     verifier = OwnerCredentialVerifier(username="owner", password_hash=password_hash)
     monkeypatch.setattr(api_server, "owner_credentials", verifier)
