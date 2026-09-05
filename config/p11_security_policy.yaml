@@ -37,3 +37,7 @@ execution:
   p7_owner_scoped_live_reads_available: true
   p10_writes_enabled: false
   external_provider_calls_enabled: true
+conversation_storage:
+  persist_locally: true
+  storage_path: "operations/conversations"
+

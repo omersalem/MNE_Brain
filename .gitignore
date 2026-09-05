@@ -22,6 +22,8 @@ operations/actions/*.json
 operations/discovery/*.json
 operations/logs/*.jsonl
 operations/verification/*.txt
+operations/conversations/*.json
+operations/conversations/*.tmp
 
 # Local editor and operating-system files
 .vscode/

@@ -41,9 +41,9 @@ class ConversationEngine:
         re.IGNORECASE,
     )
 
-    def __init__(self, base_dir: Path, *, gateway: ProviderGateway | None = None, tool_broker: ToolBroker | None = None, codex_harness: CodexAppServerHarness | None = None, opencode_runtime: OpenCodeRuntime | None = None, antigravity_harness: AntigravityHarness | None = None, external_calls_enabled: bool = False, auto_authorize_external_redacted_context: bool = False):
+    def __init__(self, base_dir: Path, *, gateway: ProviderGateway | None = None, tool_broker: ToolBroker | None = None, codex_harness: CodexAppServerHarness | None = None, opencode_runtime: OpenCodeRuntime | None = None, antigravity_harness: AntigravityHarness | None = None, external_calls_enabled: bool = False, auto_authorize_external_redacted_context: bool = False, storage_dir: Path | None = None):
         self.base_dir = base_dir.resolve()
-        self.store = ThreadStore(self.base_dir)
+        self.store = ThreadStore(self.base_dir, storage_dir=storage_dir)
         self.events = EventStream(self.base_dir)
         self.context_builder = ContextBuilder()
         self.entity_index = EntityIndexBuilder(self.base_dir)
@@ -83,6 +83,9 @@ class ConversationEngine:
         profile = self.registry.get(kwargs.get("provider_id", "prv_local_deterministic"))
         kwargs.setdefault("model_id", profile["model_id"])
         return self.store.create_thread(**kwargs)
+
+    def delete_thread(self, thread_id: str) -> bool:
+        return self.store.delete_thread(thread_id)
 
     def import_thread(self, payload: dict[str, Any]) -> dict[str, Any]:
         metadata = payload.get("thread", {}) if isinstance(payload, dict) else {}

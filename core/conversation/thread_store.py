@@ -24,13 +24,16 @@ class ThreadStore:
     OPENCODE_PROVIDER_ID = "prv_opencode"
     ANTIGRAVITY_PROVIDER_ID = "prv_antigravity_cli"
 
-    def __init__(self, base_dir: Path):
+    def __init__(self, base_dir: Path, *, storage_dir: Path | None = None):
         schema_dir = base_dir / "00_meta/schemas"
         self._schemas = {name: json.loads((schema_dir / name).read_text(encoding="utf-8")) for name in ("conversation-thread.schema.json", "conversation-turn.schema.json", "conversation-message.schema.json")}
         self._threads: dict[str, dict[str, Any]] = {}
         self._turns: dict[str, dict[str, Any]] = {}
         self._messages: dict[str, dict[str, Any]] = {}
         self._lock = threading.RLock()
+        self.storage_dir = Path(storage_dir).resolve() if storage_dir else None
+        if self.storage_dir:
+            self._load_from_disk()
 
     @staticmethod
     def _now() -> str:
@@ -42,6 +45,92 @@ class ThreadStore:
 
     def _validate(self, name: str, value: dict[str, Any]) -> None:
         jsonschema.Draft7Validator(self._schemas[name], format_checker=jsonschema.FormatChecker()).validate(value)
+
+    def _save_thread_to_disk(self, thread_id: str) -> None:
+        if not self.storage_dir:
+            return
+        with self._lock:
+            thread = self._threads.get(thread_id)
+            if not thread:
+                return
+            thread_copy = deepcopy(thread)
+            turns = [deepcopy(self._turns[t_id]) for t_id in thread.get("turn_ids", []) if t_id in self._turns]
+            ordered_message_ids = []
+            for turn in turns:
+                for m_id in turn.get("message_ids", []):
+                    if m_id not in ordered_message_ids:
+                        ordered_message_ids.append(m_id)
+            messages = [deepcopy(self._messages[m_id]) for m_id in ordered_message_ids if m_id in self._messages]
+            for msg in self._messages.values():
+                if msg.get("thread_id") == thread_id and msg["message_id"] not in ordered_message_ids:
+                    messages.append(deepcopy(msg))
+                    ordered_message_ids.append(msg["message_id"])
+
+        try:
+            self.storage_dir.mkdir(parents=True, exist_ok=True)
+            file_path = self.storage_dir / f"{thread_id}.json"
+            temp_path = self.storage_dir / f"{thread_id}.json.tmp"
+            payload = {
+                "version": "MNE_BRAIN_LOCAL_THREAD_V1",
+                "saved_at": self._now(),
+                "thread": thread_copy,
+                "turns": turns,
+                "messages": messages,
+            }
+            temp_path.write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
+            temp_path.replace(file_path)
+        except OSError:
+            pass
+
+    def _load_from_disk(self) -> None:
+        if not self.storage_dir or not self.storage_dir.exists():
+            return
+        with self._lock:
+            for file_path in sorted(self.storage_dir.glob("thr_*.json")):
+                try:
+                    data = json.loads(file_path.read_text(encoding="utf-8"))
+                    if not isinstance(data, dict) or data.get("version") != "MNE_BRAIN_LOCAL_THREAD_V1":
+                        continue
+                    thread = data.get("thread")
+                    if not thread or "thread_id" not in thread:
+                        continue
+                    self._validate("conversation-thread.schema.json", thread)
+                    self._threads[thread["thread_id"]] = thread
+
+                    for turn in data.get("turns", []):
+                        if turn.get("status") in {"QUEUED", "RUNNING"}:
+                            turn["status"] = "CANCELLED"
+                            turn["updated_at"] = self._now()
+                        self._validate("conversation-turn.schema.json", turn)
+                        self._turns[turn["turn_id"]] = turn
+
+                    for msg in data.get("messages", []):
+                        self._validate("conversation-message.schema.json", msg)
+                        self._messages[msg["message_id"]] = msg
+                except Exception:
+                    continue
+
+    def delete_thread(self, thread_id: str) -> bool:
+        with self._lock:
+            thread = self._threads.pop(thread_id, None)
+            if not thread:
+                raise ThreadStoreError("Thread not found.")
+            for turn_id in thread.get("turn_ids", []):
+                turn = self._turns.pop(turn_id, None)
+                if turn:
+                    for msg_id in turn.get("message_ids", []):
+                        self._messages.pop(msg_id, None)
+            for msg_id in [k for k, v in self._messages.items() if v.get("thread_id") == thread_id]:
+                self._messages.pop(msg_id, None)
+
+        if self.storage_dir:
+            file_path = self.storage_dir / f"{thread_id}.json"
+            if file_path.exists():
+                try:
+                    file_path.unlink()
+                except OSError:
+                    pass
+        return True
 
     @staticmethod
     def _engine_for_provider(provider_id: str) -> str:
@@ -70,6 +159,7 @@ class ThreadStore:
         self._validate("conversation-thread.schema.json", item)
         with self._lock:
             self._threads[item["thread_id"]] = item
+            self._save_thread_to_disk(item["thread_id"])
         return deepcopy(item)
 
     def list_threads(self, search: str = "") -> list[dict[str, Any]]:
@@ -100,6 +190,7 @@ class ThreadStore:
             updated["updated_at"] = self._now()
             self._validate("conversation-thread.schema.json", updated)
             self._threads[thread_id] = updated
+            self._save_thread_to_disk(thread_id)
             return deepcopy(updated)
 
     def pin_engine(self, thread_id: str, *, provider_id: str, engine_id: str, model_id: str) -> dict[str, Any]:
@@ -116,6 +207,7 @@ class ThreadStore:
             item["model_id"] = model_id[:512]
             item["updated_at"] = self._now()
             self._validate("conversation-thread.schema.json", item)
+            self._save_thread_to_disk(thread_id)
             return deepcopy(item)
 
     def recover_unavailable_opencode_model(self, thread_id: str, model_id: str) -> dict[str, Any]:
@@ -129,6 +221,7 @@ class ThreadStore:
             item["model_id"] = model_id[:512]
             item["updated_at"] = self._now()
             self._validate("conversation-thread.schema.json", item)
+            self._save_thread_to_disk(thread_id)
             return deepcopy(item)
 
     def set_permission_mode(self, thread_id: str, permission_mode: str) -> dict[str, Any]:
@@ -140,6 +233,7 @@ class ThreadStore:
             self._threads[thread_id]["permission_mode"] = permission_mode
             self._threads[thread_id]["updated_at"] = self._now()
             self._validate("conversation-thread.schema.json", self._threads[thread_id])
+            self._save_thread_to_disk(thread_id)
             return deepcopy(self._threads[thread_id])
 
     def create_turn(self, thread_id: str, *, external_authorization_id: str | None = None) -> dict[str, Any]:
@@ -153,6 +247,7 @@ class ThreadStore:
             self._turns[turn["turn_id"]] = turn
             thread["turn_ids"].append(turn["turn_id"])
             thread["updated_at"] = now
+            self._save_thread_to_disk(thread_id)
             return deepcopy(turn)
 
     def _set_turn_attribution(self, turn_id: str, *, provider_id: str, engine_id: str, model_id: str) -> None:
@@ -163,6 +258,7 @@ class ThreadStore:
             turn["engine_id"] = engine_id
             turn["model_id"] = model_id[:512]
             self._validate("conversation-turn.schema.json", turn)
+            self._save_thread_to_disk(turn["thread_id"])
 
     def migrate_legacy_gemini_threads(self, *, model_id: str = "select-model") -> int:
         """Pin future turns to OpenCode without rewriting historical turns."""
@@ -175,6 +271,7 @@ class ThreadStore:
                     thread["model_id"] = model_id[:160]
                     thread["updated_at"] = self._now()
                     self._validate("conversation-thread.schema.json", thread)
+                    self._save_thread_to_disk(thread["thread_id"])
                     migrated += 1
         return migrated
 
@@ -188,6 +285,7 @@ class ThreadStore:
             if failure_code:
                 turn["failure_code"] = failure_code[:80]
             self._validate("conversation-turn.schema.json", turn)
+            self._save_thread_to_disk(turn["thread_id"])
             return deepcopy(turn)
 
     def get_turn(self, turn_id: str) -> dict[str, Any]:
@@ -209,6 +307,7 @@ class ThreadStore:
             self._messages[item["message_id"]] = item
             turn["message_ids"].append(item["message_id"])
             turn["updated_at"] = item["created_at"]
+            self._save_thread_to_disk(turn["thread_id"])
             return deepcopy(item)
 
     def messages_for_thread(self, thread_id: str) -> list[dict[str, Any]]:

@@ -391,12 +391,17 @@ ul {
   min-height: 0;
 }
 
-.thread-list li {
+.thread-list li.thread-item {
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
   margin: 0.18rem 0;
+  position: relative;
 }
 
-.thread-list button {
-  width: 100%;
+.thread-list .thread-button {
+  flex: 1 1 auto;
+  min-width: 0;
   border-color: transparent;
   background: transparent;
   text-align: left;
@@ -410,10 +415,37 @@ ul {
   border-radius: 7px;
 }
 
-.thread-list button[aria-current="true"] {
+.thread-list .thread-button[aria-current="true"] {
   color: var(--text);
   background: var(--accent-soft);
   border-color: #2b7898;
+}
+
+.thread-delete-btn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  font-size: 0.7rem;
+  color: var(--subtle);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.thread-item:hover .thread-delete-btn,
+.thread-item:focus-within .thread-delete-btn {
+  display: inline-flex;
+}
+
+.thread-delete-btn:hover {
+  color: var(--danger);
+  background: #50162233;
+  border-color: #a9445a;
 }
 
 /* Sidebar Bottom Controls: Export/Import + Settings + Sign Out */

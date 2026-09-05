@@ -86,10 +86,17 @@ tool_broker = ToolBroker(
     p7_scoped_available=bool(security_policy.get("execution", {}).get("p7_owner_scoped_live_reads_available", False)),
     p10_execution_enabled=bool(security_policy.get("execution", {}).get("p10_writes_enabled", False)),
 )
+conversation_storage_policy = security_policy.get("conversation_storage", {})
+conversation_storage_dir = (
+    base_dir / str(conversation_storage_policy.get("storage_path", "operations/conversations"))
+    if conversation_storage_policy.get("persist_locally", True)
+    else None
+)
 conversation_engine = ConversationEngine(
     base_dir,
     gateway=provider_gateway,
     tool_broker=tool_broker,
+    storage_dir=conversation_storage_dir,
     auto_authorize_external_redacted_context=bool(
         security_policy.get("external_data", {}).get("auto_authorize_redacted_conversation", False)
     ),
@@ -448,7 +455,8 @@ class MNEBrainAPIHandler(BaseHTTPRequestHandler):
     def _handle_v2_get(self, path: str, params: Dict[str, Any]) -> None:
         if path == "/api/v2/threads":
             query = (params.get("search") or [""])[0]
-            self._json_response(200, {"threads": conversation_engine.store.list_threads(query), "retention": "IN_MEMORY_ONLY"})
+            retention = "LOCAL_STORAGE" if conversation_engine.store.storage_dir else "IN_MEMORY_ONLY"
+            self._json_response(200, {"threads": conversation_engine.store.list_threads(query), "retention": retention})
             return
         match = re.fullmatch(r"/api/v2/threads/(thr_[A-Za-z0-9_-]{16,64})", path)
         if match:
@@ -503,6 +511,7 @@ class MNEBrainAPIHandler(BaseHTTPRequestHandler):
                 "permission_mode": "OWNER_DIRECT",
                 "owner_direct": {"enabled": True, "read_identity_mode": "COLLECT_UNVERIFIED", "write_confirmation": "FINAL_UI_CONFIRMATION_ONLY"},
                 "bind_host": security_policy.get("bind_host", "127.0.0.1"),
+                "conversation_retention": "LOCAL_STORAGE" if conversation_engine.store.storage_dir else "IN_MEMORY_ONLY",
                 "external_provider_calls_enabled": provider_gateway.external_calls_enabled,
                 "auto_authorize_redacted_conversation": conversation_engine.auto_authorize_external_redacted_context,
                 "explicit_authorization_required_for_live_evidence": bool(security_policy.get("external_data", {}).get("explicit_authorization_required_for_live_evidence", True)),
@@ -535,14 +544,18 @@ class MNEBrainAPIHandler(BaseHTTPRequestHandler):
             while True:
                 events = conversation_engine.events.list_after(turn_id, last_event_id)
                 if not events:
-                    turn = conversation_engine.store.get_turn(turn_id)
-                    if turn["status"] in terminal_statuses:
+                    all_events = conversation_engine.events.list_after(turn_id, None)
+                    if any(e.get("event_type") in terminal_types for e in all_events):
                         return
-                    events = conversation_engine.events.wait_after(turn_id, last_event_id, timeout=heartbeat)
-                if not events:
-                    self.wfile.write(b": heartbeat\n\n")
-                    self.wfile.flush()
-                    continue
+                    turn = conversation_engine.store.get_turn(turn_id)
+                    wait_timeout = 2.0 if turn["status"] in terminal_statuses else heartbeat
+                    events = conversation_engine.events.wait_after(turn_id, last_event_id, timeout=wait_timeout)
+                    if not events:
+                        if turn["status"] in terminal_statuses:
+                            return
+                        self.wfile.write(b": heartbeat\n\n")
+                        self.wfile.flush()
+                        continue
                 for event in events:
                     self.wfile.write(conversation_engine.events.encode_sse(event))
                     self.wfile.flush()
@@ -641,6 +654,11 @@ class MNEBrainAPIHandler(BaseHTTPRequestHandler):
         match = re.fullmatch(r"/api/v2/threads/(thr_[A-Za-z0-9_-]{16,64})/permission", path)
         if match:
             self._json_response(200, conversation_engine.store.set_permission_mode(match.group(1), payload["permission_mode"]))
+            return
+        match = re.fullmatch(r"/api/v2/threads/(thr_[A-Za-z0-9_-]{16,64})/delete", path)
+        if match:
+            conversation_engine.delete_thread(match.group(1))
+            self._json_response(200, {"status": "DELETED", "thread_id": match.group(1)})
             return
         match = re.fullmatch(r"/api/v2/turns/(trn_[A-Za-z0-9_-]{16,64})/cancel", path)
         if match:

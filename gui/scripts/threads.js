@@ -8,13 +8,34 @@ function renderThreads(){
   list.replaceChildren();
   for(const thread of appState().threads){
     const item=document.createElement('li');
+    item.className='thread-item';
     const button=document.createElement('button');
     button.type='button';
+    button.className='thread-button';
     button.textContent=thread.title;
     button.dataset.threadId=thread.thread_id;
     button.setAttribute('aria-current',String(appState().currentThread?.thread_id===thread.thread_id));
     button.addEventListener('click',()=>selectThread(thread.thread_id));
-    item.append(button); list.append(item);
+    const del=document.createElement('button');
+    del.type='button';
+    del.className='thread-delete-btn';
+    del.title='Delete conversation';
+    del.setAttribute('aria-label',`Delete ${thread.title}`);
+    del.textContent='✕';
+    del.addEventListener('click',async event=>{
+      event.stopPropagation();
+      if(!window.confirm(`Delete conversation "${thread.title}"?`))return;
+      try{
+        await mutateJSON(`/api/v2/threads/${encodeURIComponent(thread.thread_id)}/delete`,{});
+        const threads=await loadThreads();
+        if(appState().currentThread?.thread_id===thread.thread_id){
+          if(threads.length)await selectThread(threads[0].thread_id);
+          else await newThread();
+        }
+      }catch(error){setStatus(error.message);}
+    });
+    item.append(button,del);
+    list.append(item);
   }
 }
 
