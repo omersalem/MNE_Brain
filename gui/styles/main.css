@@ -1265,7 +1265,9 @@ ul {
   border-radius: 16px;
   background: #0d1927;
   box-shadow: 0 8px 32px #00000036;
-  overflow: hidden;
+  position: relative;
+  z-index: 40;
+  overflow: visible;
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 
@@ -1278,7 +1280,7 @@ ul {
   width: 100%;
   resize: none;
   border: 0;
-  border-radius: 0;
+  border-radius: 15px 15px 0 0;
   background: transparent;
   min-height: 56px;
   max-height: 200px;
@@ -1299,6 +1301,8 @@ ul {
   gap: 0.75rem;
   padding: 0.4rem 0.85rem 0.65rem 1rem;
   flex-wrap: wrap;
+  border-bottom-left-radius: 15px;
+  border-bottom-right-radius: 15px;
 }
 
 .composer-engine-bar {
@@ -1398,6 +1402,8 @@ ul {
   padding: 0.6rem 1rem 0.2rem;
   border-bottom: 1px solid rgba(34, 67, 97, 0.5);
   background: rgba(8, 16, 26, 0.6);
+  border-top-left-radius: 15px;
+  border-top-right-radius: 15px;
 }
 
 .composer-attachments[hidden] {
@@ -1641,8 +1647,8 @@ ul {
   position: absolute;
   bottom: calc(100% + 8px);
   left: 0;
-  width: min(540px, 92vw);
-  max-height: min(440px, 62vh);
+  width: min(560px, calc(100vw - 3rem));
+  max-height: min(460px, calc(100vh - 180px), 65vh);
   background: #09131e;
   border: 1px solid #1c3c5d;
   border-radius: 12px;
@@ -1671,9 +1677,10 @@ ul {
 }
 
 .model-search-header {
+  flex-shrink: 0;
   padding: 0.65rem 0.75rem 0.45rem;
   border-bottom: 1px solid #18334f;
-  background: rgba(7, 15, 24, 0.9);
+  background: rgba(7, 15, 24, 0.96);
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
@@ -1739,8 +1746,9 @@ ul {
 
 .model-picker-options {
   flex: 1 1 auto;
+  min-height: 0;
   overflow-y: auto;
-  max-height: 350px;
+  overscroll-behavior: contain;
   padding: 0.35rem;
   display: flex;
   flex-direction: column;

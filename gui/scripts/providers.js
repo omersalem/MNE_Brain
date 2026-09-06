@@ -148,6 +148,13 @@ function openModelPicker(){
     if(modelSearchClear)modelSearchClear.hidden=true;
   }
   renderModelPickerOptions('');
+  const rect=modelPickerDropdown.getBoundingClientRect();
+  if(rect.right > window.innerWidth - 16){
+    const overflow=rect.right - (window.innerWidth - 16);
+    modelPickerDropdown.style.left=`-${overflow}px`;
+  }else{
+    modelPickerDropdown.style.left='0';
+  }
   if(modelSearchInput)modelSearchInput.focus();
   const selectedNode=modelPickerList?.querySelector('.model-picker-option.selected');
   if(selectedNode){
