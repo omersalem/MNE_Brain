@@ -566,8 +566,16 @@ form.addEventListener('submit',async event=>{
     }
     await requestSend(composedContent);
   }catch(error){
-    addFailure({code:error.payload?.code,message:error.message,retryable:true},'');
-    setStatus('Request failed');
+    const isAuth=error.status===401||error.status===403||error.message?.toLowerCase().includes('session');
+    if(isAuth){
+      input.value=rawText;
+      pendingAttachments=attachmentsToUpload;
+      renderAttachmentsTray();
+      setStatus('Session expired — please sign in to continue');
+    }else{
+      addFailure({code:error.payload?.code,message:error.message,retryable:true},'');
+      setStatus('Request failed');
+    }
   }
 });
 

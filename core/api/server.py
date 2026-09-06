@@ -312,7 +312,7 @@ class MNEBrainAPIHandler(BaseHTTPRequestHandler):
         if path == "/api/v2/session":
             try:
                 session = self._require_owner()
-                self._json_response(200, owner_sessions.describe(session))
+                self._json_response(200, owner_sessions.describe(session), extra_headers={"Set-Cookie": owner_sessions.session_cookie(session)})
             except OwnerSessionError as exc:
                 self._json_response(401, {
                     "error": str(exc),
@@ -405,7 +405,7 @@ class MNEBrainAPIHandler(BaseHTTPRequestHandler):
             self._json_response(400, {"error": str(exc)})
             return
         except OwnerSessionError as exc:
-            self._json_response(403, {"error": str(exc)})
+            self._json_response(403, {"error": str(exc), "code": "OWNER_SESSION_EXPIRED"})
             return
 
         if path.startswith("/api/v2/"):

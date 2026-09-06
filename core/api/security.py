@@ -168,6 +168,9 @@ class OwnerSessionManager:
             self._failures.pop(client_host, None)
         return self._create_session(client_host=client_host, host_header=host_header, origin_header=origin_header)
 
+    def session_cookie(self, session: _Session) -> str:
+        return f"{self.cookie_name}={session.session_id}; HttpOnly; SameSite=Strict; Path=/; Max-Age={self.inactivity_seconds}"
+
     def describe(self, session: _Session) -> dict[str, Any]:
         return {
             "status": "OWNER_SESSION_ACTIVE",

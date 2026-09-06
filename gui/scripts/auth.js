@@ -9,7 +9,7 @@ const password=document.querySelector('#owner-password');
 function showGate(detail={}){
   gate.hidden=false;document.body.dataset.authenticated='false';
   const configured=detail.owner_credentials_configured??detail.configured;
-  status.textContent=configured===false?'Owner login is not configured. Run: python scripts/configure_owner_login.py':(detail.logged_out?'Signed out safely.':'Sign in with the local owner account.');
+  status.textContent=configured===false?'Owner login is not configured. Run: python scripts/configure_owner_login.py':(detail.logged_out?'Signed out safely.':(detail.session_expired?'Your owner session expired due to inactivity. Please sign in to resume.':'Sign in with the local owner account.'));
   setTimeout(()=>username.focus(),0);
 }
 function hideGate(){gate.hidden=true;document.body.dataset.authenticated='true';password.value='';status.textContent='';}

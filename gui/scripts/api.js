@@ -61,7 +61,13 @@ export async function getJSON(path){
   await ensureSession();
   const response=await fetch(path,{credentials:'same-origin',headers:{Accept:'application/json'}});
   const payload=await response.json();
-  if(!response.ok) throw Object.assign(new Error(payload.error||`Request failed (${response.status})`),{status:response.status,payload});
+  if(!response.ok){
+    if(response.status===401||(response.status===403&&(payload.code==='OWNER_SESSION_EXPIRED'||payload.error?.includes('session')))){
+      state.session=null;sessionPromise=null;
+      emit('owner-auth-required',{configured:true,session_expired:true});
+    }
+    throw Object.assign(new Error(payload.error||`Request failed (${response.status})`),{status:response.status,payload});
+  }
   return payload;
 }
 
@@ -77,7 +83,13 @@ export async function mutateJSON(path,payload={}){
     body:JSON.stringify({...payload,request_nonce:mutationNonce()}),
   });
   const result=await response.json();
-  if(!response.ok) throw Object.assign(new Error(result.error||`Mutation failed (${response.status})`),{status:response.status,payload:result});
+  if(!response.ok){
+    if(response.status===401||(response.status===403&&(result.code==='OWNER_SESSION_EXPIRED'||result.error?.includes('session')))){
+      state.session=null;sessionPromise=null;
+      emit('owner-auth-required',{configured:true,session_expired:true});
+    }
+    throw Object.assign(new Error(result.error||`Mutation failed (${response.status})`),{status:response.status,payload:result});
+  }
   return result;
 }
 
