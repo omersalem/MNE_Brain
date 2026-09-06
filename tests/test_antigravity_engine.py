@@ -107,6 +107,7 @@ def test_antigravity_stream_event_processing():
     assert completed_turns[0] == ("trn_test_456", "Analyzing interface counters...")
     delta_texts = [p["text"] for _, _, etype, p in events_captured if etype == "answer.delta"]
     assert "".join(delta_texts) == "Analyzing interface counters..."
+    assert any(etype == "answer.final" and p.get("text") == "Analyzing interface counters..." for _, _, etype, p in events_captured)
     assert harness._conversations.get("thr_test_123") == "agy_conv_999"
 
 

@@ -374,6 +374,13 @@ class AntigravityHarness:
                         res = event_data.get("result", {})
                         if res.get("status") == "SUCCESS":
                             resp_text = res.get("response") or accumulated_text
+                            if resp_text:
+                                self.event_sink(
+                                    gui_thread_id,
+                                    gui_turn_id,
+                                    "answer.final",
+                                    {"text": resp_text},
+                                )
                             self.completion_sink(gui_turn_id, resp_text)
                             return
                         else:
@@ -383,7 +390,14 @@ class AntigravityHarness:
 
             proc.wait(timeout=15)
             if proc.returncode == 0 and (accumulated_text or not last_error):
-                self.completion_sink(gui_turn_id, accumulated_text or "Turn completed.")
+                final_text = accumulated_text or "Turn completed."
+                self.event_sink(
+                    gui_thread_id,
+                    gui_turn_id,
+                    "answer.final",
+                    {"text": final_text},
+                )
+                self.completion_sink(gui_turn_id, final_text)
             else:
                 stderr_text = proc.stderr.read() if proc.stderr else ""
                 err_msg = last_error or stderr_text.strip() or "ANTIGRAVITY_EMPTY_RESPONSE"
