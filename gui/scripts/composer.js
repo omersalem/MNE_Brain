@@ -355,6 +355,8 @@ function renderThread(thread){
   assistantNode=null;
   assistantText='';
   progressNode=null;
+  pendingAttachments=[];
+  renderAttachmentsTray();
   if(!(thread.messages||[]).length){
     const empty=document.createElement('section');
     empty.id='empty-state';
@@ -380,6 +382,14 @@ async function send(content,externalAuthorizationId=null){
   assistantText='';
   setStatus('Queued');
   const turn=await mutateJSON(`/api/v2/threads/${thread.thread_id}/turns`,{content,external_authorization_id:externalAuthorizationId,evidence:[]});
+  if(thread){
+    if(!thread.turn_ids)thread.turn_ids=[];
+    if(!thread.turn_ids.includes(turn.turn_id))thread.turn_ids.push(turn.turn_id);
+    if(!thread.turns)thread.turns=[];
+    thread.turns.push(turn);
+    if(!thread.messages)thread.messages=[];
+    thread.messages.push({role:'user',content});
+  }
   turnPrompts.set(turn.turn_id,content);
   startTurnStream(turn);
 }
@@ -605,13 +615,25 @@ document.addEventListener('agent-plan',event=>{
 
 document.addEventListener('thread-selected',event=>renderThread(event.detail.thread));
 
+document.addEventListener('clear-composer-attachments',()=>{
+  pendingAttachments=[];
+  renderAttachmentsTray();
+});
+
 document.addEventListener('stream-event',event=>{
   const envelope=event.detail.envelope;
   if(envelope.event_type==='turn.failed')addFailure(envelope.redacted_payload,envelope.turn_id);
   if(envelope.event_type==='turn.cancelled')addMessage('status','Response cancelled.');
   if(['turn.completed','turn.cancelled','turn.failed'].includes(envelope.event_type)){
-    if(envelope.event_type==='turn.completed'&&assistantNode&&assistantText){
-      formatMarkdownInto(assistantNode,assistantText);
+    if(envelope.event_type==='turn.completed'){
+      if(assistantNode&&assistantText){
+        formatMarkdownInto(assistantNode,assistantText);
+      }
+      const current=appState().currentThread;
+      if(current&&assistantText){
+        if(!current.messages)current.messages=[];
+        current.messages.push({role:'assistant',content:assistantText});
+      }
     }
     assistantNode=null;
     assistantText='';

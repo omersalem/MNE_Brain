@@ -60,10 +60,13 @@ export async function selectThread(threadId){
 
 function isThreadEmpty(thread){
   if(!thread)return true;
-  const turnIds=thread.turn_ids||[];
-  const turns=thread.turns||[];
-  const msgs=thread.messages||[];
-  return turnIds.length===0&&turns.length===0&&msgs.length===0;
+  if((thread.turn_ids&&thread.turn_ids.length>0)||(thread.turns&&thread.turns.length>0)||(thread.messages&&thread.messages.length>0))return false;
+  if(appState().currentThread?.thread_id===thread.thread_id){
+    const userMsg=document.querySelector('#message-stream .message.user');
+    const asstMsg=document.querySelector('#message-stream .message.assistant');
+    if(userMsg||asstMsg)return false;
+  }
+  return true;
 }
 
 function nextConversationTitle(){
@@ -80,27 +83,37 @@ function nextConversationTitle(){
 
 async function newThread(){
   const current=appState().currentThread;
+  const input=document.querySelector('#composer-input');
   if(isThreadEmpty(current)){
-    document.querySelector('#composer-input')?.focus();
+    if(input){input.value='';input.focus();}
+    emit('clear-composer-attachments');
+    setStatus('Ready for new conversation');
     return;
   }
   const emptyExisting=appState().threads.find(t=>isThreadEmpty(t));
-  if(emptyExisting){
+  if(emptyExisting&&emptyExisting.thread_id!==current?.thread_id){
     await selectThread(emptyExisting.thread_id);
-    document.querySelector('#composer-input')?.focus();
+    if(input){input.value='';input.focus();}
+    emit('clear-composer-attachments');
+    setStatus('Ready for new conversation');
     return;
   }
+  if(input)input.value='';
+  emit('clear-composer-attachments');
+  setStatus('Creating new conversation…');
   const title=nextConversationTitle();
   const engine=document.querySelector('#provider-select').value||'codex';
   const model=document.querySelector('#model-select').value||undefined;
   const thread=await mutateJSON('/api/v2/threads',{title,engine_id:engine,model_id:model,permission_mode:'OWNER_DIRECT'});
   await loadThreads();
   await selectThread(thread.thread_id);
-  document.querySelector('#composer-input')?.focus();
+  if(input)input.focus();
+  setStatus('Ready');
 }
 
 async function newThreadForEngine(engine,model,prompt){
   const current=appState().currentThread;
+  const input=document.querySelector('#composer-input');
   if(isThreadEmpty(current)){
     await mutateJSON(`/api/v2/threads/${encodeURIComponent(current.thread_id)}/engine`,{engine_id:engine,model_id:model});
     current.engine_id=engine;
@@ -109,11 +122,11 @@ async function newThreadForEngine(engine,model,prompt){
     document.querySelector('#model-select').value=model;
     renderThreads();
     if(prompt)document.dispatchEvent(new CustomEvent('retry-prompt',{detail:{content:prompt}}));
-    document.querySelector('#composer-input')?.focus();
+    if(input)input.focus();
     return;
   }
   const emptyExisting=appState().threads.find(t=>isThreadEmpty(t));
-  if(emptyExisting){
+  if(emptyExisting&&emptyExisting.thread_id!==current?.thread_id){
     await selectThread(emptyExisting.thread_id);
     await mutateJSON(`/api/v2/threads/${encodeURIComponent(emptyExisting.thread_id)}/engine`,{engine_id:engine,model_id:model});
     emptyExisting.engine_id=engine;
@@ -122,7 +135,7 @@ async function newThreadForEngine(engine,model,prompt){
     document.querySelector('#model-select').value=model;
     renderThreads();
     if(prompt)document.dispatchEvent(new CustomEvent('retry-prompt',{detail:{content:prompt}}));
-    document.querySelector('#composer-input')?.focus();
+    if(input)input.focus();
     return;
   }
   const selected=appState().engines.find(item=>item.engine_id===engine);
@@ -130,7 +143,7 @@ async function newThreadForEngine(engine,model,prompt){
   await loadThreads();
   await selectThread(thread.thread_id);
   if(prompt)document.dispatchEvent(new CustomEvent('retry-prompt',{detail:{content:prompt}}));
-  document.querySelector('#composer-input')?.focus();
+  if(input)input.focus();
 }
 
 document.querySelector('#new-thread').addEventListener('click',()=>newThread().catch(error=>setStatus(error.message)));
