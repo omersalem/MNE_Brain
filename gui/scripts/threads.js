@@ -58,18 +58,79 @@ export async function selectThread(threadId){
   if(active)startTurnStream(active);
 }
 
+function isThreadEmpty(thread){
+  if(!thread)return true;
+  const turnIds=thread.turn_ids||[];
+  const turns=thread.turns||[];
+  const msgs=thread.messages||[];
+  return turnIds.length===0&&turns.length===0&&msgs.length===0;
+}
+
+function nextConversationTitle(){
+  let maxNum=0;
+  for(const t of appState().threads){
+    const match=t.title?.match(/^Conversation\s+(\d+)$/i);
+    if(match){
+      const n=parseInt(match[1],10);
+      if(n>maxNum)maxNum=n;
+    }
+  }
+  return `Conversation ${Math.max(maxNum+1,appState().threads.length+1)}`;
+}
+
 async function newThread(){
-  const title=`Conversation ${appState().threads.length+1}`;
+  const current=appState().currentThread;
+  if(isThreadEmpty(current)){
+    document.querySelector('#composer-input')?.focus();
+    return;
+  }
+  const emptyExisting=appState().threads.find(t=>isThreadEmpty(t));
+  if(emptyExisting){
+    await selectThread(emptyExisting.thread_id);
+    document.querySelector('#composer-input')?.focus();
+    return;
+  }
+  const title=nextConversationTitle();
   const engine=document.querySelector('#provider-select').value||'codex';
   const model=document.querySelector('#model-select').value||undefined;
   const thread=await mutateJSON('/api/v2/threads',{title,engine_id:engine,model_id:model,permission_mode:'OWNER_DIRECT'});
-  await loadThreads(); await selectThread(thread.thread_id);
+  await loadThreads();
+  await selectThread(thread.thread_id);
+  document.querySelector('#composer-input')?.focus();
 }
 
 async function newThreadForEngine(engine,model,prompt){
+  const current=appState().currentThread;
+  if(isThreadEmpty(current)){
+    await mutateJSON(`/api/v2/threads/${encodeURIComponent(current.thread_id)}/engine`,{engine_id:engine,model_id:model});
+    current.engine_id=engine;
+    current.model_id=model;
+    document.querySelector('#provider-select').value=engine;
+    document.querySelector('#model-select').value=model;
+    renderThreads();
+    if(prompt)document.dispatchEvent(new CustomEvent('retry-prompt',{detail:{content:prompt}}));
+    document.querySelector('#composer-input')?.focus();
+    return;
+  }
+  const emptyExisting=appState().threads.find(t=>isThreadEmpty(t));
+  if(emptyExisting){
+    await selectThread(emptyExisting.thread_id);
+    await mutateJSON(`/api/v2/threads/${encodeURIComponent(emptyExisting.thread_id)}/engine`,{engine_id:engine,model_id:model});
+    emptyExisting.engine_id=engine;
+    emptyExisting.model_id=model;
+    document.querySelector('#provider-select').value=engine;
+    document.querySelector('#model-select').value=model;
+    renderThreads();
+    if(prompt)document.dispatchEvent(new CustomEvent('retry-prompt',{detail:{content:prompt}}));
+    document.querySelector('#composer-input')?.focus();
+    return;
+  }
   const selected=appState().engines.find(item=>item.engine_id===engine);
-  const thread=await mutateJSON('/api/v2/threads',{title:`Conversation ${appState().threads.length+1}`,engine_id:engine,model_id:model||selected?.default_model,permission_mode:'OWNER_DIRECT'});
-  await loadThreads();await selectThread(thread.thread_id);if(prompt)document.dispatchEvent(new CustomEvent('retry-prompt',{detail:{content:prompt}}));
+  const thread=await mutateJSON('/api/v2/threads',{title:nextConversationTitle(),engine_id:engine,model_id:model||selected?.default_model,permission_mode:'OWNER_DIRECT'});
+  await loadThreads();
+  await selectThread(thread.thread_id);
+  if(prompt)document.dispatchEvent(new CustomEvent('retry-prompt',{detail:{content:prompt}}));
+  document.querySelector('#composer-input')?.focus();
 }
 
 document.querySelector('#new-thread').addEventListener('click',()=>newThread().catch(error=>setStatus(error.message)));
