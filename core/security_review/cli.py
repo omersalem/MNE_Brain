@@ -4,6 +4,10 @@ import os
 import sys
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
+from dotenv import load_dotenv
+
+# Ensure local .env is loaded
+load_dotenv()
 
 from core.connectors.security.ad_exchange_collector import (
     ActiveDirectoryCollector,

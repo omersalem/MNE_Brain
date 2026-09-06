@@ -2,8 +2,13 @@ import hashlib
 import logging
 import os
 import re
+import time
 from datetime import datetime, timezone
 from typing import Dict, List, Optional
+
+from dotenv import load_dotenv
+
+load_dotenv()
 
 from core.connectors.security.base import BaseSecurityCollector
 from core.connectors.security.models import (
@@ -47,7 +52,7 @@ class FortiGateSecurityCollector(BaseSecurityCollector):
 
     def parse_log_line(self, line: str) -> Optional[NormalizedSecurityEvent]:
         """Converts a raw FortiGate syslog string into a NormalizedSecurityEvent."""
-        if not line or not line.strip():
+        if not line or not line.strip() or ("date=" not in line and "logid=" not in line):
             return None
 
         fields = self.parse_key_value_pairs(line)
@@ -58,23 +63,27 @@ class FortiGateSecurityCollector(BaseSecurityCollector):
         subtype = fields.get("subtype", "").lower()
         msg = fields.get("msg", "")
         action = fields.get("action", "").lower()
+        attack = fields.get("attack", "")
+        hostname = fields.get("hostname", "")
 
         # Determine category & threat name
         category = ThreatCategory.ANOMALY
-        threat_name = msg or "FortiGate Security Event"
+        threat_name = msg or attack or "FortiGate Security Event"
         attacker_ip = fields.get("srcip") or fields.get("remip")
-        target = fields.get("dstip") or fields.get("user")
+        target = fields.get("dstip") or fields.get("user") or fields.get("hostname")
 
         if subtype == "vpn" or "vpn login fail" in msg.lower() or "negotiation failure" in fields.get("reason", "").lower():
             category = ThreatCategory.BRUTE_FORCE
             threat_name = f"SSL-VPN Authentication Failure: {fields.get('user', 'unknown user')}"
             target = fields.get("user") or target
-        elif log_type == "ips" or subtype == "signature":
+        elif log_type in ("ips", "utm") or subtype in ("ips", "signature") or attack:
             category = ThreatCategory.INTRUSION
-            threat_name = fields.get("attack") or msg or "IPS Signature Match"
+            threat_name = f"IPS / Security Attack: {attack or msg}"
+            if hostname:
+                threat_name += f" ({hostname})"
         elif log_type == "virus" or subtype == "virus":
             category = ThreatCategory.MALWARE
-            threat_name = fields.get("virus") or msg or "Malware Detected"
+            threat_name = f"Malware Detected: {fields.get('virus', msg)}"
         elif subtype == "system" or subtype == "admin":
             if "login" in msg.lower():
                 category = ThreatCategory.PRIVILEGE_CHANGE
@@ -92,10 +101,9 @@ class FortiGateSecurityCollector(BaseSecurityCollector):
             normalized_action = "ALERT"
 
         # Unique event ID hash
-        raw_hash = hashlib.md5(f"{line}_{fields.get('date')}_{fields.get('time')}".encode("utf-8")).hexdigest()[:12]
+        raw_hash = hashlib.md5(f"{line}_{fields.get('date')}_{fields.get('time')}_{fields.get('eventtime')}".encode("utf-8")).hexdigest()[:12]
         event_id = f"fgt-{raw_hash}"
 
-        # Parse timestamp if available
         event_time = datetime.now(timezone.utc)
         if "date" in fields and "time" in fields:
             try:
@@ -121,6 +129,10 @@ class FortiGateSecurityCollector(BaseSecurityCollector):
     def _fetch_logs_internal(self, hours_back: int) -> List[NormalizedSecurityEvent]:
         """Fetch logs from FortiGate using REST API or SSH."""
         events: List[NormalizedSecurityEvent] = []
+
+        if not self.password and not self.api_key:
+            raise ValueError("Neither MNE_FORTIGATE_PASSWORD nor MNE_FORTIGATE_API_KEY is configured in .env.")
+
         # If API key configured, use REST API
         if self.api_key:
             import requests
@@ -135,26 +147,43 @@ class FortiGateSecurityCollector(BaseSecurityCollector):
             return events
 
         # If SSH credentials configured
-        if self.password:
-            import paramiko
-            client = paramiko.SSHClient()
-            client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-            try:
-                client.connect(
-                    hostname=self.host,
-                    username=self.username,
-                    password=self.password,
-                    timeout=45,
-                    look_for_keys=False,
-                    allow_agent=False,
-                )
-                stdin, stdout, stderr = client.exec_command("execute log display", timeout=self.timeout)
-                output = stdout.read().decode("utf-8", errors="ignore")
-                for line in output.splitlines():
-                    parsed = self.parse_log_line(line)
-                    if parsed:
-                        events.append(parsed)
-            finally:
-                client.close()
+        import paramiko
+        client = paramiko.SSHClient()
+        client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        try:
+            client.connect(
+                hostname=self.host,
+                username=self.username,
+                password=self.password,
+                timeout=30,
+                look_for_keys=False,
+                allow_agent=False,
+            )
+            shell = client.invoke_shell()
+            time.sleep(1)
+            shell.recv(4096)
+
+            # Pull IPS / UTM attack logs from disk
+            cmd_ips = "execute log filter device disk\nexecute log filter view-lines 50\nexecute log filter category 4\nexecute log display\n"
+            shell.send(cmd_ips)
+            time.sleep(2.5)
+            output_ips = shell.recv(65536).decode("utf-8", errors="ignore")
+            for line in output_ips.splitlines():
+                parsed = self.parse_log_line(line)
+                if parsed:
+                    events.append(parsed)
+
+            # Pull System / VPN events from disk
+            cmd_sys = "execute log filter category 1\nexecute log display\n"
+            shell.send(cmd_sys)
+            time.sleep(2.5)
+            output_sys = shell.recv(65536).decode("utf-8", errors="ignore")
+            for line in output_sys.splitlines():
+                parsed = self.parse_log_line(line)
+                if parsed:
+                    events.append(parsed)
+
+        finally:
+            client.close()
 
         return events

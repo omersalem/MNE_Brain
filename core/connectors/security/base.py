@@ -1,7 +1,13 @@
 import abc
 import logging
+import os
 import time
 from typing import List
+from dotenv import load_dotenv
+
+# Ensure .env is loaded in any execution context
+load_dotenv()
+
 from core.connectors.security.models import (
     CollectorResult,
     CollectorStatus,

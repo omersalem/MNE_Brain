@@ -1,8 +1,14 @@
 import hashlib
 import logging
 import os
+import re
+import time
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
+
+from dotenv import load_dotenv
+
+load_dotenv()
 
 from core.connectors.security.base import BaseSecurityCollector
 from core.connectors.security.models import (
@@ -16,8 +22,8 @@ logger = logging.getLogger(__name__)
 class SophosEmailCollector(BaseSecurityCollector):
     """Collector for Sophos Email Protection Appliance (172.23.71.39:4444).
 
-    Collects SMTP Quarantine alerts, Zero-day Sandstorm detonations,
-    malware attachments, and spam surge anomalies.
+    Collects SMTP rejected logs, RBL blocks, quarantine alerts,
+    and malware/phishing detections.
     """
 
     def __init__(
@@ -30,12 +36,12 @@ class SophosEmailCollector(BaseSecurityCollector):
     ):
         super().__init__(device_name="Sophos Email", timeout=timeout)
         self.host = host or os.getenv("MNE_SOPHOS_HOST", "172.23.71.39")
-        self.port = int(os.getenv("MNE_SOPHOS_PORT", str(port)))
+        self.port = int(os.getenv("MNE_SOPHOS_WEB_PORT", str(port)))
         self.username = username or os.getenv("MNE_SOPHOS_USERNAME", "admin")
         self.password = password or os.getenv("MNE_SOPHOS_PASSWORD", "")
 
     def parse_quarantine_entry(self, entry: Dict[str, Any]) -> NormalizedSecurityEvent:
-        """Parses a Sophos quarantine or mail log entry dictionary."""
+        """Parses a structured quarantine dictionary entry."""
         mail_id = entry.get("mail_id") or hashlib.md5(str(entry).encode()).hexdigest()[:10]
         sender = entry.get("sender", "unknown@sender")
         recipient = entry.get("recipient", "unknown@recipient")
@@ -76,34 +82,80 @@ class SophosEmailCollector(BaseSecurityCollector):
             metadata={"sender": sender, "recipient": recipient, "sandbox_verdict": sandbox},
         )
 
+    def parse_reject_log_line(self, line: str) -> Optional[NormalizedSecurityEvent]:
+        """Parses a line from Sophos /log/smtpd_reject.log."""
+        if not line or "rejected RCPT" not in line:
+            return None
+
+        # Format: 2026-09-06 08:29:08.746Z [13449] H=omta34.uswest2.a.cloudfilter.net [35.89.44.33]:59371 ... F=<hr@jscpd.ps> rejected RCPT <nablus@mne.gov.ps>: An RBL has blocked...
+        ip_match = re.search(r'\[([0-9a-fA-F\.\:]+)\]:\d+', line)
+        src_ip = ip_match.group(1) if ip_match else None
+
+        sender_match = re.search(r'F=<([^>]+)>', line)
+        sender = sender_match.group(1) if sender_match else "unknown_sender"
+
+        rcpt_match = re.search(r'rejected RCPT <([^>]+)>:\s*(.*)', line)
+        recipient = rcpt_match.group(1) if rcpt_match else "unknown_recipient"
+        reason = rcpt_match.group(2).strip() if rcpt_match else "Rejected by policy"
+
+        category = ThreatCategory.PHISHING
+        if "rbl" in reason.lower():
+            category = ThreatCategory.INTRUSION
+        elif "malware" in reason.lower() or "virus" in reason.lower():
+            category = ThreatCategory.MALWARE
+
+        raw_hash = hashlib.md5(f"{src_ip}_{sender}_{recipient}_{reason}".encode()).hexdigest()[:10]
+
+        return NormalizedSecurityEvent(
+            event_id=f"sophos-rej-{raw_hash}",
+            timestamp=datetime.now(timezone.utc),
+            source_device="Sophos Email",
+            category=category,
+            threat_name=f"Email Blocked: {reason} (From: {sender})",
+            attacker_ip=src_ip,
+            target=recipient,
+            action_taken="DROPPED",
+            count=1,
+            raw_snippet=line.strip()[:300],
+            metadata={"sender": sender, "recipient": recipient, "reason": reason},
+        )
+
     def _fetch_logs_internal(self, hours_back: int) -> List[NormalizedSecurityEvent]:
-        """Fetches quarantine and mail logs via Sophos XML API or SSH."""
+        """Fetches reject and mail logs via Sophos SSH shell."""
         events: List[NormalizedSecurityEvent] = []
         if not self.password:
-            logger.warning("Sophos password not configured. Skipping live fetch.")
-            return events
+            raise ValueError("MNE_SOPHOS_PASSWORD is not configured in .env.")
 
-        # Query Sophos WebConsole XML API
-        import requests
-        api_url = f"https://{self.host}:{self.port}/webconsole/APIController"
-        login_xml = (
-            f"<Request><Login><Username>{self.username}</Username>"
-            f"<Password>{self.password}</Password></Login></Request>"
-        )
+        import paramiko
+        client = paramiko.SSHClient()
+        client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         try:
-            resp = requests.post(api_url, data={"reqxml": login_xml}, verify=False, timeout=self.timeout)
-            if resp.status_code == 200 and "Authentication Failure" not in resp.text:
-                # Query quarantine records
-                query_xml = (
-                    f"<Request><Login><Username>{self.username}</Username>"
-                    f"<Password>{self.password}</Password></Login>"
-                    f"<Get><MailQuarantine></MailQuarantine></Get></Request>"
-                )
-                q_resp = requests.post(api_url, data={"reqxml": query_xml}, verify=False, timeout=self.timeout)
-                # Parse XML responses or log records
-                pass
-        except Exception as exc:
-            logger.warning("Sophos API request failed: %s", exc)
-            raise
+            client.connect(
+                hostname=self.host,
+                username=self.username,
+                password=self.password,
+                timeout=30,
+                look_for_keys=False,
+                allow_agent=False,
+            )
+            shell = client.invoke_shell()
+            time.sleep(1)
+            shell.recv(4096)
+            # Enter menu 5 (Device Management) -> 3 (Advanced Shell)
+            shell.send("5\n3\n")
+            time.sleep(1.5)
+            shell.recv(8192)
+
+            # Query the last 50 rejected emails
+            shell.send("tail -n 50 /log/smtpd_reject.log\n")
+            time.sleep(2)
+            reject_output = shell.recv(65536).decode("utf-8", errors="ignore")
+            for line in reject_output.splitlines():
+                parsed = self.parse_reject_log_line(line)
+                if parsed:
+                    events.append(parsed)
+
+        finally:
+            client.close()
 
         return events

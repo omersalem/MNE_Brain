@@ -11,6 +11,7 @@ from typing import List, Optional
 import jinja2
 from core.connectors.security.models import (
     CollectorResult,
+    CollectorStatus,
     Incident,
     SeverityLevel,
 )
@@ -102,8 +103,8 @@ class SecurityReporter:
         h2_style = ParagraphStyle(
             "SectionH2",
             parent=styles["Heading2"],
-            fontSize=13,
-            leading=16,
+            fontSize=12,
+            leading=15,
             textColor=colors.HexColor("#0284c7"),
             spaceBefore=12,
             spaceAfter=6,
@@ -119,56 +120,104 @@ class SecurityReporter:
             spaceBefore=4,
             spaceAfter=6,
         )
+        alert_style = ParagraphStyle(
+            "AlertBox",
+            parent=styles["Normal"],
+            fontSize=9,
+            leading=12,
+            textColor=colors.HexColor("#991b1b"),
+            backColor=colors.HexColor("#fee2e2"),
+            borderPadding=6,
+            spaceBefore=6,
+            spaceAfter=8,
+        )
 
         elements = []
         # Header
         elements.append(Paragraph("Ministry of National Economy (MNE)", title_style))
         today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
-        elements.append(Paragraph(f"Daily Cyber Threat & Risk Intelligence Briefing | Generated: {today_str}", subtitle_style))
+        elements.append(Paragraph(f"Daily Cyber Threat & Risk Intelligence Briefing | Generated: {today_str} | Window: Past 24h", subtitle_style))
         elements.append(HRFlowable(width="100%", thickness=1.5, color=colors.HexColor("#0284c7"), spaceAfter=12))
 
-        # Executive Metrics Summary
-        if incidents:
-            crit_n = sum(1 for i in incidents if i.severity == SeverityLevel.CRITICAL)
-            high_n = sum(1 for i in incidents if i.severity == SeverityLevel.HIGH)
-            med_n = sum(1 for i in incidents if i.severity == SeverityLevel.MEDIUM)
-            summary_data = [
-                ["Metric", "Count", "Severity Status"],
-                ["Critical Risks", str(crit_n), "IMMEDIATE ATTENTION" if crit_n > 0 else "Clear"],
-                ["High Risks", str(high_n), "Action Required" if high_n > 0 else "Clear"],
-                ["Medium Risks", str(med_n), "Monitor" if med_n > 0 else "Clear"],
-            ]
-            summary_table = Table(summary_data, colWidths=[200, 80, 200])
-            summary_table.setStyle(TableStyle([
-                ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#0f172a")),
+        # Risk Metrics Grid
+        inc_list = incidents or []
+        crit_n = sum(1 for i in inc_list if i.severity == SeverityLevel.CRITICAL)
+        high_n = sum(1 for i in inc_list if i.severity == SeverityLevel.HIGH)
+        med_n = sum(1 for i in inc_list if i.severity == SeverityLevel.MEDIUM)
+
+        col_list = collectors or []
+        success_cols = sum(1 for c in col_list if c.status == CollectorStatus.SUCCESS)
+        total_cols = len(col_list) if col_list else 6
+
+        summary_data = [
+            ["Critical Risks", "High Risks", "Medium Risks", "Devices Online"],
+            [str(crit_n), str(high_n), str(med_n), f"{success_cols}/{total_cols}"],
+        ]
+        summary_table = Table(summary_data, colWidths=[130, 130, 130, 130])
+        summary_table.setStyle(TableStyle([
+            ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#0f172a")),
+            ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+            ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+            ("FONTSIZE", (0, 0), (-1, 0), 9),
+            ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+            ("BACKGROUND", (0, 1), (-1, 1), colors.HexColor("#f8fafc")),
+            ("FONTSIZE", (0, 1), (-1, 1), 14),
+            ("FONTNAME", (0, 1), (-1, 1), "Helvetica-Bold"),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
+            ("TOPPADDING", (0, 0), (-1, -1), 8),
+            ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#cbd5e1")),
+        ]))
+        elements.append(summary_table)
+        elements.append(Spacer(1, 12))
+
+        # Ingestion Health Table
+        if col_list:
+            elements.append(Paragraph("Perimeter & Identity Log Ingestion Health", h2_style))
+            health_rows = [["System", "Status", "Events", "Time", "Diagnostics"]]
+            failed_count = 0
+            for col in col_list:
+                status_str = col.status.value
+                if col.status != CollectorStatus.SUCCESS:
+                    failed_count += 1
+                diag = (col.error_message or "Healthy log synchronization")[:45]
+                health_rows.append([col.device_name, status_str, str(len(col.events)), f"{col.collection_duration_seconds}s", diag])
+
+            health_table = Table(health_rows, colWidths=[100, 60, 50, 50, 260])
+            health_table.setStyle(TableStyle([
+                ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#334155")),
                 ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
                 ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-                ("FONTSIZE", (0, 0), (-1, 0), 9),
-                ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
+                ("FONTSIZE", (0, 0), (-1, -1), 8),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
+                ("TOPPADDING", (0, 0), (-1, -1), 4),
                 ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#cbd5e1")),
             ]))
-            elements.append(Paragraph("Executive Summary & Risk Metrics", h2_style))
-            elements.append(summary_table)
-            elements.append(Spacer(1, 12))
+            elements.append(health_table)
+            elements.append(Spacer(1, 10))
 
-            elements.append(Paragraph("Detailed Security Incidents & Actionable Remediations", h2_style))
-            for inc in incidents:
+            if failed_count > 0:
+                elements.append(Paragraph(f"⚠️ <b>OPERATIONAL ALERT:</b> {failed_count} device(s) encountered log collection errors. Review connectivity or credentials.", alert_style))
+
+        # Incidents Section
+        elements.append(Paragraph("Identified Security Risks & Threat Incidents", h2_style))
+        if inc_list:
+            for inc in inc_list:
                 inc_title = f"[{inc.severity.value}] {inc.incident_id} — {inc.title}"
                 elements.append(Paragraph(f"<b>{inc_title}</b>", styles["Heading3"]))
-                details_p = f"Device: {inc.source_device} | Attacker: {inc.attacker_ip or 'N/A'} | Target: {inc.target or 'N/A'} | Attempts: {inc.event_count}"
+                details_p = f"Device: <b>{inc.source_device}</b> | Attacker: <b>{inc.attacker_ip or 'N/A'}</b> | Target: <b>{inc.target or 'N/A'}</b> | Attempts: <b>{inc.event_count}</b>"
                 elements.append(Paragraph(details_p, styles["Normal"]))
                 elements.append(Paragraph(f"Description: {inc.description}", styles["Normal"]))
 
                 if inc.remediation_cli:
-                    elements.append(Paragraph("<b>CLI Containment Commands:</b>", styles["Normal"]))
+                    elements.append(Paragraph("<b>CLI Containment Playbook:</b>", styles["Normal"]))
                     cli_text = "<br/>".join(inc.remediation_cli)
                     elements.append(Paragraph(cli_text, code_style))
 
                 if inc.remediation_mode_b_command:
-                    elements.append(Paragraph(f"<i>Mode B Remediation Command:</i> {inc.remediation_mode_b_command}", subtitle_style))
-                elements.append(Spacer(1, 10))
+                    elements.append(Paragraph(f"<i>Mode B Remediation:</i> {inc.remediation_mode_b_command}", subtitle_style))
+                elements.append(Spacer(1, 8))
         else:
-            elements.append(Paragraph("Report Summary: All security and identity devices operating normally.", styles["Normal"]))
+            elements.append(Paragraph("No active security threats meeting Critical, High, or Medium risk thresholds were observed in the collected telemetry.", styles["Normal"]))
 
         doc.build(elements)
         buffer.seek(0)

@@ -4,6 +4,10 @@ import os
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
+from dotenv import load_dotenv
+
+load_dotenv()
+
 from core.connectors.security.base import BaseSecurityCollector
 from core.connectors.security.models import (
     NormalizedSecurityEvent,
@@ -17,7 +21,7 @@ class FmcSecurityCollector(BaseSecurityCollector):
     """Collector for Cisco FMC / FTD (172.23.70.77 / .78).
 
     Collects Snort intrusion alerts, Security Intelligence blocks,
-    and malware file detection events.
+    and audit records.
     """
 
     def __init__(
@@ -47,7 +51,7 @@ class FmcSecurityCollector(BaseSecurityCollector):
         else:
             action = "ALERT"
 
-        ts = item.get("timestamp")
+        ts = item.get("timestamp") or item.get("time")
         event_time = datetime.now(timezone.utc)
         if ts:
             try:
@@ -58,11 +62,17 @@ class FmcSecurityCollector(BaseSecurityCollector):
             except Exception:
                 pass
 
+        category = ThreatCategory.INTRUSION
+        if "login" in rule_msg.lower() or "session" in rule_msg.lower():
+            category = ThreatCategory.PRIVILEGE_CHANGE
+        elif "malware" in rule_msg.lower():
+            category = ThreatCategory.MALWARE
+
         return NormalizedSecurityEvent(
             event_id=f"fmc-{event_id}",
             timestamp=event_time,
             source_device="Cisco FMC",
-            category=ThreatCategory.INTRUSION,
+            category=category,
             threat_name=rule_msg,
             attacker_ip=src_ip,
             target=dst_ip,
@@ -73,35 +83,37 @@ class FmcSecurityCollector(BaseSecurityCollector):
         )
 
     def _fetch_logs_internal(self, hours_back: int) -> List[NormalizedSecurityEvent]:
-        """Queries FMC REST API for intrusion & security intelligence events."""
+        """Queries FMC REST API for audit & intrusion events."""
         events: List[NormalizedSecurityEvent] = []
         if not self.password:
-            logger.warning("FMC password not configured. Skipping live fetch.")
-            return events
+            raise ValueError("MNE_FMC_PASSWORD is not configured in .env.")
 
         import requests
+        import urllib3
+        urllib3.disable_warnings()
+
         auth_url = f"https://{self.host}/api/fmc_platform/v1/auth/generatetoken"
-        try:
-            resp = requests.post(
-                auth_url,
-                auth=(self.username, self.password),
-                verify=False,
-                timeout=45,
-            )
-            if resp.status_code in (200, 204):
-                token = resp.headers.get("X-auth-access-token")
-                domain_uuid = resp.headers.get("DOMAIN_UUID", "e276abec-e0f2-11e3-8169-6d9ed49b625f")
-                if token:
-                    events_url = f"https://{self.host}/api/fmc_config/v1/domain/{domain_uuid}/audit/auditrecords"
-                    headers = {"X-auth-access-token": token}
-                    ev_resp = requests.get(events_url, headers=headers, verify=False, timeout=self.timeout)
-                    if ev_resp.status_code == 200:
-                        items = ev_resp.json().get("items", [])
-                        for item in items:
-                            events.append(self.parse_fmc_event(item))
-        except Exception as exc:
-            logger.warning("FMC REST call failed (%s). Attempting SSH fallback...", exc)
-            # SSH fallback to FMC/FTD can be performed if needed
-            raise
+        resp = requests.post(
+            auth_url,
+            auth=(self.username, self.password),
+            verify=False,
+            timeout=30,
+        )
+        if resp.status_code not in (200, 204):
+            raise ConnectionError(f"FMC authentication failed with status {resp.status_code}")
+
+        token = resp.headers.get("X-auth-access-token")
+        domain = resp.headers.get("DOMAIN_UUID") or "e276abec-e0f2-11e3-8169-6d9ed49b625f"
+        if not token:
+            raise ConnectionError("FMC authentication succeeded but no X-auth-access-token was returned.")
+
+        headers = {"X-auth-access-token": token}
+
+        # 1. Fetch Audit Records from FMC platform
+        audit_url = f"https://{self.host}/api/fmc_platform/v1/domain/{domain}/audit/auditrecords?limit=50"
+        audit_resp = requests.get(audit_url, headers=headers, verify=False, timeout=self.timeout)
+        if audit_resp.status_code == 200:
+            for it in audit_resp.json().get("items", []):
+                events.append(self.parse_fmc_event(it))
 
         return events

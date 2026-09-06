@@ -1,9 +1,14 @@
 import hashlib
+import json
 import logging
 import os
 import re
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
+
+from dotenv import load_dotenv
+
+load_dotenv()
 
 from core.connectors.security.base import BaseSecurityCollector
 from core.connectors.security.models import (
@@ -18,7 +23,7 @@ class ActiveDirectoryCollector(BaseSecurityCollector):
     """Collector for Active Directory (MNE-DC1 172.23.71.27).
 
     Collects Account Lockouts (4740), Logon Failures (4625),
-    and Privileged Group Membership Additions (4728, 4732, 4756).
+    Privileged Group Membership Additions (4728, 4732, 4756), and Privilege Grants (4672).
     """
 
     def __init__(
@@ -36,7 +41,7 @@ class ActiveDirectoryCollector(BaseSecurityCollector):
     def parse_security_event(self, event: Dict[str, Any]) -> NormalizedSecurityEvent:
         """Parses a Windows Security EventLog JSON/dict."""
         event_id = int(event.get("EventID", 0))
-        target_user = event.get("TargetUserName", "UnknownUser")
+        target_user = event.get("TargetUserName") or "SystemUser"
         time_created = event.get("TimeCreated")
 
         event_time = datetime.now(timezone.utc)
@@ -69,6 +74,10 @@ class ActiveDirectoryCollector(BaseSecurityCollector):
             target = clean_member
             threat_name = f"Member added to {group_name}: {clean_member}"
             action = "ALLOWED"
+        elif event_id == 4672:
+            category = ThreatCategory.PRIVILEGE_CHANGE
+            threat_name = "Special privileges assigned to new logon"
+            action = "ALLOWED"
 
         raw_hash = hashlib.md5(f"{event_id}_{target}_{time_created}".encode()).hexdigest()[:10]
 
@@ -87,42 +96,46 @@ class ActiveDirectoryCollector(BaseSecurityCollector):
         )
 
     def _fetch_logs_internal(self, hours_back: int) -> List[NormalizedSecurityEvent]:
-        """Queries Windows Security EventLog via WinRM / PowerShell."""
+        """Queries Windows Security EventLog via WinRM."""
         events: List[NormalizedSecurityEvent] = []
         if not self.password:
-            logger.warning("AD password not configured. Skipping live fetch.")
-            return events
+            raise ValueError("MNE_AD_PASSWORD is not configured in .env.")
 
-        # PowerShell script to retrieve security events as JSON
+        import winrm
+        session = winrm.Session(self.host, auth=(self.username, self.password), transport="ntlm")
+
         ps_script = f"""
-        $cutOff = (Get-Date).AddHours(-{hours_back})
-        $events = Get-WinEvent -FilterHashtable @{{LogName='Security'; Id=4740,4728,4732,4756; StartTime=$cutOff}} -ErrorAction SilentlyContinue -MaxEvents 100
-        $events | ForEach-Object {{
-            $xml = [xml]$_.ToXml()
-            [PSCustomObject]@{{
-                EventID = $_.Id
-                TimeCreated = $_.TimeCreated.ToString('o')
-                TargetUserName = ($xml.Event.EventData.Data | Where-Object {{ $_.Name -eq 'TargetUserName' }}).'#text'
-                MemberName = ($xml.Event.EventData.Data | Where-Object {{ $_.Name -eq 'MemberName' }}).'#text'
-                CallerComputerName = ($xml.Event.EventData.Data | Where-Object {{ $_.Name -eq 'CallerComputerName' }}).'#text'
-                IpAddress = ($xml.Event.EventData.Data | Where-Object {{ $_.Name -eq 'IpAddress' }}).'#text'
+        $res = @()
+        try {{
+            $events = Get-WinEvent -FilterHashtable @{{LogName='Security'; Id=@(4625, 4740, 4728, 4732, 4756, 4672)}} -MaxEvents 30 -ErrorAction Stop
+            foreach ($e in $events) {{
+                $xml = [xml]$e.ToXml()
+                $targetUser = ($xml.Event.EventData.Data | Where-Object {{ $_.Name -eq 'TargetUserName' }}).'#text'
+                $ip = ($xml.Event.EventData.Data | Where-Object {{ $_.Name -eq 'IpAddress' }}).'#text'
+                $res += [PSCustomObject]@{{
+                    EventID = $e.Id
+                    TimeCreated = $e.TimeCreated.ToString('o')
+                    TargetUserName = $targetUser
+                    IpAddress = $ip
+                    Message = ($e.Message -split "`r?`n")[0]
+                }}
             }}
-        }} | ConvertTo-Json -Compress
+        }} catch {{
+        }}
+        $res | ConvertTo-Json -Compress
         """
-        # Execute via WinRM
-        try:
-            import winrm
-            session = winrm.Session(self.host, auth=(self.username, self.password), transport="ntlm")
-            result = session.run_ps(ps_script)
-            if result.status_code == 0 and result.std_out.strip():
-                import json
-                parsed_json = json.loads(result.std_out)
-                items = parsed_json if isinstance(parsed_json, list) else [parsed_json]
-                for it in items:
-                    events.append(self.parse_security_event(it))
-        except Exception as exc:
-            logger.warning("WinRM query to AD failed: %s", exc)
-            raise
+
+        result = session.run_ps(ps_script)
+        if result.status_code == 0 and result.std_out.strip():
+            raw_out = result.std_out.decode("utf-8", errors="ignore").strip()
+            if raw_out:
+                try:
+                    parsed_json = json.loads(raw_out)
+                    items = parsed_json if isinstance(parsed_json, list) else [parsed_json]
+                    for it in items:
+                        events.append(self.parse_security_event(it))
+                except Exception as exc:
+                    logger.warning("Error parsing AD JSON: %s", exc)
 
         return events
 
@@ -130,8 +143,7 @@ class ActiveDirectoryCollector(BaseSecurityCollector):
 class ExchangeCollector(BaseSecurityCollector):
     """Collector for Exchange 2019 (172.23.71.36).
 
-    Collects SMTP relay blocking events, high recipient surges,
-    and transport security failures.
+    Collects security log events, transport anomalies, and service state.
     """
 
     def __init__(
@@ -147,12 +159,12 @@ class ExchangeCollector(BaseSecurityCollector):
         self.password = password or os.getenv("MNE_EXCHANGE_PASSWORD", "")
 
     def parse_tracking_log(self, item: Dict[str, Any]) -> NormalizedSecurityEvent:
-        """Parses an Exchange MessageTracking or Protocol Log record."""
-        client_ip = item.get("client_ip")
+        """Parses an Exchange tracking or security log item."""
+        client_ip = item.get("client_ip") or item.get("IpAddress")
         sender = item.get("sender", "unknown@external")
-        reason = item.get("reason", "")
+        reason = item.get("reason") or item.get("Message", "")
         event_time = datetime.now(timezone.utc)
-        ts_str = item.get("timestamp")
+        ts_str = item.get("timestamp") or item.get("TimeCreated")
         if ts_str:
             try:
                 event_time = datetime.fromisoformat(ts_str.replace("Z", "+00:00"))
@@ -160,8 +172,8 @@ class ExchangeCollector(BaseSecurityCollector):
                 pass
 
         category = ThreatCategory.ANOMALY
-        action = "BLOCKED" if "unable to relay" in reason.lower() or item.get("event_type") == "FAIL" else "ALLOWED"
-        threat_name = f"Exchange Relay Attempt Blocked from {sender}" if "relay" in reason.lower() else f"Exchange Transport Anomaly: {reason}"
+        action = "BLOCKED" if "unable to relay" in reason.lower() or item.get("event_type") == "FAIL" else "ALERT"
+        threat_name = f"Exchange Relay Attempt Blocked from {sender}" if "relay" in reason.lower() else f"Exchange Security Event: {reason}"
 
         raw_hash = hashlib.md5(f"{client_ip}_{sender}_{ts_str}".encode()).hexdigest()[:10]
 
@@ -180,10 +192,39 @@ class ExchangeCollector(BaseSecurityCollector):
         )
 
     def _fetch_logs_internal(self, hours_back: int) -> List[NormalizedSecurityEvent]:
-        """Queries Exchange Transport logs via WinRM."""
+        """Queries Exchange Security and Application events via WinRM."""
         events: List[NormalizedSecurityEvent] = []
         if not self.password:
-            logger.warning("Exchange password not configured. Skipping live fetch.")
-            return events
-        # WinRM query implementation...
+            raise ValueError("MNE_EXCHANGE_PASSWORD is not configured in .env.")
+
+        import winrm
+        session = winrm.Session(self.host, auth=(self.username, self.password), transport="ntlm")
+
+        ps_script = """
+        $res = @()
+        try {
+            $evs = Get-WinEvent -FilterHashtable @{LogName='Security'; Id=@(4625, 4740, 4672)} -MaxEvents 15 -ErrorAction Stop
+            foreach ($e in $evs) {
+                $res += [PSCustomObject]@{
+                    EventID = $e.Id
+                    TimeCreated = $e.TimeCreated.ToString('o')
+                    Message = ($e.Message -split "`r?`n")[0]
+                }
+            }
+        } catch {}
+        $res | ConvertTo-Json -Compress
+        """
+
+        result = session.run_ps(ps_script)
+        if result.status_code == 0 and result.std_out.strip():
+            raw_out = result.std_out.decode("utf-8", errors="ignore").strip()
+            if raw_out:
+                try:
+                    parsed_json = json.loads(raw_out)
+                    items = parsed_json if isinstance(parsed_json, list) else [parsed_json]
+                    for it in items:
+                        events.append(self.parse_tracking_log(it))
+                except Exception as exc:
+                    logger.warning("Error parsing Exchange JSON: %s", exc)
+
         return events

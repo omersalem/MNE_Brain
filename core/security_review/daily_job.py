@@ -1,6 +1,8 @@
-"""Daily 07:00 AM Automated Job for MNE Security Review & Reporting."""
 import logging
 import sys
+from dotenv import load_dotenv
+
+load_dotenv()
 from core.security_review.cli import run_security_pipeline
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
