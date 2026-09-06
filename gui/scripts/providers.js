@@ -4,7 +4,162 @@ const engineSelect=document.querySelector('#provider-select');
 const modelSelect=document.querySelector('#model-select');
 const status=document.querySelector('#provider-status');
 const settings=document.querySelector('#settings-panel');
+const modelPickerBtn=document.querySelector('#model-picker-btn');
+const modelPickerLabel=document.querySelector('#model-picker-label');
+const modelPickerDropdown=document.querySelector('#model-picker-dropdown');
+const modelSearchInput=document.querySelector('#model-search-input');
+const modelSearchClear=document.querySelector('#model-search-clear');
+const modelSearchCount=document.querySelector('#model-search-count');
+const modelPickerList=document.querySelector('#model-picker-list');
 let openCodeCatalog={providers:[],models:[]};
+
+function formatLimit(num){
+  if(num==null||num==='unknown'||isNaN(Number(num)))return num||'unknown';
+  const n=Number(num);
+  if(n>=1000000)return (n/1000000).toFixed(n%1000000===0?0:1)+'M';
+  if(n>=1000)return Math.round(n/1000)+'k';
+  return String(n);
+}
+
+function updateModelPickerLabel(){
+  if(!modelPickerLabel)return;
+  const engine=activeEngine();
+  const model=(engine?.models||[]).find(item=>item.id===modelSelect.value);
+  if(!model||modelSelect.value==='select-model'){
+    modelPickerLabel.textContent=engine?.engine_id==='opencode'?'Choose an OpenCode model…':'Select model…';
+    return;
+  }
+  if(engine?.engine_id==='opencode'){
+    modelPickerLabel.textContent=`${model.display_name||model.model_id||model.id} · ${model.provider_id}`;
+  }else{
+    modelPickerLabel.textContent=model.label||model.display_name||model.id;
+  }
+}
+
+function renderModelPickerOptions(query=''){
+  if(!modelPickerList)return;
+  modelPickerList.replaceChildren();
+  const engine=activeEngine();
+  const allModels=engine?.models||[];
+  const q=query.trim().toLowerCase();
+  const filtered=allModels.filter(m=>{
+    if(!q)return true;
+    const name=(m.display_name||m.label||'').toLowerCase();
+    const id=(m.id||'').toLowerCase();
+    const modelId=(m.model_id||'').toLowerCase();
+    const provider=(m.provider_id||'').toLowerCase();
+    const cost=(m.cost_classification||'').toLowerCase();
+    return name.includes(q)||id.includes(q)||modelId.includes(q)||provider.includes(q)||cost.includes(q);
+  });
+
+  if(modelSearchCount){
+    modelSearchCount.textContent=`${filtered.length} of ${allModels.length} models`;
+  }
+
+  if(!filtered.length){
+    const empty=document.createElement('div');
+    empty.className='model-picker-empty';
+    empty.textContent=q?`No models matching "${query}"`:'No models available for this engine';
+    modelPickerList.append(empty);
+    return;
+  }
+
+  for(const model of filtered){
+    const opt=document.createElement('button');
+    opt.type='button';
+    opt.className='model-picker-option';
+    opt.dataset.modelId=model.id;
+    opt.setAttribute('role','option');
+    const isSelected=modelSelect.value===model.id;
+    opt.setAttribute('aria-selected',String(isSelected));
+    if(isSelected)opt.classList.add('selected');
+
+    const header=document.createElement('div');
+    header.className='model-opt-header';
+    const name=document.createElement('span');
+    name.className='model-opt-name';
+    name.textContent=model.display_name||model.label||model.id;
+    header.append(name);
+
+    const tags=document.createElement('div');
+    tags.className='model-opt-tags';
+    if(model.provider_id){
+      const pTag=document.createElement('span');
+      pTag.className='model-badge model-badge-provider';
+      pTag.textContent=model.provider_id;
+      tags.append(pTag);
+    }
+    if(model.cost_classification==='FREE'){
+      const fTag=document.createElement('span');
+      fTag.className='model-badge model-badge-free';
+      fTag.textContent='FREE';
+      tags.append(fTag);
+    }
+    header.append(tags);
+    opt.append(header);
+
+    const sub=document.createElement('div');
+    sub.className='model-opt-sub';
+    if(model.context_limit){
+      const ctxSpan=document.createElement('span');
+      ctxSpan.textContent=`ctx ${formatLimit(model.context_limit)}`;
+      sub.append(ctxSpan);
+    }
+    if(model.output_limit){
+      const outSpan=document.createElement('span');
+      outSpan.textContent=`out ${formatLimit(model.output_limit)}`;
+      sub.append(outSpan);
+    }
+    if(model.tool_support){
+      const tSpan=document.createElement('span');
+      tSpan.textContent='tools ✓';
+      sub.append(tSpan);
+    }
+    if(model.reasoning){
+      const rSpan=document.createElement('span');
+      rSpan.textContent='reasoning ✓';
+      sub.append(rSpan);
+    }
+    if(sub.hasChildNodes()){
+      opt.append(sub);
+    }
+
+    opt.addEventListener('click',()=>{
+      selectModel(model.id);
+    });
+
+    modelPickerList.append(opt);
+  }
+}
+
+function selectModel(modelId){
+  modelSelect.value=modelId;
+  updateModelPickerLabel();
+  closeModelPicker();
+  modelSelect.dispatchEvent(new Event('change'));
+}
+
+function openModelPicker(){
+  if(!modelPickerDropdown)return;
+  modelPickerDropdown.removeAttribute('hidden');
+  modelPickerBtn?.setAttribute('aria-expanded','true');
+  if(modelSearchInput){
+    modelSearchInput.value='';
+    if(modelSearchClear)modelSearchClear.hidden=true;
+  }
+  renderModelPickerOptions('');
+  if(modelSearchInput)modelSearchInput.focus();
+  const selectedNode=modelPickerList?.querySelector('.model-picker-option.selected');
+  if(selectedNode){
+    selectedNode.scrollIntoView({block:'nearest'});
+  }
+}
+
+function closeModelPicker(){
+  if(!modelPickerDropdown)return;
+  modelPickerDropdown.setAttribute('hidden','');
+  modelPickerBtn?.setAttribute('aria-expanded','false');
+}
 
 function readinessCard(id,title,health,detail){
   const root=document.querySelector(id);root.replaceChildren();
@@ -20,6 +175,10 @@ function renderModels(selected){
   if(engine?.engine_id==='opencode'){const placeholder=document.createElement('option');placeholder.value='select-model';placeholder.textContent='Choose an OpenCode provider model';placeholder.disabled=true;modelSelect.append(placeholder);}
   for(const model of engine?.models||[]){const option=document.createElement('option');option.value=model.id;if(engine?.engine_id==='opencode')option.textContent=`${model.display_name} · ${model.provider_id} · ${model.cost_classification} · ctx ${model.context_limit||'unknown'} · out ${model.output_limit||'unknown'} · tools ${model.tool_support?'yes':'no'} · reasoning ${model.reasoning?'yes':'no'} · ${model.availability} · ${model.connection_status}`;else option.textContent=model.label;modelSelect.append(option);}
   modelSelect.value=selected||engine?.default_model||'select-model';
+  updateModelPickerLabel();
+  if(modelPickerDropdown&&!modelPickerDropdown.hasAttribute('hidden')){
+    renderModelPickerOptions(modelSearchInput?.value||'');
+  }
   renderModelDetails();
 }
 function renderModelDetails(){const engine=activeEngine();const model=(engine?.models||[]).find(item=>item.id===modelSelect.value);const root=document.querySelector('#model-details');if(!model){root.textContent=engine?.engine_id==='opencode'?'Select an exact connected OpenCode model; no automatic fallback will occur.':'';return;}if(engine?.engine_id==='opencode')root.textContent=`${model.provider_id}/${model.model_id} · ${model.cost_classification} · context ${model.context_limit||'unknown'} · output ${model.output_limit||'unknown'} · tools ${model.tool_support?'supported':'not reported'} · reasoning ${model.reasoning?'reported':'not reported'} · ${model.availability} · ${model.connection_status}${model.warnings?.length?' · '+model.warnings.join(' · '):''}`;else if(engine?.engine_id==='antigravity')root.textContent=`${engine.label} · ${model.label}${model.effort?' · effort: '+model.effort:''} · Unrestricted Read & Governed Write Review`;else root.textContent=`${engine.label} · ${model.label}`;}
@@ -104,6 +263,82 @@ async function pinSelection(){
   catch(error){setStatus(error.message);engineSelect.value=thread.engine_id;renderModels(thread.model_id);}
 }
 engineSelect.addEventListener('change',()=>{renderModels();pinSelection();});modelSelect.addEventListener('change',()=>{renderModelDetails();pinSelection();});
+
+if(modelPickerBtn){
+  modelPickerBtn.addEventListener('click',e=>{
+    e.stopPropagation();
+    if(!modelPickerDropdown||modelPickerDropdown.hasAttribute('hidden'))openModelPicker();
+    else closeModelPicker();
+  });
+}
+
+if(modelSearchInput){
+  modelSearchInput.addEventListener('input',()=>{
+    if(modelSearchClear)modelSearchClear.hidden=!modelSearchInput.value;
+    renderModelPickerOptions(modelSearchInput.value);
+  });
+  modelSearchInput.addEventListener('keydown',e=>{
+    if(e.key==='Escape'){
+      e.stopPropagation();
+      closeModelPicker();
+      modelPickerBtn?.focus();
+    }else if(e.key==='Enter'){
+      e.preventDefault();
+      const firstOpt=modelPickerList?.querySelector('.model-picker-option');
+      if(firstOpt&&firstOpt.dataset.modelId){
+        selectModel(firstOpt.dataset.modelId);
+      }
+    }else if(e.key==='ArrowDown'){
+      e.preventDefault();
+      const firstOpt=modelPickerList?.querySelector('.model-picker-option');
+      if(firstOpt)firstOpt.focus();
+    }
+  });
+}
+
+if(modelSearchClear){
+  modelSearchClear.addEventListener('click',()=>{
+    modelSearchInput.value='';
+    modelSearchClear.hidden=true;
+    renderModelPickerOptions('');
+    modelSearchInput.focus();
+  });
+}
+
+if(modelPickerList){
+  modelPickerList.addEventListener('keydown',e=>{
+    const current=document.activeElement;
+    if(!current||!current.classList.contains('model-picker-option'))return;
+    if(e.key==='ArrowDown'){
+      e.preventDefault();
+      const next=current.nextElementSibling;
+      if(next&&next.classList.contains('model-picker-option'))next.focus();
+    }else if(e.key==='ArrowUp'){
+      e.preventDefault();
+      const prev=current.previousElementSibling;
+      if(prev&&prev.classList.contains('model-picker-option'))prev.focus();
+      else modelSearchInput?.focus();
+    }else if(e.key==='Escape'){
+      closeModelPicker();
+      modelPickerBtn?.focus();
+    }
+  });
+}
+
+document.addEventListener('click',e=>{
+  if(modelPickerDropdown&&!modelPickerDropdown.hasAttribute('hidden')){
+    if(!e.target.closest('.model-picker-wrapper')){
+      closeModelPicker();
+    }
+  }
+});
+
+window.addEventListener('keydown',e=>{
+  if(e.key==='Escape'&&modelPickerDropdown&&!modelPickerDropdown.hasAttribute('hidden')){
+    closeModelPicker();
+    modelPickerBtn?.focus();
+  }
+});
 
 async function providerAction(action,providerId){const output=document.querySelector('#settings-status');try{output.textContent=`${action} in progress…`;const result=await mutateJSON(`/api/v2/opencode/providers/${action}`,{provider_id:providerId});output.textContent=`${result.status} · no credential material returned`;await loadProviders();}catch(error){output.textContent=error.message;}}
 document.querySelector('#settings-button').addEventListener('click',()=>settings.showModal());

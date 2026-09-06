@@ -1586,6 +1586,259 @@ ul {
   font-family: var(--mono);
 }
 
+/* Searchable Model Picker Combobox */
+.model-picker-wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.model-picker-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.45rem;
+  height: 30px;
+  min-width: 9.5rem;
+  max-width: 17rem;
+  padding: 0.28rem 0.65rem;
+  font-size: 0.78rem;
+  color: var(--text);
+  background: var(--bg-elev);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s ease;
+}
+
+.model-picker-trigger:hover,
+.model-picker-trigger:focus-visible {
+  border-color: var(--accent);
+  background: var(--panel-2);
+}
+
+.model-picker-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1 1 auto;
+}
+
+.model-picker-arrow {
+  font-size: 0.65rem;
+  color: var(--muted);
+  flex-shrink: 0;
+  transition: transform 0.15s ease;
+}
+
+.model-picker-trigger[aria-expanded="true"] .model-picker-arrow {
+  transform: rotate(180deg);
+  color: var(--accent);
+}
+
+.model-picker-dropdown {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 0;
+  width: min(540px, 92vw);
+  max-height: min(440px, 62vh);
+  background: #09131e;
+  border: 1px solid #1c3c5d;
+  border-radius: 12px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(56, 189, 248, 0.2);
+  backdrop-filter: blur(16px);
+  z-index: 250;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: modelPickerOpen 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.model-picker-dropdown[hidden] {
+  display: none !important;
+}
+
+@keyframes modelPickerOpen {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.model-search-header {
+  padding: 0.65rem 0.75rem 0.45rem;
+  border-bottom: 1px solid #18334f;
+  background: rgba(7, 15, 24, 0.9);
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.model-search-input-box {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.model-search-icon {
+  position: absolute;
+  left: 0.65rem;
+  font-size: 0.78rem;
+  color: var(--muted);
+  pointer-events: none;
+}
+
+.model-search-input-box input {
+  width: 100%;
+  height: 32px;
+  padding: 0.3rem 1.8rem 0.3rem 2rem;
+  font-size: 0.82rem;
+  background: #0c1c2e;
+  border: 1px solid #20456c;
+  border-radius: 7px;
+  color: #ffffff;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.model-search-input-box input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2);
+}
+
+.model-search-clear {
+  position: absolute;
+  right: 0.45rem;
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 0.2rem;
+  font-size: 0.75rem;
+  line-height: 1;
+  border-radius: 4px;
+}
+
+.model-search-clear:hover {
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.model-search-count {
+  font-size: 0.68rem;
+  color: var(--muted);
+  font-weight: 600;
+  padding: 0 0.15rem;
+}
+
+.model-picker-options {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  max-height: 350px;
+  padding: 0.35rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.model-picker-option {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.5rem 0.65rem;
+  border-radius: 8px;
+  background: transparent;
+  border: 1px solid transparent;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.12s ease, border-color 0.12s ease;
+  width: 100%;
+}
+
+.model-picker-option:hover,
+.model-picker-option.focused {
+  background: #112842;
+  border-color: #245280;
+}
+
+.model-picker-option.selected {
+  background: rgba(14, 165, 233, 0.15);
+  border-color: rgba(56, 189, 248, 0.4);
+}
+
+.model-opt-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.model-opt-name {
+  font-weight: 650;
+  font-size: 0.83rem;
+  color: #f1f5f9;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.model-opt-tags {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-shrink: 0;
+}
+
+.model-badge {
+  font-size: 0.62rem;
+  font-weight: 750;
+  padding: 0.12rem 0.4rem;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.model-badge-provider {
+  background: #1e3650;
+  color: #93c5fd;
+  border: 1px solid #2b4c73;
+}
+
+.model-badge-free {
+  background: rgba(34, 197, 94, 0.18);
+  color: #4ade80;
+  border: 1px solid rgba(74, 222, 128, 0.3);
+}
+
+.model-opt-sub {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.68rem;
+  color: var(--muted);
+  flex-wrap: wrap;
+}
+
+.model-opt-sub span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+.model-picker-empty {
+  padding: 1.5rem 1rem;
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
 /* Right: Sleek Collapsible Evidence Panel */
 .evidence-panel {
   display: none;

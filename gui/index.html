@@ -115,7 +115,26 @@
           <div class="composer-engine-bar">
             <button id="attach-file-btn" class="composer-attach-btn" type="button" title="Attach files or images (or drag & drop / paste)" aria-label="Attach file">📎 Attach</button>
             <label class="control-field" for="provider-select"><span>Engine</span><select id="provider-select" aria-describedby="provider-status" title="Select AI Engine"></select></label>
-            <label class="control-field" for="model-select"><span>Model</span><select id="model-select" aria-describedby="provider-status" title="Select Model"></select></label>
+            <div class="model-picker-wrapper">
+              <label class="control-field" for="model-select"><span>Model</span>
+                <select id="model-select" class="sr-only" aria-describedby="provider-status" title="Select Model"></select>
+                <button id="model-picker-btn" class="model-picker-trigger" type="button" aria-haspopup="listbox" aria-expanded="false" title="Search and select model">
+                  <span id="model-picker-label" class="model-picker-label">Select model…</span>
+                  <span class="model-picker-arrow" aria-hidden="true">▾</span>
+                </button>
+              </label>
+              <div id="model-picker-dropdown" class="model-picker-dropdown" hidden role="listbox" aria-label="Available models">
+                <div class="model-search-header">
+                  <div class="model-search-input-box">
+                    <span class="model-search-icon" aria-hidden="true">🔍</span>
+                    <input id="model-search-input" type="search" placeholder="Search models (e.g. deepseek, llama, gpt-4)…" autocomplete="off" aria-label="Search models">
+                    <button id="model-search-clear" class="model-search-clear" type="button" aria-label="Clear search" hidden>✕</button>
+                  </div>
+                  <span id="model-search-count" class="model-search-count">0 models</span>
+                </div>
+                <div id="model-picker-list" class="model-picker-options"></div>
+              </div>
+            </div>
             <p id="model-details" class="settings-note" aria-live="polite"></p>
           </div>
           <div class="composer-actions">
