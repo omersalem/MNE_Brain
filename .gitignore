@@ -24,6 +24,8 @@ operations/logs/*.jsonl
 operations/verification/*.txt
 operations/conversations/*.json
 operations/conversations/*.tmp
+operations/uploads/*
+!operations/uploads/.gitkeep
 
 # Local editor and operating-system files
 .vscode/

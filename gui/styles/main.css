@@ -1385,6 +1385,207 @@ ul {
   font-size: 0.95rem;
 }
 
+/* Attachment Tray & File Badges */
+.composer.drag-over {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(53, 189, 244, 0.25), 0 8px 32px rgba(0, 0, 0, 0.45);
+}
+
+.composer-attachments {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 0.6rem 1rem 0.2rem;
+  border-bottom: 1px solid rgba(34, 67, 97, 0.5);
+  background: rgba(8, 16, 26, 0.6);
+}
+
+.composer-attachments[hidden] {
+  display: none;
+}
+
+.attachment-preview-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #112236;
+  border: 1px solid #1e3a5a;
+  border-radius: 8px;
+  padding: 0.25rem 0.5rem;
+  max-width: 240px;
+  font-size: 0.76rem;
+  animation: fadeIn 0.15s ease;
+}
+
+.attachment-preview-thumb {
+  width: 32px;
+  height: 32px;
+  border-radius: 5px;
+  object-fit: cover;
+  border: 1px solid #284a70;
+  flex-shrink: 0;
+}
+
+.attachment-preview-icon {
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+
+.attachment-preview-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.attachment-preview-name {
+  font-weight: 600;
+  color: #e2e8f0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.attachment-preview-size {
+  font-size: 0.66rem;
+  color: var(--muted);
+}
+
+.attachment-remove-btn {
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  padding: 0.1rem 0.3rem;
+  font-size: 0.78rem;
+  border-radius: 4px;
+  cursor: pointer;
+  line-height: 1;
+  margin-left: auto;
+}
+
+.attachment-remove-btn:hover {
+  color: var(--danger);
+  background: rgba(251, 113, 133, 0.15);
+}
+
+.composer-attach-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  height: 28px;
+  padding: 0.2rem 0.65rem;
+  font-size: 0.76rem;
+  font-weight: 650;
+  color: var(--muted);
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.composer-attach-btn:hover {
+  color: var(--accent-2);
+  border-color: var(--accent);
+  background: var(--panel-3);
+}
+
+/* Chat Attached Media & Badges */
+.chat-attached-image {
+  display: block;
+  max-width: min(560px, 100%);
+  max-height: 400px;
+  border-radius: 10px;
+  border: 1px solid #1e3a5a;
+  margin: 0.65rem 0;
+  cursor: zoom-in;
+  transition: transform 0.15s ease, border-color 0.15s ease;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+.chat-attached-image:hover {
+  border-color: var(--accent);
+  transform: scale(1.01);
+}
+
+.chat-attachment-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  background: #0f2238;
+  border: 1px solid #234368;
+  border-radius: 8px;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #93c5fd;
+  text-decoration: none;
+  margin: 0.35rem 0.35rem 0.35rem 0;
+  transition: all 0.15s ease;
+}
+
+.chat-attachment-chip:hover {
+  background: #173456;
+  border-color: #38bdf8;
+  color: #ffffff;
+}
+
+/* Image Lightbox Modal */
+.image-lightbox {
+  border: none;
+  background: transparent;
+  padding: 0;
+  max-width: 95vw;
+  max-height: 95vh;
+  overflow: visible;
+}
+
+.image-lightbox::backdrop {
+  background: rgba(4, 9, 15, 0.88);
+  backdrop-filter: blur(8px);
+}
+
+.lightbox-content {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.lightbox-close {
+  position: absolute;
+  top: -2.5rem;
+  right: 0;
+  background: transparent;
+  border: none;
+  color: #ffffff;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+}
+
+.lightbox-close:hover {
+  color: var(--danger);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+#lightbox-img {
+  max-width: 90vw;
+  max-height: 80vh;
+  object-fit: contain;
+  border-radius: 10px;
+  box-shadow: 0 16px 60px rgba(0, 0, 0, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.lightbox-caption {
+  color: #cbd5e1;
+  font-size: 0.82rem;
+  margin-top: 0.65rem;
+  font-family: var(--mono);
+}
+
 /* Right: Sleek Collapsible Evidence Panel */
 .evidence-panel {
   display: none;

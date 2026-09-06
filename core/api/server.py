@@ -9,6 +9,8 @@ import os
 import sys
 import json
 import hashlib
+import base64
+import secrets
 import re
 import socket
 import threading
@@ -525,6 +527,10 @@ class MNEBrainAPIHandler(BaseHTTPRequestHandler):
                 "antigravity": _antigravity_readiness(start_process=True),
             })
             return
+        match = re.fullmatch(r"/api/v2/uploads/([A-Za-z0-9_.-]{1,250})", path)
+        if match:
+            self._serve_upload(match.group(1))
+            return
         raise ThreadStoreError("P11 endpoint not found.")
 
     def _stream_turn_events(self, turn_id: str) -> None:
@@ -565,8 +571,109 @@ class MNEBrainAPIHandler(BaseHTTPRequestHandler):
         except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError, socket.timeout):
             return
 
+    def _serve_upload(self, filename: str) -> None:
+        uploads_dir = (base_dir / "operations/uploads").resolve()
+        candidate = (uploads_dir / filename).resolve()
+        try:
+            candidate.relative_to(uploads_dir)
+        except ValueError:
+            self._json_response(403, {"error": "Invalid file path."})
+            return
+        if not candidate.is_file():
+            self._json_response(404, {"error": "Uploaded file not found."})
+            return
+        ext = candidate.suffix.lower()
+        mime_map = {
+            ".png": "image/png",
+            ".jpg": "image/jpeg",
+            ".jpeg": "image/jpeg",
+            ".gif": "image/gif",
+            ".webp": "image/webp",
+            ".svg": "image/svg+xml",
+            ".bmp": "image/bmp",
+            ".ico": "image/x-icon",
+            ".pdf": "application/pdf",
+            ".json": "application/json",
+            ".txt": "text/plain; charset=utf-8",
+            ".log": "text/plain; charset=utf-8",
+            ".conf": "text/plain; charset=utf-8",
+            ".cfg": "text/plain; charset=utf-8",
+            ".csv": "text/csv; charset=utf-8",
+            ".py": "text/plain; charset=utf-8",
+            ".sh": "text/plain; charset=utf-8",
+            ".ps1": "text/plain; charset=utf-8",
+            ".yaml": "text/yaml; charset=utf-8",
+            ".yml": "text/yaml; charset=utf-8",
+            ".md": "text/markdown; charset=utf-8",
+            ".xml": "application/xml",
+        }
+        ct = mime_map.get(ext, "application/octet-stream")
+        try:
+            raw = candidate.read_bytes()
+            self._set_headers(200, ct, content_length=len(raw))
+            self.wfile.write(raw)
+        except Exception as exc:
+            self._json_response(500, {"error": f"Failed reading upload: {exc}"})
+
+    def _handle_upload_post(self, payload: Dict[str, Any], owner_session) -> None:
+        filename = str(payload.get("filename") or "upload.bin").strip()
+        content_b64 = str(payload.get("content_base64") or "")
+        mime_type = str(payload.get("mime_type") or "application/octet-stream").strip()
+        if not content_b64:
+            raise ValueError("File content (base64) is required.")
+
+        try:
+            raw_data = base64.b64decode(content_b64, validate=True)
+        except Exception:
+            raise ValueError("Invalid base64 payload.")
+
+        max_size = 25 * 1024 * 1024
+        if len(raw_data) > max_size:
+            raise ValueError(f"File size ({len(raw_data)} bytes) exceeds the 25 MB limit.")
+
+        clean_name = Path(filename).name.replace("/", "").replace("\\", "").replace("..", "").strip()
+        clean_name = re.sub(r"[^A-Za-z0-9_.-]", "_", clean_name)
+        if not clean_name or clean_name.startswith("."):
+            clean_name = f"attachment_{secrets.token_hex(4)}.bin"
+
+        timestamp = int(time.time())
+        token = secrets.token_hex(4)
+        safe_name = f"upl_{timestamp}_{token}_{clean_name}"
+
+        uploads_dir = (base_dir / "operations/uploads").resolve()
+        uploads_dir.mkdir(parents=True, exist_ok=True)
+        target_path = uploads_dir / safe_name
+        target_path.write_bytes(raw_data)
+
+        ext = target_path.suffix.lower()
+        is_image = ext in {".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg", ".bmp", ".ico"}
+
+        text_content = None
+        if not is_image and len(raw_data) <= 50 * 1024:
+            try:
+                text_content = raw_data.decode("utf-8")
+            except UnicodeDecodeError:
+                pass
+
+        resp = {
+            "upload_id": f"upl_{token}",
+            "filename": filename,
+            "safe_name": safe_name,
+            "url": f"/api/v2/uploads/{safe_name}",
+            "relative_path": f"operations/uploads/{safe_name}",
+            "absolute_path": str(target_path),
+            "is_image": is_image,
+            "size": len(raw_data),
+            "mime_type": mime_type,
+            "text_content": text_content,
+        }
+        self._json_response(201, resp)
+
     def _handle_v2_post(self, path: str, body: Dict[str, Any], owner_session) -> None:
         payload = {key: value for key, value in body.items() if key != "request_nonce"}
+        if path == "/api/v2/uploads":
+            self._handle_upload_post(payload, owner_session)
+            return
         if path == "/api/v2/threads":
             allowed = {"title", "provider_id", "engine_id", "model_id", "permission_mode"}
             if set(payload).difference(allowed):

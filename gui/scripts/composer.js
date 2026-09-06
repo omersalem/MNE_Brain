@@ -4,11 +4,19 @@ import {startTurnStream} from './streaming.js';
 const form=document.querySelector('#composer');
 const input=document.querySelector('#composer-input');
 const messages=document.querySelector('#message-stream');
+const fileInput=document.querySelector('#composer-file-input');
+const attachBtn=document.querySelector('#attach-file-btn');
+const attachmentsTray=document.querySelector('#composer-attachments');
+const lightbox=document.querySelector('#image-lightbox');
+const lightboxImg=document.querySelector('#lightbox-img');
+const lightboxCaption=document.querySelector('#lightbox-caption');
+const closeLightboxBtn=document.querySelector('#close-lightbox');
 let assistantNode=null;
 let assistantText='';
 let renderScheduled=false;
 let progressNode=null;
 const turnPrompts=new Map();
+let pendingAttachments=[];
 
 const ALERT_ICONS={
   NOTE:'ℹ️',
@@ -17,6 +25,18 @@ const ALERT_ICONS={
   WARNING:'⚠️',
   CAUTION:'🛑'
 };
+
+function openLightbox(src,alt){
+  if(!lightbox||!lightboxImg)return;
+  lightboxImg.src=src;
+  lightboxImg.alt=alt||'';
+  if(lightboxCaption)lightboxCaption.textContent=alt||'';
+  lightbox.showModal();
+}
+if(closeLightboxBtn&&lightbox){
+  closeLightboxBtn.addEventListener('click',()=>lightbox.close());
+  lightbox.addEventListener('click',e=>{if(e.target===lightbox)lightbox.close();});
+}
 
 function scheduleAssistantRender(){
   if(renderScheduled)return;
@@ -32,7 +52,7 @@ function scheduleAssistantRender(){
 
 function renderInlineMarkdown(parent,text){
   if(!text)return;
-  const pattern=/(`[^`]+`|\[([^\]]+)\]\(([^)]+)\)|\*\*\*[^*]+\*\*\*|\*\*[^*]+\*\*|\*[^*]+\*|_[^_]+_)/g;
+  const pattern=/(!\[([^\]]*)\]\(([^)]+)\)|\[(📎[^\]]+)\]\(([^)]+)\)|`[^`]+`|\[([^\]]+)\]\(([^)]+)\)|\*\*\*[^*]+\*\*\*|\*\*[^*]+\*\*|\*[^*]+\*|_[^_]+_)/g;
   let lastIndex=0;
   let match;
   while((match=pattern.exec(text))!==null){
@@ -40,19 +60,39 @@ function renderInlineMarkdown(parent,text){
       parent.append(document.createTextNode(text.slice(lastIndex,match.index)));
     }
     const token=match[0];
-    if(token.startsWith('`')&&token.endsWith('`')){
+    if(token.startsWith('![')&&match[3]){
+      const alt=match[2]||'';
+      const src=match[3];
+      const img=document.createElement('img');
+      img.className='chat-attached-image';
+      img.src=src;
+      img.alt=alt;
+      img.loading='lazy';
+      img.addEventListener('click',()=>openLightbox(src,alt));
+      parent.append(img);
+    }else if(token.startsWith('[📎')&&match[5]){
+      const label=match[4];
+      const href=match[5];
+      const a=document.createElement('a');
+      a.className='chat-attachment-chip';
+      a.href=href;
+      a.target='_blank';
+      a.rel='noopener noreferrer';
+      a.textContent=label;
+      parent.append(a);
+    }else if(token.startsWith('`')&&token.endsWith('`')){
       const code=document.createElement('code');
       code.className='inline-code';
       code.textContent=token.slice(1,-1);
       parent.append(code);
-    }else if(token.startsWith('[')&&match[2]&&match[3]){
+    }else if(token.startsWith('[')&&match[6]&&match[7]){
       const a=document.createElement('a');
       a.className='chat-link';
-      a.href=match[3];
+      a.href=match[7];
       a.target='_blank';
       a.rel='noopener noreferrer';
-      if(match[3].startsWith('file:'))a.classList.add('chat-file-link');
-      renderInlineMarkdown(a,match[2]);
+      if(match[7].startsWith('file:'))a.classList.add('chat-file-link');
+      renderInlineMarkdown(a,match[6]);
       parent.append(a);
     }else if(token.startsWith('***')&&token.endsWith('***')){
       const strong=document.createElement('strong');
@@ -279,7 +319,7 @@ function formatMarkdownInto(container,text){
 function addMessage(role,text){
   document.querySelector('#empty-state')?.setAttribute('hidden','');
   const item=document.createElement('article');item.className=`message ${role}`;
-  if(role==='assistant'&&text)formatMarkdownInto(item,text);else item.textContent=text;
+  if((role==='assistant'||role==='user')&&text)formatMarkdownInto(item,text);else item.textContent=text;
   messages.append(item);messages.scrollTop=messages.scrollHeight;return item;
 }
 
@@ -354,13 +394,167 @@ function retryTurn(turnId){
   requestSend(content).catch(error=>addFailure({code:error.payload?.code,message:error.message,retryable:true},turnId));
 }
 
+function formatBytes(bytes){
+  if(bytes<1024)return bytes+' B';
+  if(bytes<1024*1024)return (bytes/1024).toFixed(1)+' KB';
+  return (bytes/(1024*1024)).toFixed(1)+' MB';
+}
+
+function renderAttachmentsTray(){
+  if(!attachmentsTray)return;
+  attachmentsTray.replaceChildren();
+  if(!pendingAttachments.length){
+    attachmentsTray.setAttribute('hidden','');
+    return;
+  }
+  attachmentsTray.removeAttribute('hidden');
+  pendingAttachments.forEach((att,index)=>{
+    const chip=document.createElement('div');
+    chip.className='attachment-preview-chip';
+    if(att.isImage&&att.dataUrl){
+      const thumb=document.createElement('img');
+      thumb.className='attachment-preview-thumb';
+      thumb.src=att.dataUrl;
+      thumb.alt=att.name;
+      chip.append(thumb);
+    }else{
+      const icon=document.createElement('span');
+      icon.className='attachment-preview-icon';
+      icon.textContent='📄';
+      chip.append(icon);
+    }
+    const info=document.createElement('div');
+    info.className='attachment-preview-info';
+    const nameSpan=document.createElement('span');
+    nameSpan.className='attachment-preview-name';
+    nameSpan.textContent=att.name;
+    const sizeSpan=document.createElement('span');
+    sizeSpan.className='attachment-preview-size';
+    sizeSpan.textContent=formatBytes(att.size);
+    info.append(nameSpan,sizeSpan);
+
+    const removeBtn=document.createElement('button');
+    removeBtn.type='button';
+    removeBtn.className='attachment-remove-btn';
+    removeBtn.textContent='✕';
+    removeBtn.title='Remove';
+    removeBtn.addEventListener('click',()=>{
+      pendingAttachments.splice(index,1);
+      renderAttachmentsTray();
+    });
+
+    chip.append(info,removeBtn);
+    attachmentsTray.append(chip);
+  });
+}
+
+async function addFilesToPending(fileList){
+  for(const file of Array.from(fileList)){
+    if(file.size>25*1024*1024){
+      alert(`File "${file.name}" exceeds the 25 MB limit.`);
+      continue;
+    }
+    const isImage=file.type.startsWith('image/');
+    const reader=new FileReader();
+    const dataUrl=await new Promise(resolve=>{
+      reader.onload=()=>resolve(reader.result);
+      reader.readAsDataURL(file);
+    });
+    const base64Content=String(dataUrl).split(',')[1]||'';
+    pendingAttachments.push({
+      file,
+      name:file.name,
+      size:file.size,
+      mimeType:file.type||'application/octet-stream',
+      isImage,
+      dataUrl:isImage?dataUrl:null,
+      base64:base64Content
+    });
+  }
+  renderAttachmentsTray();
+}
+
+if(attachBtn&&fileInput){
+  attachBtn.addEventListener('click',()=>fileInput.click());
+}
+if(fileInput){
+  fileInput.addEventListener('change',async()=>{
+    await addFilesToPending(fileInput.files);
+    fileInput.value='';
+  });
+}
+
+form.addEventListener('dragover',e=>{
+  e.preventDefault();
+  form.classList.add('drag-over');
+});
+form.addEventListener('dragleave',e=>{
+  if(!form.contains(e.relatedTarget))form.classList.remove('drag-over');
+});
+form.addEventListener('drop',async e=>{
+  e.preventDefault();
+  form.classList.remove('drag-over');
+  if(e.dataTransfer?.files?.length){
+    await addFilesToPending(e.dataTransfer.files);
+  }
+});
+
+input.addEventListener('paste',async e=>{
+  const items=e.clipboardData?.items;
+  if(!items)return;
+  const files=[];
+  for(const item of items){
+    if(item.kind==='file'){
+      const file=item.getAsFile();
+      if(file)files.push(file);
+    }
+  }
+  if(files.length){
+    await addFilesToPending(files);
+  }
+});
+
 form.addEventListener('submit',async event=>{
   event.preventDefault();
-  const content=input.value.trim();
-  if(!content)return;
+  const rawText=input.value.trim();
+  if(!rawText&&!pendingAttachments.length)return;
   input.value='';
+
+  const attachmentsToUpload=[...pendingAttachments];
+  pendingAttachments=[];
+  renderAttachmentsTray();
+
   try{
-    await requestSend(content);
+    let composedContent=rawText;
+    if(attachmentsToUpload.length){
+      setStatus('Uploading attachments…');
+      const uploadedResults=[];
+      for(const att of attachmentsToUpload){
+        const result=await mutateJSON('/api/v2/uploads',{
+          filename:att.name,
+          mime_type:att.mimeType,
+          content_base64:att.base64
+        });
+        uploadedResults.push(result);
+      }
+      const parts=[];
+      if(composedContent)parts.push(composedContent);
+      for(const res of uploadedResults){
+        if(res.is_image){
+          parts.push(`![${res.filename}](${res.url})`);
+          parts.push(`[Attached local file: ${res.absolute_path}]`);
+        }else{
+          parts.push(`[📎 ${res.filename}](${res.url})`);
+          parts.push(`[Attached local file: ${res.absolute_path}]`);
+          if(res.text_content&&res.text_content.length<=40000){
+            const ext=(res.filename.split('.').pop()||'text').toLowerCase();
+            parts.push('```'+ext+'\n'+res.text_content+'\n```');
+          }
+        }
+      }
+      composedContent=parts.join('\n\n');
+    }
+    await requestSend(composedContent);
   }catch(error){
     addFailure({code:error.payload?.code,message:error.message,retryable:true},'');
     setStatus('Request failed');
