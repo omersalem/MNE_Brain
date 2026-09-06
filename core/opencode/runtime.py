@@ -32,6 +32,7 @@ OPENCODE_SAFE_ERRORS = {
     "OPENCODE_NOT_INSTALLED",
     "OPENCODE_VERSION_UNSUPPORTED",
     "OPENCODE_AUTH_REQUIRED",
+    "OPENCODE_PAYMENT_REQUIRED",
     "OPENCODE_NO_CONNECTED_PROVIDER",
     "OPENCODE_NO_MODELS",
     "OPENCODE_MODEL_REMOVED",
@@ -117,6 +118,8 @@ class OpenCodeHTTPClient:
                         continue
                     if line.startswith("data:"):
                         data_lines.append(line[5:].lstrip())
+                    elif line.startswith(":"):
+                        yield {"type": ":heartbeat"}
         except urllib.error.HTTPError as exc:
             code = "OPENCODE_AUTH_REQUIRED" if exc.code in {401, 403} else "OPENCODE_CONNECTION_FAILED"
             raise OpenCodeError(code, "OpenCode event stream was rejected.") from exc
@@ -867,7 +870,41 @@ class OpenCodeRuntime:
         )
         worker.start()
 
-    def _run_turn(self, gui_thread_id: str, gui_turn_id: str, content: str, owner_digest: str, selection_id: str, permission_mode: str, timeout_seconds: int) -> None:
+    def _check_session_terminal(self, session_id: str) -> tuple[bool, Any]:
+        """Check whether the latest assistant message for the session has completed or errored."""
+        if not self._client:
+            return False, None
+        try:
+            items = self._client.request(
+                "GET", "/session/" + urllib.parse.quote(session_id, safe="") + "/message" + self._directory_query(), timeout=10
+            )
+            if not isinstance(items, list):
+                return False, None
+            for item in reversed(items):
+                if not isinstance(item, dict):
+                    continue
+                info = item.get("info") if isinstance(item.get("info"), dict) else {}
+                if info.get("role") != "assistant":
+                    continue
+                if info.get("error"):
+                    return True, info["error"]
+                if isinstance(info.get("time"), dict) and info["time"].get("completed"):
+                    return True, None
+                return False, None
+        except Exception:
+            return False, None
+        return False, None
+
+    def _run_turn(
+        self,
+        gui_thread_id: str,
+        gui_turn_id: str,
+        content: str,
+        owner_digest: str,
+        selection_id: str,
+        permission_mode: str,
+        timeout_seconds: int,
+    ) -> None:
         with self._turn_gate:
             try:
                 if gui_turn_id in self._cancelled:
@@ -877,6 +914,7 @@ class OpenCodeRuntime:
                     mapping = {
                         "NOT_INSTALLED": "OPENCODE_NOT_INSTALLED",
                         "VERSION_UNSUPPORTED": "OPENCODE_VERSION_UNSUPPORTED",
+                        "AUTH_REQUIRED": "OPENCODE_AUTH_REQUIRED",
                         "NO_CONNECTED_PROVIDER": "OPENCODE_NO_CONNECTED_PROVIDER",
                         "NO_MODELS": "OPENCODE_NO_MODELS",
                     }
@@ -914,22 +952,46 @@ class OpenCodeRuntime:
                     if gui_turn_id in self._cancelled:
                         raise OpenCodeError("OPENCODE_TURN_CANCELLED", "OpenCode turn was cancelled.")
                     try:
-                        for event in self._client.events("/event" + self._directory_query(), timeout=30):
+                        for event in self._client.events("/event" + self._directory_query(), timeout=15):
                             if gui_turn_id in self._cancelled:
                                 raise OpenCodeError("OPENCODE_TURN_CANCELLED", "OpenCode turn was cancelled.")
-                            properties = event.get("properties") if isinstance(event.get("properties"), dict) else {}
-                            if properties.get("sessionID") != session_id:
-                                continue
+                            if time.monotonic() >= deadline:
+                                raise OpenCodeError("OPENCODE_TIMEOUT", "OpenCode turn exceeded the governed timeout.")
                             event_type = str(event.get("type", ""))
+                            if event_type.startswith(":"):
+                                terminal, err = self._check_session_terminal(session_id)
+                                if terminal:
+                                    if err:
+                                        raise self._event_error(err)
+                                    idle = True
+                                    break
+                                continue
+                            properties = event.get("properties") if isinstance(event.get("properties"), dict) else {}
+                            event_session_id = properties.get("sessionID")
+                            if not event_session_id and isinstance(properties.get("info"), dict):
+                                event_session_id = properties["info"].get("sessionID")
+                            if event_session_id != session_id:
+                                continue
                             if event_type == "message.part.delta" and properties.get("field") == "text":
                                 delta = str(properties.get("delta", ""))
                                 if delta:
                                     self.event_sink(gui_thread_id, gui_turn_id, "answer.delta", {"text": delta})
+                            elif event_type == "message.updated":
+                                info = properties.get("info") if isinstance(properties.get("info"), dict) else {}
+                                if info.get("role") == "assistant":
+                                    if info.get("error"):
+                                        raise self._event_error(info["error"])
+                                    if isinstance(info.get("time"), dict) and info["time"].get("completed"):
+                                        idle = True
+                                        break
                             elif event_type == "session.status":
                                 status = properties.get("status") if isinstance(properties.get("status"), dict) else {}
                                 if status.get("type") == "retry":
                                     message = _safe_text(status.get("message"), 300)
                                     self.event_sink(gui_thread_id, gui_turn_id, "agent.progress", {"text": "OpenCode provider retrying safely" + (": " + message if message else ".")})
+                                elif status.get("type") == "idle":
+                                    idle = True
+                                    break
                             elif event_type == "session.error":
                                 raise self._event_error(properties.get("error"))
                             elif event_type == "session.idle":
@@ -938,15 +1000,29 @@ class OpenCodeRuntime:
                         if not idle:
                             reconnects += 1
                     except OpenCodeError as exc:
-                        if exc.code not in {"OPENCODE_SERVER_UNAVAILABLE", "OPENCODE_CONNECTION_FAILED"} or reconnects >= 5:
+                        if exc.code not in {"OPENCODE_SERVER_UNAVAILABLE", "OPENCODE_CONNECTION_FAILED"}:
+                            raise
+                        terminal, err = self._check_session_terminal(session_id)
+                        if terminal:
+                            if err:
+                                raise self._event_error(err)
+                            idle = True
+                            break
+                        if reconnects >= 5:
                             raise
                         reconnects += 1
-                        time.sleep(min(reconnects, 3))
+                        time.sleep(min(reconnects, 2))
                     if not idle:
-                        statuses = self._client.request("GET", "/session/status" + self._directory_query(), timeout=10)
-                        current = statuses.get(session_id) if isinstance(statuses, dict) else None
-                        if isinstance(current, dict) and current.get("type") == "idle":
+                        terminal, err = self._check_session_terminal(session_id)
+                        if terminal:
+                            if err:
+                                raise self._event_error(err)
                             idle = True
+                        else:
+                            statuses = self._client.request("GET", "/session/status" + self._directory_query(), timeout=10)
+                            current = statuses.get(session_id) if isinstance(statuses, dict) else None
+                            if isinstance(current, dict) and current.get("type") == "idle":
+                                idle = True
                 if not idle:
                     raise OpenCodeError("OPENCODE_TIMEOUT", "OpenCode turn exceeded the governed timeout.")
                 answer = self._final_answer(session_id)
@@ -978,6 +1054,8 @@ class OpenCodeRuntime:
     @staticmethod
     def _event_error(error: Any) -> OpenCodeError:
         text = json.dumps(_sanitize(error), ensure_ascii=False).casefold() if error is not None else ""
+        if "payment" in text or "billing" in text or "credit" in text:
+            return OpenCodeError("OPENCODE_PAYMENT_REQUIRED", "OpenCode model requires credits or a payment method. Visit opencode.ai/billing or select a free model.")
         if "rate" in text and "limit" in text:
             return OpenCodeError("OPENCODE_RATE_LIMITED", "OpenCode provider rate limit was reached.")
         if "auth" in text or "credential" in text or "unauthorized" in text:
@@ -999,6 +1077,8 @@ class OpenCodeRuntime:
             info = item.get("info") if isinstance(item.get("info"), dict) else {}
             if info.get("role") != "assistant":
                 continue
+            if info.get("error"):
+                raise self._event_error(info["error"])
             parts = item.get("parts") if isinstance(item.get("parts"), list) else []
             text = "".join(str(part.get("text", "")) for part in parts if isinstance(part, dict) and part.get("type") == "text" and not part.get("ignored"))
             if text.strip():

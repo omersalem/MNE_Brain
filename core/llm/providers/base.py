@@ -38,6 +38,7 @@ SAFE_PROVIDER_ERRORS: dict[str, tuple[str, bool]] = {
     "OPENCODE_NOT_INSTALLED": ("OpenCode is not installed for the GUI server user.", False),
     "OPENCODE_VERSION_UNSUPPORTED": ("The installed OpenCode version is unsupported.", False),
     "OPENCODE_AUTH_REQUIRED": ("The selected OpenCode provider requires authentication.", False),
+    "OPENCODE_PAYMENT_REQUIRED": ("The selected OpenCode model requires credits or a payment method. Visit opencode.ai/billing or select a free model.", False),
     "OPENCODE_NO_CONNECTED_PROVIDER": ("Connect an OpenCode provider before starting a turn.", False),
     "OPENCODE_NO_MODELS": ("Connected OpenCode providers currently expose no models.", True),
     "OPENCODE_MODEL_REMOVED": ("The pinned OpenCode model is no longer available. Choose another model.", False),

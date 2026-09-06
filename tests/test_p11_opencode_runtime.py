@@ -194,3 +194,94 @@ def test_gui_exposes_only_codex_and_opencode_with_safe_recovery():
     assert "Retry with another OpenCode model" in scripts and "Retry with Codex" in scripts
     assert "innerHTML" not in scripts and "localStorage" in scripts
     assert "GEMINI_API_KEY" not in html and "Gemini CLI" not in html
+
+
+def test_opencode_detects_payment_error_and_fails_immediately():
+    class ErrorClient(FakeClient):
+        def events(self, path, timeout=0):
+            yield {
+                "type": "message.updated",
+                "properties": {
+                    "info": {
+                        "sessionID": "ses_test",
+                        "role": "assistant",
+                        "error": {
+                            "name": "APIError",
+                            "data": {
+                                "message": "No payment method. Add a payment method here: https://opencode.ai/billing",
+                                "statusCode": 401,
+                            },
+                        },
+                    },
+                },
+            }
+
+        def request(self, method, path, payload=None, timeout=0):
+            if path.startswith("/session/ses_test/message") and method == "GET":
+                return [{
+                    "info": {
+                        "role": "assistant",
+                        "error": {"data": {"message": "No payment method"}},
+                    },
+                    "parts": [],
+                }]
+            return super().request(method, path, payload, timeout)
+
+    client = ErrorClient()
+    failed = []
+    runtime = _runtime(client, failed=failed)
+    runtime._bridge = DummyBridge()
+    runtime.refresh_catalog(start_process=False)
+    runtime.start_turn(
+        gui_thread_id="thr_1234567890123456",
+        gui_turn_id="trn_1234567890123456",
+        content="check policies",
+        owner_session_digest="a" * 64,
+        model_id="sample/temporary-free-model",
+        permission_mode="OWNER_AUTONOMOUS",
+        timeout_seconds=5,
+    )
+    for _ in range(100):
+        if failed:
+            break
+        time.sleep(0.01)
+    assert failed == [("trn_1234567890123456", "OPENCODE_PAYMENT_REQUIRED")]
+
+
+def test_opencode_completes_from_terminal_message_without_session_idle():
+    class NoIdleClient(FakeClient):
+        def events(self, path, timeout=0):
+            yield {"type": "message.part.delta", "properties": {"sessionID": "ses_test", "field": "text", "delta": "fast answer"}}
+
+        def request(self, method, path, payload=None, timeout=0):
+            if path.startswith("/session/status"):
+                return {}
+            if path.startswith("/session/ses_test/message") and method == "GET":
+                return [{
+                    "info": {
+                        "role": "assistant",
+                        "time": {"created": 1000, "completed": 2000},
+                    },
+                    "parts": [{"type": "text", "text": "fast answer"}],
+                }]
+            return super().request(method, path, payload, timeout)
+
+    client = NoIdleClient()
+    completed = []
+    runtime = _runtime(client, completed=completed)
+    runtime._bridge = DummyBridge()
+    runtime.refresh_catalog(start_process=False)
+    runtime.start_turn(
+        gui_thread_id="thr_1234567890123456",
+        gui_turn_id="trn_1234567890123456",
+        content="check policies",
+        owner_session_digest="a" * 64,
+        model_id="sample/temporary-free-model",
+        permission_mode="OWNER_AUTONOMOUS",
+        timeout_seconds=5,
+    )
+    for _ in range(100):
+        if completed:
+            break
+        time.sleep(0.01)
+    assert completed and completed[-1][-1] == "fast answer"
