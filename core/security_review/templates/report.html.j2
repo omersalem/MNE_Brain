@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MNE Daily Security Review</title>
+<style>
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background-color: #f1f5f9;
+    color: #1e293b;
+    margin: 0;
+    padding: 20px;
+    line-height: 1.5;
+  }
+  .container {
+    max-width: 900px;
+    margin: 0 auto;
+    background: #ffffff;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    border: 1px solid #e2e8f0;
+  }
+  .header {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    color: #ffffff;
+    padding: 28px 32px;
+    border-bottom: 4px solid #0284c7;
+  }
+  .header h1 {
+    margin: 0 0 6px 0;
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+  }
+  .header p {
+    margin: 0;
+    font-size: 13px;
+    color: #94a3b8;
+  }
+  .kpi-grid {
+    display: table;
+    width: 100%;
+    table-layout: fixed;
+    background: #f8fafc;
+    border-bottom: 1px solid #e2e8f0;
+  }
+  .kpi-cell {
+    display: table-cell;
+    padding: 18px 20px;
+    text-align: center;
+    border-right: 1px solid #e2e8f0;
+  }
+  .kpi-cell:last-child {
+    border-right: none;
+  }
+  .kpi-value {
+    font-size: 28px;
+    font-weight: 800;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+  .kpi-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    font-weight: 600;
+    color: #64748b;
+  }
+  .crit { color: #dc2626; }
+  .high { color: #ea580c; }
+  .med  { color: #d97706; }
+  .ok   { color: #16a34a; }
+  .content {
+    padding: 32px;
+  }
+  .section-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #0f172a;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 24px 0 16px 0;
+    border-left: 4px solid #0284c7;
+    padding-left: 10px;
+  }
+  .device-health-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 24px;
+    font-size: 13px;
+  }
+  .device-health-table th, .device-health-table td {
+    padding: 10px 14px;
+    border: 1px solid #e2e8f0;
+    text-align: left;
+  }
+  .device-health-table th {
+    background: #f8fafc;
+    color: #475569;
+    font-weight: 600;
+  }
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+  .badge-CRITICAL { background: #fee2e2; color: #991b1b; }
+  .badge-HIGH     { background: #ffedd5; color: #9a3412; }
+  .badge-MEDIUM   { background: #fef3c7; color: #92400e; }
+  .badge-SUCCESS  { background: #dcfce7; color: #166534; }
+  .badge-WARNING  { background: #fef9c3; color: #854d0e; }
+  .badge-FAILED   { background: #fee2e2; color: #991b1b; }
+  .incident-card {
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    background: #ffffff;
+    overflow: hidden;
+  }
+  .incident-header {
+    background: #f8fafc;
+    padding: 14px 18px;
+    border-bottom: 1px solid #e2e8f0;
+  }
+  .incident-body {
+    padding: 18px;
+    font-size: 13px;
+  }
+  .code-block {
+    background: #0f172a;
+    color: #38bdf8;
+    padding: 14px;
+    border-radius: 6px;
+    font-family: Consolas, Monaco, "Courier New", monospace;
+    font-size: 12px;
+    overflow-x: auto;
+    margin: 10px 0;
+    white-space: pre;
+  }
+  .mode-b-box {
+    background: #eff6ff;
+    border-left: 4px solid #3b82f6;
+    padding: 12px 16px;
+    margin-top: 14px;
+    border-radius: 0 6px 6px 0;
+    font-size: 12px;
+  }
+  .footer {
+    background: #f8fafc;
+    border-top: 1px solid #e2e8f0;
+    padding: 20px 32px;
+    font-size: 11px;
+    color: #94a3b8;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>Ministry of National Economy (MNE)</h1>
+    <p>Daily Cyber Threat & Risk Intelligence Briefing | Generated: {{ generated_at }} | Window: Past 24 Hours</p>
+  </div>
+
+  <div class="kpi-grid">
+    <div class="kpi-cell">
+      <div class="kpi-value crit">{{ critical_count }}</div>
+      <div class="kpi-label">Critical Risks</div>
+    </div>
+    <div class="kpi-cell">
+      <div class="kpi-value high">{{ high_count }}</div>
+      <div class="kpi-label">High Risks</div>
+    </div>
+    <div class="kpi-cell">
+      <div class="kpi-value med">{{ medium_count }}</div>
+      <div class="kpi-label">Medium Risks</div>
+    </div>
+    <div class="kpi-cell">
+      <div class="kpi-value ok">{{ collectors|selectattr('status.value', 'equalto', 'SUCCESS')|list|length }}/{{ collectors|length }}</div>
+      <div class="kpi-label">Devices Online</div>
+    </div>
+  </div>
+
+  <div class="content">
+    <div class="section-title">Perimeter & Identity Log Ingestion Health</div>
+    <table class="device-health-table">
+      <thead>
+        <tr>
+          <th>Target System</th>
+          <th>Ingestion Status</th>
+          <th>Events Collected</th>
+          <th>Query Time</th>
+          <th>Diagnostics / Notes</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for col in collectors %}
+        <tr>
+          <td><strong>{{ col.device_name }}</strong></td>
+          <td><span class="badge badge-{{ col.status.value }}">{{ col.status.value }}</span></td>
+          <td>{{ col.events|length }}</td>
+          <td>{{ col.collection_duration_seconds }}s</td>
+          <td>{{ col.error_message or 'Healthy read-only log synchronization' }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <div class="section-title">Identified Security Risks & Threat Incidents</div>
+    {% if not incidents %}
+    <p style="color: #16a34a; font-weight: 600;">No Critical, High, or Medium security risks identified during the past 24 hours.</p>
+    {% endif %}
+
+    {% for inc in incidents %}
+    <div class="incident-card">
+      <div class="incident-header">
+        <span class="badge badge-{{ inc.severity.value }}">{{ inc.severity.value }}</span>
+        <strong style="margin-left: 8px; font-size: 14px;">[{{ inc.incident_id }}] {{ inc.title }}</strong>
+      </div>
+      <div class="incident-body">
+        <p><strong>Device:</strong> {{ inc.source_device }} | <strong>Attacker IP:</strong> {{ inc.attacker_ip or 'N/A' }} | <strong>Target:</strong> {{ inc.target or 'N/A' }} | <strong>Attempts:</strong> {{ inc.event_count }}</p>
+        <p><strong>Description:</strong> {{ inc.description }}</p>
+
+        {% if inc.remediation_cli %}
+        <div style="font-weight: 600; margin-top: 12px; color: #0f172a;">Immediate Containment CLI Playbook:</div>
+        <div class="code-block">{% for cmd in inc.remediation_cli %}{{ cmd }}
+{% endfor %}</div>
+        {% endif %}
+
+        {% if inc.remediation_gui %}
+        <div style="font-weight: 600; margin-top: 12px; color: #0f172a;">Standard Management GUI Procedure:</div>
+        <ul style="margin: 6px 0; padding-left: 20px;">
+          {% for step in inc.remediation_gui %}
+          <li>{{ step }}</li>
+          {% endfor %}
+        </ul>
+        {% endif %}
+
+        {% if inc.remediation_mode_b_command %}
+        <div class="mode-b-box">
+          <strong>Mode B Assisted Remediation:</strong> To have MNE_Brain safely execute this mitigation under your approval, execute:
+          <div style="font-family: monospace; font-weight: bold; margin-top: 4px;">{{ inc.remediation_mode_b_command }}</div>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <div class="footer">
+    Ministry of National Economy (MNE) — Cybersecurity & Infrastructure Operations Center.<br>
+    This report is strictly confidential and intended solely for authorized MNE security personnel.
+  </div>
+</div>
+</body>
+</html>
