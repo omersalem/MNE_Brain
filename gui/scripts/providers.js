@@ -359,3 +359,411 @@ document.querySelector('#opencode-custom-provider-form').addEventListener('submi
 const themeButton=document.querySelector('#theme-toggle');function applyTheme(theme){document.documentElement.dataset.theme=theme;themeButton.setAttribute('aria-pressed',String(theme==='light'));themeButton.textContent=theme==='light'?'Use dark theme':'Use light theme';localStorage.setItem('mne-theme',theme);}themeButton.addEventListener('click',()=>applyTheme(document.documentElement.dataset.theme==='light'?'dark':'light'));applyTheme(localStorage.getItem('mne-theme')||'dark');
 document.addEventListener('thread-selected',()=>renderEngines());
 loadProviders().catch(error=>{status.textContent=error.message;});
+
+// --- Security Review Agent Presentation Controls ---
+const secDialog = document.querySelector('#security-agent-dialog');
+const secOpenBtn = document.querySelector('#security-agent-button');
+const secBtnRun = document.querySelector('#sec-btn-run');
+const secBtnViewHtml = document.querySelector('#sec-btn-view-html');
+const secBtnDownloadPdf = document.querySelector('#sec-btn-download-pdf');
+const secBtnTestEmail = document.querySelector('#sec-btn-test-email');
+const secHeaderStatusPill = document.querySelector('#sec-header-status-pill');
+const secStatCritical = document.querySelector('#sec-stat-critical');
+const secStatHigh = document.querySelector('#sec-stat-high');
+const secStatMedium = document.querySelector('#sec-stat-medium');
+const secStatTotal = document.querySelector('#sec-stat-total');
+const secStatDevices = document.querySelector('#sec-stat-devices');
+const secScheduleForm = document.querySelector('#sec-schedule-form');
+const secScheduleEnabledInput = document.querySelector('#sec-schedule-enabled');
+const secScheduleTimeInput = document.querySelector('#sec-schedule-time');
+const secSchedulerBadge = document.querySelector('#sec-scheduler-badge');
+const secTaskStateEl = document.querySelector('#sec-task-state');
+const secTaskNextEl = document.querySelector('#sec-task-next');
+const secScheduleStatusEl = document.querySelector('#sec-schedule-status');
+const secRecipientsListEl = document.querySelector('#sec-recipients-list');
+const secRecipientsCountEl = document.querySelector('#sec-recipients-count');
+const secNewEmailInput = document.querySelector('#sec-new-email');
+const secBtnAddEmail = document.querySelector('#sec-btn-add-email');
+const secBtnSaveRecipients = document.querySelector('#sec-btn-save-recipients');
+const secRecipientsStatusEl = document.querySelector('#sec-recipients-status');
+const secDevicesGridEl = document.querySelector('#sec-devices-grid');
+const secConsoleSection = document.querySelector('#sec-console-section');
+const secRunStatusIndicator = document.querySelector('#sec-run-status-indicator');
+const secRunConsoleEl = document.querySelector('#sec-run-console');
+
+let secLocalRecipients = [];
+let secIsRunning = false;
+
+function setSecNotice(element, text, isError = false) {
+  if (!element) return;
+  element.textContent = text;
+  element.className = 'sec-status-msg ' + (isError ? 'error' : 'success');
+  setTimeout(() => {
+    if (element.textContent === text) {
+      element.textContent = '';
+      element.className = 'sec-status-msg';
+    }
+  }, 5000);
+}
+
+function renderSecRecipients() {
+  if (!secRecipientsListEl) return;
+  secRecipientsListEl.replaceChildren();
+  if (secRecipientsCountEl) {
+    secRecipientsCountEl.textContent = `${secLocalRecipients.length} Recipient${secLocalRecipients.length === 1 ? '' : 's'}`;
+  }
+
+  if (secLocalRecipients.length === 0) {
+    const hint = document.createElement('span');
+    hint.className = 'sec-empty-hint';
+    hint.textContent = 'No recipient emails configured yet. Add one below.';
+    secRecipientsListEl.appendChild(hint);
+    return;
+  }
+
+  secLocalRecipients.forEach((email, index) => {
+    const chip = document.createElement('span');
+    chip.className = 'sec-email-chip';
+
+    const emailSpan = document.createElement('span');
+    emailSpan.className = 'chip-email';
+    emailSpan.textContent = email;
+    chip.appendChild(emailSpan);
+
+    const removeBtn = document.createElement('button');
+    removeBtn.type = 'button';
+    removeBtn.className = 'chip-remove-btn';
+    removeBtn.title = `Remove ${email}`;
+    removeBtn.dataset.index = String(index);
+    removeBtn.textContent = '✕';
+    chip.appendChild(removeBtn);
+
+    secRecipientsListEl.appendChild(chip);
+  });
+}
+
+function renderSecDevices(devices = []) {
+  if (!secDevicesGridEl) return;
+  secDevicesGridEl.replaceChildren();
+  if (!devices || devices.length === 0) {
+    const hint = document.createElement('p');
+    hint.className = 'sec-empty-hint';
+    hint.textContent = 'No appliance catalog found.';
+    secDevicesGridEl.appendChild(hint);
+    return;
+  }
+
+  devices.forEach(dev => {
+    const row = document.createElement('div');
+    row.className = 'sec-device-row';
+
+    const mainDiv = document.createElement('div');
+    mainDiv.className = 'sec-device-main';
+
+    const titleRow = document.createElement('div');
+    titleRow.className = 'sec-device-title-row';
+
+    const strongName = document.createElement('strong');
+    strongName.textContent = dev.name || 'Appliance';
+    titleRow.appendChild(strongName);
+
+    const ipSpan = document.createElement('span');
+    ipSpan.className = 'sec-device-ip';
+    ipSpan.textContent = dev.ip || '';
+    titleRow.appendChild(ipSpan);
+
+    mainDiv.appendChild(titleRow);
+
+    const subDiv = document.createElement('div');
+    subDiv.className = 'sec-device-sub';
+
+    const roleSpan = document.createElement('span');
+    roleSpan.className = 'sec-device-role';
+    roleSpan.textContent = dev.role || '';
+    subDiv.appendChild(roleSpan);
+
+    const sepSpan = document.createElement('span');
+    sepSpan.className = 'sec-device-sep';
+    sepSpan.textContent = ' · ';
+    subDiv.appendChild(sepSpan);
+
+    const protoSpan = document.createElement('span');
+    protoSpan.className = 'sec-device-proto';
+    protoSpan.textContent = dev.protocol || '';
+    subDiv.appendChild(protoSpan);
+
+    mainDiv.appendChild(subDiv);
+    row.appendChild(mainDiv);
+
+    const metaDiv = document.createElement('div');
+    metaDiv.className = 'sec-device-meta';
+
+    if (dev.last_events_count) {
+      const eventsBadge = document.createElement('span');
+      eventsBadge.className = 'badge-code';
+      eventsBadge.textContent = `${dev.last_events_count} events`;
+      metaDiv.appendChild(eventsBadge);
+    }
+
+    const status = dev.last_collection_status || 'CONFIGURED';
+    const isSuccess = status === 'SUCCESS' || status === 'READY' || status === 'CONFIGURED';
+    const statusClass = isSuccess ? 'safe' : (status === 'PARTIAL' ? 'warning' : 'danger');
+
+    const statusPill = document.createElement('span');
+    statusPill.className = `status-pill ${statusClass}`;
+    statusPill.textContent = status;
+    metaDiv.appendChild(statusPill);
+
+    row.appendChild(metaDiv);
+    secDevicesGridEl.appendChild(row);
+  });
+}
+
+async function refreshSecurityStatus() {
+  try {
+    const data = await getJSON('/api/v2/security-agent/status');
+    const cfg = data.config || {};
+    const sched = data.scheduler || {};
+    const last = data.last_status || {};
+    const reports = data.reports || {};
+
+    if (secScheduleTimeInput) secScheduleTimeInput.value = cfg.schedule_time || '07:00';
+    if (secScheduleEnabledInput) secScheduleEnabledInput.checked = Boolean(cfg.schedule_enabled);
+
+    if (secTaskStateEl) {
+      secTaskStateEl.textContent = sched.state || (sched.registered ? 'Registered' : 'Not Registered');
+    }
+    if (secTaskNextEl) {
+      if (sched.NextRunTime) {
+        try {
+          const d = new Date(sched.NextRunTime);
+          secTaskNextEl.textContent = d.toLocaleString();
+        } catch {
+          secTaskNextEl.textContent = sched.NextRunTime;
+        }
+      } else {
+        secTaskNextEl.textContent = cfg.schedule_enabled ? `Daily at ${cfg.schedule_time}` : 'Automation Paused';
+      }
+    }
+
+    if (secSchedulerBadge) {
+      const isSchedOk = sched.state === 'Ready' || sched.state === 'Queued' || sched.state === 'Running';
+      secSchedulerBadge.className = 'status-pill ' + (cfg.schedule_enabled ? (isSchedOk ? 'safe' : 'warning') : 'muted');
+      secSchedulerBadge.textContent = cfg.schedule_enabled ? (sched.state || 'Active') : 'Disabled';
+    }
+
+    if (secHeaderStatusPill) {
+      secHeaderStatusPill.className = 'status-pill ' + (cfg.schedule_enabled ? 'safe' : 'warning');
+      secHeaderStatusPill.textContent = cfg.schedule_enabled ? `Daily @ ${cfg.schedule_time}` : 'Schedule Paused';
+    }
+
+    secLocalRecipients = [...(cfg.recipients || [])];
+    renderSecRecipients();
+
+    if (secStatCritical) secStatCritical.textContent = last.critical_count ?? 0;
+    if (secStatHigh) secStatHigh.textContent = last.high_count ?? 0;
+    if (secStatMedium) secStatMedium.textContent = last.medium_count ?? 0;
+    if (secStatTotal) secStatTotal.textContent = last.total_incidents ?? 0;
+    if (secStatDevices) {
+      const onlineCount = (last.collectors || []).filter(c => c.status === 'SUCCESS').length;
+      secStatDevices.textContent = (last.collectors && last.collectors.length) ? `${onlineCount} / ${last.collectors.length}` : '7 / 7';
+    }
+
+    if (secBtnViewHtml) {
+      secBtnViewHtml.disabled = !reports.html?.available;
+      secBtnViewHtml.title = reports.html?.available ? `Open ${reports.html.filename}` : 'No HTML report generated yet';
+    }
+    if (secBtnDownloadPdf) {
+      secBtnDownloadPdf.disabled = !reports.pdf?.available;
+      secBtnDownloadPdf.title = reports.pdf?.available ? `Download ${reports.pdf.filename}` : 'No PDF report generated yet';
+    }
+
+    renderSecDevices(data.devices || []);
+  } catch (err) {
+    console.error('Failed refreshing security status:', err);
+    if (secHeaderStatusPill) {
+      secHeaderStatusPill.className = 'status-pill danger';
+      secHeaderStatusPill.textContent = 'Offline / Error';
+    }
+  }
+}
+
+if (secOpenBtn && secDialog) {
+  secOpenBtn.addEventListener('click', () => {
+    secDialog.showModal();
+    refreshSecurityStatus();
+  });
+}
+
+if (secBtnAddEmail && secNewEmailInput) {
+  const addAction = () => {
+    const email = (secNewEmailInput.value || '').trim().toLowerCase();
+    if (!email) return;
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setSecNotice(secRecipientsStatusEl, 'Please enter a valid email address.', true);
+      return;
+    }
+    if (secLocalRecipients.includes(email)) {
+      setSecNotice(secRecipientsStatusEl, 'Email is already in the list.', true);
+      return;
+    }
+    secLocalRecipients.push(email);
+    secNewEmailInput.value = '';
+    renderSecRecipients();
+    setSecNotice(secRecipientsStatusEl, 'Recipient added. Click "Save Distribution List" to commit.');
+  };
+
+  secBtnAddEmail.addEventListener('click', addAction);
+  secNewEmailInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      addAction();
+    }
+  });
+}
+
+if (secRecipientsListEl) {
+  secRecipientsListEl.addEventListener('click', (e) => {
+    const btn = e.target.closest('.chip-remove-btn');
+    if (!btn) return;
+    const index = parseInt(btn.dataset.index, 10);
+    if (!isNaN(index) && index >= 0 && index < secLocalRecipients.length) {
+      secLocalRecipients.splice(index, 1);
+      renderSecRecipients();
+      setSecNotice(secRecipientsStatusEl, 'Recipient removed. Click "Save Distribution List" to commit.');
+    }
+  });
+}
+
+if (secBtnSaveRecipients) {
+  secBtnSaveRecipients.addEventListener('click', async () => {
+    if (secLocalRecipients.length === 0) {
+      setSecNotice(secRecipientsStatusEl, 'At least one recipient email is required.', true);
+      return;
+    }
+    secBtnSaveRecipients.disabled = true;
+    setSecNotice(secRecipientsStatusEl, 'Saving recipients…');
+    try {
+      await mutateJSON('/api/v2/security-agent/config', { recipients: secLocalRecipients });
+      setSecNotice(secRecipientsStatusEl, 'Distribution list saved successfully!');
+      refreshSecurityStatus();
+    } catch (err) {
+      setSecNotice(secRecipientsStatusEl, `Save failed: ${err.message}`, true);
+    } finally {
+      secBtnSaveRecipients.disabled = false;
+    }
+  });
+}
+
+if (secScheduleForm) {
+  secScheduleForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const schedule_time = secScheduleTimeInput.value;
+    const schedule_enabled = secScheduleEnabledInput.checked;
+    const saveBtn = document.querySelector('#sec-btn-save-schedule');
+
+    if (saveBtn) saveBtn.disabled = true;
+    setSecNotice(secScheduleStatusEl, 'Syncing schedule with Task Scheduler…');
+    try {
+      await mutateJSON('/api/v2/security-agent/config', {
+        schedule_time,
+        schedule_enabled,
+      });
+      setSecNotice(secScheduleStatusEl, 'Schedule & Windows Task synchronized successfully!');
+      refreshSecurityStatus();
+    } catch (err) {
+      setSecNotice(secScheduleStatusEl, `Sync failed: ${err.message}`, true);
+    } finally {
+      if (saveBtn) saveBtn.disabled = false;
+    }
+  });
+}
+
+if (secBtnViewHtml) {
+  secBtnViewHtml.addEventListener('click', () => {
+    window.open('/api/v2/security-agent/report/html', '_blank');
+  });
+}
+
+if (secBtnDownloadPdf) {
+  secBtnDownloadPdf.addEventListener('click', () => {
+    const link = document.createElement('a');
+    link.href = '/api/v2/security-agent/report/pdf';
+    link.download = 'MNE_Daily_Security_Report_latest.pdf';
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+  });
+}
+
+if (secBtnTestEmail) {
+  secBtnTestEmail.addEventListener('click', async () => {
+    secBtnTestEmail.disabled = true;
+    const originalText = secBtnTestEmail.textContent;
+    secBtnTestEmail.textContent = 'Sending…';
+    try {
+      const res = await mutateJSON('/api/v2/security-agent/test-email', {});
+      alert(res.message || 'Test email dispatched successfully! Please check your inbox.');
+    } catch (err) {
+      alert(`Test email failed: ${err.message}`);
+    } finally {
+      secBtnTestEmail.disabled = false;
+      secBtnTestEmail.textContent = originalText;
+    }
+  });
+}
+
+if (secBtnRun) {
+  secBtnRun.addEventListener('click', async () => {
+    if (secIsRunning) return;
+    secIsRunning = true;
+    secBtnRun.disabled = true;
+
+    if (secConsoleSection) secConsoleSection.hidden = false;
+    if (secRunStatusIndicator) {
+      secRunStatusIndicator.textContent = 'RUNNING';
+      secRunStatusIndicator.className = 'activity-state';
+    }
+    if (secRunConsoleEl) {
+      secRunConsoleEl.textContent = `[${new Date().toLocaleTimeString()}] Starting on-demand Cybersecurity Review...\n[${new Date().toLocaleTimeString()}] Querying FortiGate, FortiAnalyzer, F5, FMC, Sophos, Active Directory, and Exchange...\n`;
+    }
+
+    try {
+      const result = await mutateJSON('/api/v2/security-agent/run', {
+        dry_run: false,
+        send_email: true,
+      });
+
+      if (secRunConsoleEl) {
+        let logLines = `[${new Date().toLocaleTimeString()}] Log collection complete across ${(result.collectors || []).length || 7} appliances.\n`;
+        (result.collectors || []).forEach(c => {
+          logLines += `  • ${c.device_name}: ${c.status} (${c.events_count} events in ${c.duration}s)\n`;
+        });
+        logLines += `[${new Date().toLocaleTimeString()}] Threat correlation complete: ${result.total_incidents} consolidated incidents found.\n`;
+        logLines += `  • Critical: ${result.critical_count} | High: ${result.high_count} | Medium: ${result.medium_count}\n`;
+        logLines += `[${new Date().toLocaleTimeString()}] Executive HTML & PDF reports generated.\n`;
+        logLines += `[${new Date().toLocaleTimeString()}] Email dispatch status: ${result.email_sent ? 'SUCCESS (Delivered)' : 'SKIPPED/FAILED'}\n`;
+        logLines += `[${new Date().toLocaleTimeString()}] Security Review execution finished successfully!`;
+        secRunConsoleEl.textContent = logLines;
+      }
+
+      if (secRunStatusIndicator) {
+        secRunStatusIndicator.textContent = 'COMPLETED';
+        secRunStatusIndicator.className = 'activity-state success';
+      }
+
+      refreshSecurityStatus();
+    } catch (err) {
+      if (secRunConsoleEl) {
+        secRunConsoleEl.textContent += `\n[${new Date().toLocaleTimeString()}] ERROR: ${err.message}\nReview terminated.`;
+      }
+      if (secRunStatusIndicator) {
+        secRunStatusIndicator.textContent = 'FAILED';
+        secRunStatusIndicator.className = 'activity-state danger';
+      }
+    } finally {
+      secIsRunning = false;
+      secBtnRun.disabled = false;
+    }
+  });
+}

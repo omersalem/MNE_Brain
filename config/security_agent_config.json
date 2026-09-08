@@ -1,0 +1,63 @@
+{
+  "schedule_time": "07:00",
+  "schedule_enabled": true,
+  "recipients": [
+    "omersalem@mne.gov.ps",
+    "omersalem2008@gmail.com"
+  ],
+  "last_run": "2026-09-08T21:30:41.849235+00:00",
+  "last_status": {
+    "success": true,
+    "critical_count": 0,
+    "high_count": 82,
+    "medium_count": 61,
+    "total_incidents": 143,
+    "email_sent": false,
+    "html_path": "operations/reports\\MNE_Daily_Security_Report_20260908.html",
+    "pdf_path": "operations/reports\\MNE_Daily_Security_Report_20260908.pdf",
+    "collectors": [
+      {
+        "device_name": "FortiGate",
+        "status": "SUCCESS",
+        "events_count": 100,
+        "duration": 6.8
+      },
+      {
+        "device_name": "FortiAnalyzer",
+        "status": "SUCCESS",
+        "events_count": 0,
+        "duration": 7.18
+      },
+      {
+        "device_name": "F5 BIG-IP",
+        "status": "SUCCESS",
+        "events_count": 133,
+        "duration": 1.41
+      },
+      {
+        "device_name": "Cisco FMC",
+        "status": "SUCCESS",
+        "events_count": 40,
+        "duration": 0.79
+      },
+      {
+        "device_name": "Sophos Email",
+        "status": "SUCCESS",
+        "events_count": 48,
+        "duration": 4.81
+      },
+      {
+        "device_name": "Active Directory",
+        "status": "SUCCESS",
+        "events_count": 30,
+        "duration": 1.85
+      },
+      {
+        "device_name": "Exchange",
+        "status": "SUCCESS",
+        "events_count": 15,
+        "duration": 0.84
+      }
+    ]
+  }
+}

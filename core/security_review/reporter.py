@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 from email.mime.application import MIMEApplication
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 import jinja2
 from core.connectors.security.models import (
@@ -15,6 +15,7 @@ from core.connectors.security.models import (
     Incident,
     SeverityLevel,
 )
+from core.security_review.config import SecurityAgentConfig
 
 logger = logging.getLogger(__name__)
 
@@ -29,15 +30,16 @@ class SecurityReporter:
             loader=jinja2.FileSystemLoader(templates_dir),
             autoescape=jinja2.select_autoescape(["html", "xml"]),
         )
+        self.config_mgr = SecurityAgentConfig()
         self.smtp_host = os.getenv("MNE_SMTP_HOST", "172.23.71.36")
         self.smtp_port = int(os.getenv("MNE_SMTP_PORT", "25"))
         self.smtp_user = os.getenv("MNE_SMTP_USER", "")
         self.smtp_password = os.getenv("MNE_SMTP_PASSWORD", "")
         self.smtp_sender = os.getenv("MNE_SMTP_SENDER", "security-alert@mne.gov.ps")
-        self.default_recipients = [
-            "omersalem@mne.gov.ps",
-            "omersalem2008@gmail.com",
-        ]
+
+    @property
+    def default_recipients(self) -> List[str]:
+        return self.config_mgr.get_recipients()
 
     def render_html_report(
         self,
@@ -276,3 +278,68 @@ class SecurityReporter:
         except Exception as exc:
             logger.error("Failed to send security report email via SMTP: %s", exc, exc_info=True)
             return False
+
+    def send_test_email(self, recipients: Optional[List[str]] = None) -> Tuple[bool, str]:
+        """Sends an automated test email to confirm SMTP server reachability and inbox delivery."""
+        target_recipients = recipients or self.default_recipients
+        now_str = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
+
+        msg = MIMEMultipart("alternative")
+        msg["Subject"] = f"MNE Security Review Agent — SMTP Verification Test ({now_str})"
+        msg["From"] = self.smtp_sender
+        msg["To"] = ", ".join(target_recipients)
+
+        text_body = (
+            f"MNE Cybersecurity Review Agent — SMTP Verification Test\n"
+            f"Timestamp: {now_str}\n"
+            f"Configured Recipients: {', '.join(target_recipients)}\n"
+            f"SMTP Server: {self.smtp_host}:{self.smtp_port}\n\n"
+            f"This is an automated test message from MNE_Brain to verify that daily threat briefings "
+            f"and executive reports are delivered successfully."
+        )
+
+        html_body = f"""<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><style>
+body {{ font-family: Segoe UI, sans-serif; background: #071019; color: #e8f0f7; padding: 24px; }}
+.card {{ background: #0e1b28; border: 1px solid #21384c; border-radius: 12px; padding: 22px; max-width: 580px; margin: 0 auto; box-shadow: 0 8px 24px rgba(0,0,0,0.4); }}
+.badge {{ display: inline-block; background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; }}
+h2 {{ margin: 0 0 10px 0; color: #38bdf8; font-size: 18px; }}
+p {{ color: #91a4b7; font-size: 13.5px; line-height: 1.5; margin: 0 0 16px 0; }}
+table {{ width: 100%; font-size: 13px; color: #cbd5e1; border-top: 1px solid #1c3044; padding-top: 12px; border-collapse: collapse; }}
+td {{ padding: 6px 0; }}
+.label {{ color: #64748b; width: 130px; font-weight: 600; }}
+.footer {{ margin-top: 16px; padding-top: 10px; border-top: 1px solid #1c3044; font-size: 11px; color: #64748b; }}
+</style></head>
+<body>
+  <div class="card">
+    <span class="badge">MNE_Brain Security Verification</span>
+    <h2>SMTP Connectivity Confirmed</h2>
+    <p>This automated test confirms that the MNE Cybersecurity Review & Threat Reporting Agent can reach your email server and successfully deliver daily briefings and executive PDF reports.</p>
+    <table>
+      <tr><td class="label">Timestamp:</td><td>{now_str}</td></tr>
+      <tr><td class="label">SMTP Server:</td><td>{self.smtp_host}:{self.smtp_port}</td></tr>
+      <tr><td class="label">Sender:</td><td>{self.smtp_sender}</td></tr>
+      <tr><td class="label">Recipients:</td><td>{', '.join(target_recipients)}</td></tr>
+    </table>
+    <div class="footer">MNE_Brain Release 2 · Confidential Infrastructure Management</div>
+  </div>
+</body>
+</html>"""
+        msg.attach(MIMEText(text_body, "plain", "utf-8"))
+        msg.attach(MIMEText(html_body, "html", "utf-8"))
+
+        try:
+            logger.info("Connecting to SMTP server at %s:%s for test email...", self.smtp_host, self.smtp_port)
+            server = smtplib.SMTP(self.smtp_host, self.smtp_port, timeout=30)
+            if self.smtp_port == 587:
+                server.starttls()
+            if self.smtp_user and self.smtp_password:
+                server.login(self.smtp_user, self.smtp_password)
+            server.send_message(msg)
+            server.quit()
+            logger.info("Test email successfully sent to %s", target_recipients)
+            return True, f"Test email sent successfully to {', '.join(target_recipients)}"
+        except Exception as exc:
+            logger.error("Failed sending test email: %s", exc, exc_info=True)
+            return False, f"SMTP Error: {str(exc)}"

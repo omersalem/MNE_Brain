@@ -1,0 +1,38 @@
+profile:
+  name: fortianalyzer
+  platform: fortinet_fortianalyzer
+  trust_level: 5
+  description: "Declarative read-only discovery contract for FortiAnalyzer Central Logging & Analytics"
+
+connection:
+  protocol: ssh
+  adapter_id: fortianalyzer_ssh_readonly
+  entity_ref: faz-fortianalyzer-hq-01
+  port_env: MNE_FORTIANALYZER_SSH_PORT
+  credential_ref_env: FORTIANALYZER_CREDENTIAL_REF
+  auth_method: secret_reference
+  timeout_seconds: 10
+  max_output_bytes: 65536
+
+read_commands:
+  - id: system_status
+    command: "get system status"
+    target: "in_memory_evidence"
+    trust: 5
+  - id: managed_devices
+    command: "diagnose dvm device list"
+    target: "in_memory_evidence"
+    trust: 5
+  - id: storage_status
+    command: "diagnose log device"
+    target: "in_memory_evidence"
+    trust: 5
+  - id: performance
+    command: "get system performance"
+    target: "in_memory_evidence"
+    trust: 5
+
+normalization:
+  target_file: "docs/company_docs/fortianalyzer-7410/fortianalyzer-canonical.md"
+  promote_policy: "two_stage_verification"
+  freshness_ttl_seconds: 900

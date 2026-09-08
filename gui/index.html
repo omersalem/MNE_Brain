@@ -51,6 +51,10 @@
           <input id="import-thread-file" type="file" accept="application/json,.json" hidden>
         </div>
         <div class="sidebar-user-controls">
+          <button id="security-agent-button" class="sidebar-action-btn" type="button" aria-controls="security-agent-dialog" title="Cyber Threat Review & Reporting Agent">
+            <span class="btn-icon" aria-hidden="true">🛡️</span>
+            <span>Security Agent</span>
+          </button>
           <button id="settings-button" class="sidebar-action-btn" type="button" aria-controls="settings-panel" title="Settings">
             <span class="btn-icon" aria-hidden="true">⚙️</span>
             <span>Settings</span>
@@ -183,6 +187,152 @@
     <details id="opencode-oauth-panel"><summary>OAuth or device-code flow</summary><form id="opencode-oauth-complete-form"><label for="opencode-oauth-provider">Provider</label><select id="opencode-oauth-provider" required></select><label for="opencode-oauth-method">Authentication method</label><select id="opencode-oauth-method" required></select><div id="opencode-oauth-inputs"></div><button id="opencode-oauth-start" type="button">Start through OpenCode</button><label for="opencode-oauth-code">Code, only when OpenCode requests one</label><input id="opencode-oauth-code" autocomplete="one-time-code"><button type="submit">Complete through OpenCode</button></form></details>
     <details><summary>Add custom OpenAI-compatible provider</summary><form id="opencode-custom-provider-form"><label for="custom-provider-id">Provider ID</label><input id="custom-provider-id" pattern="[a-z][a-z0-9_-]{2,63}" required><label for="custom-provider-name">Display name</label><input id="custom-provider-name" maxlength="100" required><label for="custom-provider-url">HTTPS base URL</label><input id="custom-provider-url" type="url" required><label for="custom-provider-protocol">Protocol</label><select id="custom-provider-protocol"><option value="chat_completions">Chat Completions</option><option value="responses">Responses API</option></select><label for="custom-provider-key">API key, optional and never saved by MNE Brain</label><input id="custom-provider-key" type="password" autocomplete="new-password"><label for="custom-provider-env">Environment credential reference, optional alternative to an API key</label><input id="custom-provider-env" pattern="[A-Z][A-Z0-9_]{2,80}"><label for="custom-provider-models">Models, one per line: id | display name | context | output</label><textarea id="custom-provider-models" rows="4" required></textarea><label for="custom-provider-headers">Optional non-secret headers as JSON</label><textarea id="custom-provider-headers" rows="3">{}</textarea><label><input id="custom-provider-loopback" type="checkbox"> Explicitly approve a loopback local-model endpoint</label><button type="submit">Validate and save metadata</button></form></details>
     <p id="settings-status" role="status"></p>
+  </dialog>
+
+  <dialog id="security-agent-dialog" class="security-agent-dialog" aria-labelledby="sec-dialog-title">
+    <form method="dialog" class="dialog-header sec-dialog-header">
+      <div class="sec-header-left">
+        <span class="brand-mark" aria-hidden="true">🛡️</span>
+        <div>
+          <span class="eyebrow">Autonomous Threat Intelligence & Reporting</span>
+          <h2 id="sec-dialog-title">Cybersecurity Review Agent</h2>
+        </div>
+      </div>
+      <div class="sec-header-actions">
+        <span id="sec-header-status-pill" class="status-pill safe">Initializing…</span>
+        <button value="close" class="close-btn" aria-label="Close Security Agent">✕</button>
+      </div>
+    </form>
+
+    <div class="sec-dialog-content">
+      <!-- Quick Action Toolbar -->
+      <section class="sec-action-toolbar" aria-label="Quick Actions">
+        <div class="sec-action-left">
+          <button id="sec-btn-run" class="primary sec-btn-prominent" type="button">
+            <span class="btn-icon" aria-hidden="true">⚡</span>
+            <span>Run Review Now</span>
+          </button>
+          <button id="sec-btn-view-html" class="sec-btn-action" type="button" title="Open the latest HTML Executive Report in a new tab">
+            <span class="btn-icon" aria-hidden="true">📄</span>
+            <span>View HTML Report</span>
+          </button>
+          <button id="sec-btn-download-pdf" class="sec-btn-action" type="button" title="Download the latest Executive PDF Briefing">
+            <span class="btn-icon" aria-hidden="true">📥</span>
+            <span>Download PDF</span>
+          </button>
+        </div>
+        <div class="sec-action-right">
+          <button id="sec-btn-test-email" class="sec-btn-quiet" type="button" title="Dispatch a lightweight test email to verify SMTP delivery">
+            <span class="btn-icon" aria-hidden="true">✉️</span>
+            <span>Send Test Email</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- Threat Stat Metric Strip -->
+      <section class="sec-metrics-strip" aria-label="Threat Overview">
+        <div class="sec-stat-card critical">
+          <span class="sec-stat-label">Critical Risks</span>
+          <span id="sec-stat-critical" class="sec-stat-value">0</span>
+          <span class="sec-stat-hint">Immediate action</span>
+        </div>
+        <div class="sec-stat-card high">
+          <span class="sec-stat-label">High Risks</span>
+          <span id="sec-stat-high" class="sec-stat-value">0</span>
+          <span class="sec-stat-hint">Elevated threats</span>
+        </div>
+        <div class="sec-stat-card medium">
+          <span class="sec-stat-label">Medium Risks</span>
+          <span id="sec-stat-medium" class="sec-stat-value">0</span>
+          <span class="sec-stat-hint">Warnings & anomalies</span>
+        </div>
+        <div class="sec-stat-card total">
+          <span class="sec-stat-label">Total Incidents</span>
+          <span id="sec-stat-total" class="sec-stat-value">0</span>
+          <span class="sec-stat-hint">Consolidated events</span>
+        </div>
+        <div class="sec-stat-card appliances">
+          <span class="sec-stat-label">Appliances</span>
+          <span id="sec-stat-devices" class="sec-stat-value">7 / 7</span>
+          <span class="sec-stat-hint">Infrastructure active</span>
+        </div>
+      </section>
+
+      <!-- Main Controls Grid (Schedule & Recipients) -->
+      <div class="sec-grid-two-col">
+        <!-- Schedule Automation Card -->
+        <section class="sec-card" aria-labelledby="sec-schedule-heading">
+          <div class="sec-card-header">
+            <h3 id="sec-schedule-heading">⏰ Daily Schedule Automation</h3>
+            <span id="sec-scheduler-badge" class="status-pill safe">Checking…</span>
+          </div>
+          <p class="sec-card-desc">Automatically executes 24-hour log reviews across all 7 appliances and emails reports every morning.</p>
+          <form id="sec-schedule-form" class="sec-form">
+            <div class="sec-form-row">
+              <label class="sec-switch-label" for="sec-schedule-enabled">
+                <input id="sec-schedule-enabled" type="checkbox" checked>
+                <span class="sec-switch-text">Enable Daily Automation</span>
+              </label>
+            </div>
+            <div class="sec-form-row">
+              <label for="sec-schedule-time">Daily Trigger Time (24h format)</label>
+              <div class="sec-time-input-group">
+                <input id="sec-schedule-time" type="time" value="07:00" required>
+                <span class="sec-input-hint">Morning briefing</span>
+              </div>
+            </div>
+            <div class="sec-scheduler-details">
+              <div class="sec-detail-line"><span>Windows Task:</span> <strong id="sec-task-state">Ready</strong></div>
+              <div class="sec-detail-line"><span>Next Scheduled Run:</span> <span id="sec-task-next">Tomorrow 07:00</span></div>
+            </div>
+            <div class="sec-form-actions">
+              <button id="sec-btn-save-schedule" class="primary compact" type="submit">Save Schedule & Sync Task</button>
+              <output id="sec-schedule-status" class="sec-status-msg" role="status"></output>
+            </div>
+          </form>
+        </section>
+
+        <!-- Email Distribution List Card -->
+        <section class="sec-card" aria-labelledby="sec-recipients-heading">
+          <div class="sec-card-header">
+            <h3 id="sec-recipients-heading">📧 Report Email Distribution List</h3>
+            <span id="sec-recipients-count" class="badge-code">Loading…</span>
+          </div>
+          <p class="sec-card-desc">Daily cyber briefings, executive HTML summaries, and PDF attachments are dispatched to these addresses.</p>
+          <div class="sec-recipients-box">
+            <div id="sec-recipients-list" class="sec-tags-container"></div>
+            <div class="sec-add-email-row">
+              <input id="sec-new-email" type="email" placeholder="Add administrator email (e.g. admin@mne.gov.ps)..." autocomplete="off">
+              <button id="sec-btn-add-email" class="compact" type="button">+ Add</button>
+            </div>
+          </div>
+          <div class="sec-form-actions">
+            <button id="sec-btn-save-recipients" class="primary compact" type="button">Save Distribution List</button>
+            <output id="sec-recipients-status" class="sec-status-msg" role="status"></output>
+          </div>
+        </section>
+      </div>
+
+      <!-- Monitored Security Appliances Card -->
+      <section class="sec-card" aria-labelledby="sec-appliances-heading">
+        <div class="sec-card-header">
+          <h3 id="sec-appliances-heading">🛡️ Monitored Security Appliances (7 Systems)</h3>
+          <span class="trust-badge">Read-Only Telemetry</span>
+        </div>
+        <div id="sec-devices-grid" class="sec-devices-table">
+          <!-- Populated dynamically by JS -->
+        </div>
+      </section>
+
+      <!-- Live Execution Log Console -->
+      <section id="sec-console-section" class="sec-card sec-console-card" aria-labelledby="sec-console-heading" hidden>
+        <div class="sec-card-header">
+          <h3 id="sec-console-heading">💻 Live Review Execution Log</h3>
+          <span id="sec-run-status-indicator" class="activity-state">RUNNING</span>
+        </div>
+        <div id="sec-run-console" class="sec-console-output" role="log" aria-live="polite"></div>
+      </section>
+    </div>
   </dialog>
 
   <dialog id="image-lightbox" class="image-lightbox" aria-label="Image Preview">

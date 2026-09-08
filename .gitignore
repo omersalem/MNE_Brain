@@ -28,6 +28,7 @@ operations/uploads/*
 !operations/uploads/.gitkeep
 operations/reports/*
 !operations/reports/.gitkeep
+*.csv
 
 # Local editor and operating-system files
 .vscode/

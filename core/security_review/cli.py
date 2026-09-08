@@ -15,6 +15,7 @@ from core.connectors.security.ad_exchange_collector import (
 )
 from core.connectors.security.f5_collector import F5SecurityCollector
 from core.connectors.security.fmc_collector import FmcSecurityCollector
+from core.connectors.security.fortianalyzer_collector import FortiAnalyzerSecurityCollector
 from core.connectors.security.fortigate_collector import FortiGateSecurityCollector
 from core.connectors.security.models import (
     CollectorResult,
@@ -23,6 +24,7 @@ from core.connectors.security.models import (
     NormalizedSecurityEvent,
 )
 from core.connectors.security.sophos_collector import SophosEmailCollector
+from core.security_review.config import SecurityAgentConfig
 from core.security_review.engine import SecurityRiskEngine
 from core.security_review.playbooks import attach_remediation_playbooks
 from core.security_review.remediator import RemediationExecutor
@@ -67,10 +69,14 @@ def run_security_pipeline(
     output_dir: str = "operations/reports",
 ) -> Dict[str, Any]:
     """Executes the complete log review, threat correlation, and reporting pipeline."""
+    config_mgr = SecurityAgentConfig()
+    target_recipients = recipients or config_mgr.get_recipients()
+
     logger.info("Initializing MNE security collectors...")
 
     collectors = [
         FortiGateSecurityCollector(),
+        FortiAnalyzerSecurityCollector(),
         F5SecurityCollector(),
         FmcSecurityCollector(),
         SophosEmailCollector(),
@@ -125,12 +131,35 @@ def run_security_pipeline(
 
     email_sent = False
     if send_email and not dry_run:
-        logger.info("Dispatching email with attached PDF to administrators...")
+        logger.info("Dispatching email with attached PDF to administrators: %s...", target_recipients)
         email_sent = reporter.send_daily_security_email(
             html_content=html_report,
             pdf_bytes=pdf_report,
-            recipients=recipients,
+            recipients=target_recipients,
         )
+
+    # Record run result into SecurityAgentConfig
+    from core.connectors.security.models import SeverityLevel
+    summary_for_config = {
+        "success": True,
+        "critical_count": sum(1 for i in incidents if i.severity == SeverityLevel.CRITICAL),
+        "high_count": sum(1 for i in incidents if i.severity == SeverityLevel.HIGH),
+        "medium_count": sum(1 for i in incidents if i.severity == SeverityLevel.MEDIUM),
+        "total_incidents": len(incidents),
+        "email_sent": email_sent,
+        "html_path": html_path,
+        "pdf_path": pdf_path,
+        "collectors": [
+            {
+                "device_name": c.device_name,
+                "status": c.status.value,
+                "events_count": len(c.events),
+                "duration": c.collection_duration_seconds,
+            }
+            for c in collector_results
+        ],
+    }
+    config_mgr.record_run_result(summary_for_config)
 
     return {
         "success": True,
@@ -147,6 +176,14 @@ def run_security_pipeline(
 def main():
     parser = build_parser()
     args = parser.parse_args()
+
+    if args.test_email:
+        reporter = SecurityReporter()
+        success, msg = reporter.send_test_email()
+        print("\n[MNE Test Email Dispatch]")
+        print(f"Status:  {'SUCCESS' if success else 'FAILED'}")
+        print(f"Details: {msg}")
+        sys.exit(0 if success else 1)
 
     if args.remediate:
         executor = RemediationExecutor()

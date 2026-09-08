@@ -80,3 +80,41 @@ def test_cross_device_attack_correlation():
     # Check that multi-vector flag or elevated severity is present
     multi_device_notes = [inc for inc in correlated if "Multi-Device" in inc.title or inc.event_count >= 2]
     assert len(multi_device_notes) > 0
+
+
+def test_multi_branch_attack_correlation():
+    now = datetime.now(timezone.utc)
+    attacker = "198.51.100.99"
+    ev1 = NormalizedSecurityEvent(
+        event_id="faz-1",
+        timestamp=now - timedelta(minutes=20),
+        source_device="FortiAnalyzer",
+        category=ThreatCategory.INTRUSION,
+        threat_name="[FW-MNE-Hebron] IPS Attack: Apache.Log4j.RCE",
+        attacker_ip=attacker,
+        target="172.27.13.62",
+        action_taken="DROPPED",
+        metadata={"reporting_firewall": "FW-MNE-Hebron", "devname": "FW-MNE-Hebron", "faz_crlevel": "critical"},
+    )
+    ev2 = NormalizedSecurityEvent(
+        event_id="faz-2",
+        timestamp=now - timedelta(minutes=5),
+        source_device="FortiAnalyzer",
+        category=ThreatCategory.INTRUSION,
+        threat_name="[FW-MNE-Nablus] IPS Attack: Apache.Log4j.RCE",
+        attacker_ip=attacker,
+        target="172.27.13.58",
+        action_taken="DROPPED",
+        metadata={"reporting_firewall": "FW-MNE-Nablus", "devname": "FW-MNE-Nablus", "faz_crlevel": "critical"},
+    )
+    engine = SecurityRiskEngine()
+    incidents = engine.process_events([ev1, ev2])
+
+    assert len(incidents) == 1
+    inc = incidents[0]
+    assert inc.attacker_ip == attacker
+    assert inc.event_count == 2
+    assert inc.severity == SeverityLevel.CRITICAL
+    assert "[Multi-Branch Coordinated Campaign]" in inc.title
+    assert "FW-MNE-Hebron" in inc.description
+    assert "FW-MNE-Nablus" in inc.description

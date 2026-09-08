@@ -23,9 +23,12 @@ class SecurityRiskEngine:
         action_taken: str,
         count: int,
         is_multi_device: bool = False,
+        is_multi_branch: bool = False,
+        crlevel: str = "",
     ) -> SeverityLevel:
         """Applies Standard Enterprise SOC classification rules."""
         threat_lower = threat_name.lower()
+        crlevel_lower = (crlevel or "").lower()
 
         # 1. Critical Rules
         if action_taken == "ALLOWED" and category in (
@@ -40,11 +43,19 @@ class SecurityRiskEngine:
         ):
             return SeverityLevel.CRITICAL
 
-        if "zero-day" in threat_lower or "sandstorm" in threat_lower:
+        if "zero-day" in threat_lower or "sandstorm" in threat_lower or crlevel_lower == "critical":
+            return SeverityLevel.CRITICAL
+
+        # Coordinated attacks targeting multiple perimeter devices or multiple branches with exploits/malware
+        if (is_multi_device or is_multi_branch) and category in (
+            ThreatCategory.INTRUSION,
+            ThreatCategory.MALWARE,
+            ThreatCategory.WAF_EXPLOIT,
+        ):
             return SeverityLevel.CRITICAL
 
         # 2. High Rules
-        if is_multi_device:
+        if is_multi_device or is_multi_branch:
             return SeverityLevel.HIGH
 
         if category == ThreatCategory.BRUTE_FORCE and count >= 20:
@@ -74,18 +85,27 @@ class SecurityRiskEngine:
 
         # Check for multi-device attacker IPs
         ip_device_map = collections.defaultdict(set)
+        # Check for multi-branch attacker IPs (across 14 firewalls reported via FortiAnalyzer)
+        ip_branch_map = collections.defaultdict(set)
+
         for ev in events:
             if ev.attacker_ip:
                 ip_device_map[ev.attacker_ip].add(ev.source_device)
+                branch = ev.metadata.get("reporting_firewall") or ev.metadata.get("devname")
+                if branch and branch != "FortiGate":
+                    ip_branch_map[ev.attacker_ip].add(branch)
 
         multi_device_ips = {ip for ip, devices in ip_device_map.items() if len(devices) > 1}
+        multi_branch_ips = {ip for ip, branches in ip_branch_map.items() if len(branches) > 1}
 
         # Deduplication grouping:
-        # Group key: (attacker_ip or target, category, primary device or 'Multi-Device')
+        # Group key: (attacker_ip or target, category, primary device or 'Multi-Branch' / 'Multi-Device')
         groups: Dict[Tuple[str, ThreatCategory, str], List[NormalizedSecurityEvent]] = collections.defaultdict(list)
 
         for ev in events:
-            if ev.attacker_ip and ev.attacker_ip in multi_device_ips:
+            if ev.attacker_ip and ev.attacker_ip in multi_branch_ips:
+                key = (ev.attacker_ip, ev.category, "Multi-Branch")
+            elif ev.attacker_ip and ev.attacker_ip in multi_device_ips:
                 key = (ev.attacker_ip, ev.category, "Multi-Device")
             elif ev.attacker_ip:
                 key = (ev.attacker_ip, ev.category, ev.source_device)
@@ -109,25 +129,46 @@ class SecurityRiskEngine:
             has_allowed = any(e.action_taken == "ALLOWED" for e in group_events)
             action_taken = "ALLOWED" if has_allowed else first_event.action_taken
 
-            is_multi = dev_label == "Multi-Device" or (attacker_ip and attacker_ip in multi_device_ips)
+            is_multi_dev = dev_label == "Multi-Device" or (attacker_ip and attacker_ip in multi_device_ips)
+            is_multi_branch = dev_label == "Multi-Branch" or (attacker_ip and attacker_ip in multi_branch_ips)
+            is_multi = is_multi_dev or is_multi_branch
+
             devices_involved = list({e.source_device for e in group_events})
             source_device = " / ".join(devices_involved) if len(devices_involved) > 1 else devices_involved[0]
+
+            crlevels = [e.metadata.get("faz_crlevel", "") for e in group_events if e.metadata.get("faz_crlevel")]
+            highest_crlevel = "critical" if any(c.lower() == "critical" for c in crlevels) else (crlevels[0] if crlevels else "")
 
             severity = self.evaluate_severity(
                 category=category,
                 threat_name=first_event.threat_name,
                 action_taken=action_taken,
                 count=total_count,
-                is_multi_device=is_multi,
+                is_multi_device=is_multi_dev,
+                is_multi_branch=is_multi_branch,
+                crlevel=highest_crlevel,
             )
 
-            title_prefix = "[Multi-Device Coordinated Attack] " if is_multi else ""
+            if is_multi_branch:
+                title_prefix = "[Multi-Branch Coordinated Campaign] "
+            elif is_multi_dev:
+                title_prefix = "[Multi-Device Coordinated Attack] "
+            else:
+                title_prefix = ""
+
             title = f"{title_prefix}{first_event.threat_name}"
             if total_count > 1 and "Failure" in title:
                 title = f"{title_prefix}Repeated {first_event.threat_name} ({total_count} attempts)"
 
+            branches_targeted = list({
+                e.metadata.get("reporting_firewall")
+                for e in group_events
+                if e.metadata.get("reporting_firewall") and e.metadata.get("reporting_firewall") != "FortiGate"
+            })
+            branch_info = f" Targeted branch firewalls: {', '.join(sorted(branches_targeted))}." if len(branches_targeted) > 1 else ""
+
             desc = (
-                f"Observed {total_count} security event(s) across {source_device}. "
+                f"Observed {total_count} security event(s) across {source_device}.{branch_info} "
                 f"Target: {target or 'Perimeter'}. Action: {action_taken}."
             )
 

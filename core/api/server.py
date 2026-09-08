@@ -57,6 +57,7 @@ from core.llm.registry import ProviderRegistry, ProviderRegistryError
 from core.tools.broker import ToolBroker, ToolBrokerError
 from core.runbooks.registry import RunbookRegistry
 from core.observability.tracer import ObservabilityTracer
+from core.security_review.config import SecurityAgentConfig
 from integrations.n8n.webhook_listener import WebhookAlertListener
 
 security_policy = yaml.safe_load((base_dir / "config/p11_security_policy.yaml").read_text(encoding="utf-8")) or {}
@@ -376,6 +377,12 @@ class MNEBrainAPIHandler(BaseHTTPRequestHandler):
             self._handle_p10_plan_get(path.rsplit("/", 1)[-1])
         elif path.startswith("/api/p10/results/"):
             self._handle_p10_result_get(path.rsplit("/", 1)[-1])
+        elif path == "/api/security-agent/status":
+            self._handle_security_agent_status()
+        elif path == "/api/security-agent/report/html":
+            self._handle_security_agent_report_html()
+        elif path == "/api/security-agent/report/pdf":
+            self._handle_security_agent_report_pdf()
         else:
             self._set_headers(404)
             self.wfile.write(json.dumps({"error": f"Endpoint {path} not found"}).encode("utf-8"))
@@ -449,6 +456,12 @@ class MNEBrainAPIHandler(BaseHTTPRequestHandler):
             self._handle_p10_execute(path.split("/")[-2], body)
         elif path.startswith("/api/p10/plans/") and path.endswith("/rollback/prepare"):
             self._handle_p10_rollback_prepare(path.split("/")[-3], body)
+        elif path == "/api/security-agent/config":
+            self._handle_security_agent_config_post(body)
+        elif path == "/api/security-agent/run":
+            self._handle_security_agent_run_post(body)
+        elif path == "/api/security-agent/test-email":
+            self._handle_security_agent_test_email_post(body)
         else:
             self._set_headers(404)
             self.wfile.write(json.dumps({"error": f"Endpoint {path} not found"}).encode("utf-8"))
@@ -530,6 +543,15 @@ class MNEBrainAPIHandler(BaseHTTPRequestHandler):
         match = re.fullmatch(r"/api/v2/uploads/([A-Za-z0-9_.-]{1,250})", path)
         if match:
             self._serve_upload(match.group(1))
+            return
+        if path == "/api/v2/security-agent/status":
+            self._handle_security_agent_status()
+            return
+        if path == "/api/v2/security-agent/report/html":
+            self._handle_security_agent_report_html()
+            return
+        if path == "/api/v2/security-agent/report/pdf":
+            self._handle_security_agent_report_pdf()
             return
         raise ThreadStoreError("P11 endpoint not found.")
 
@@ -958,6 +980,15 @@ class MNEBrainAPIHandler(BaseHTTPRequestHandler):
         if match:
             item = tool_broker.p10.prepare_rollback(match.group(1))
             self._json_response(200, item)
+            return
+        if path == "/api/v2/security-agent/config":
+            self._handle_security_agent_config_post(payload)
+            return
+        if path == "/api/v2/security-agent/run":
+            self._handle_security_agent_run_post(payload)
+            return
+        if path == "/api/v2/security-agent/test-email":
+            self._handle_security_agent_test_email_post(payload)
             return
         raise ValueError("P11 endpoint not found.")
 
@@ -1604,6 +1635,170 @@ class MNEBrainAPIHandler(BaseHTTPRequestHandler):
         }.get(res.get("status"), 400)
         self._set_headers(response_code)
         self.wfile.write(json.dumps(res, indent=2).encode("utf-8"))
+
+    def _handle_security_agent_status(self) -> None:
+        try:
+            cfg = SecurityAgentConfig()
+            config_data = cfg.load()
+            scheduler = cfg.get_task_scheduler_status()
+            reports = cfg.get_latest_reports()
+            devices = cfg.get_device_catalog()
+
+            last_status = config_data.get("last_status") or {}
+            last_collectors = {c.get("device_name"): c for c in last_status.get("collectors", [])}
+            device_collector_map = {
+                "fortigate_core": "FortiGate",
+                "fortianalyzer": "FortiAnalyzer",
+                "f5_bigip": "F5 BIG-IP",
+                "cisco_fmc": "Cisco FMC",
+                "sophos_email": "Sophos Email",
+                "active_directory": "Active Directory",
+                "exchange_2019": "Exchange",
+            }
+            enriched_devices = []
+            for d in devices:
+                item = dict(d)
+                mapped_name = device_collector_map.get(d.get("id"))
+                col_info = (last_collectors.get(mapped_name) if mapped_name else None) or last_collectors.get(d["name"])
+                if not col_info:
+                    d_tokens = set(re.findall(r'[a-z0-9]+', (d["name"] + " " + d.get("id", "")).lower()))
+                    for c_name, c_data in last_collectors.items():
+                        c_tokens = set(re.findall(r'[a-z0-9]+', (c_name or "").lower()))
+                        if c_tokens and (c_tokens.issubset(d_tokens) or d_tokens.issubset(c_tokens)):
+                            col_info = c_data
+                            break
+                if col_info:
+                    item["last_collection_status"] = col_info.get("status", "READY")
+                    item["last_events_count"] = col_info.get("events_count", 0)
+                    item["last_duration_seconds"] = col_info.get("duration", 0)
+                else:
+                    item["last_collection_status"] = "CONFIGURED"
+                    item["last_events_count"] = 0
+                    item["last_duration_seconds"] = 0
+                enriched_devices.append(item)
+
+            resp = {
+                "config": {
+                    "schedule_time": config_data.get("schedule_time", "07:00"),
+                    "schedule_enabled": config_data.get("schedule_enabled", True),
+                    "recipients": config_data.get("recipients", []),
+                },
+                "scheduler": scheduler,
+                "last_run": config_data.get("last_run"),
+                "last_status": last_status,
+                "reports": reports,
+                "devices": enriched_devices,
+            }
+            self._json_response(200, resp)
+        except Exception as exc:
+            self._json_response(500, {"error": f"Failed fetching security agent status: {exc}"})
+
+    def _handle_security_agent_config_post(self, payload: Dict[str, Any]) -> None:
+        try:
+            cfg = SecurityAgentConfig()
+            if "recipients" in payload:
+                recipients = payload["recipients"]
+                if not isinstance(recipients, list):
+                    raise ValueError("recipients must be a list of email strings.")
+                cfg.set_recipients(recipients)
+
+            if "schedule_time" in payload or "schedule_enabled" in payload:
+                schedule_time = payload.get("schedule_time", cfg.get_schedule_time())
+                schedule_enabled = payload.get("schedule_enabled", cfg.is_enabled())
+                cfg.set_schedule(str(schedule_time), bool(schedule_enabled))
+
+            self._handle_security_agent_status()
+        except ValueError as exc:
+            self._json_response(400, {"error": str(exc)})
+        except Exception as exc:
+            self._json_response(500, {"error": f"Failed updating security configuration: {exc}"})
+
+    def _handle_security_agent_run_post(self, payload: Dict[str, Any]) -> None:
+        try:
+            from core.security_review.cli import run_security_pipeline
+            from core.connectors.security.models import SeverityLevel
+
+            dry_run = bool(payload.get("dry_run", False))
+            send_email = bool(payload.get("send_email", True))
+            recipients = payload.get("recipients")
+
+            result = run_security_pipeline(dry_run=dry_run, send_email=send_email, recipients=recipients)
+            incidents = result.get("incidents", [])
+            collector_results = result.get("collectors", [])
+
+            resp = {
+                "success": result.get("success", True),
+                "total_incidents": len(incidents),
+                "critical_count": sum(1 for i in incidents if i.severity == SeverityLevel.CRITICAL),
+                "high_count": sum(1 for i in incidents if i.severity == SeverityLevel.HIGH),
+                "medium_count": sum(1 for i in incidents if i.severity == SeverityLevel.MEDIUM),
+                "email_sent": result.get("email_sent", False),
+                "html_path": result.get("html_path"),
+                "pdf_path": result.get("pdf_path"),
+                "collectors": [
+                    {
+                        "device_name": c.device_name,
+                        "status": c.status.value,
+                        "events_count": len(c.events),
+                        "duration": c.collection_duration_seconds,
+                    }
+                    for c in collector_results
+                ],
+            }
+            self._json_response(200, resp)
+        except Exception as exc:
+            self._json_response(500, {"error": f"Security review run failed: {exc}"})
+
+    def _handle_security_agent_test_email_post(self, payload: Dict[str, Any]) -> None:
+        try:
+            from core.security_review.reporter import SecurityReporter
+            reporter = SecurityReporter()
+            recipients = payload.get("recipients")
+            if recipients and not isinstance(recipients, list):
+                raise ValueError("recipients must be a list of email strings.")
+            success, msg = reporter.send_test_email(recipients=recipients)
+            status_code = 200 if success else 502
+            self._json_response(status_code, {"success": success, "message": msg})
+        except ValueError as exc:
+            self._json_response(400, {"error": str(exc)})
+        except Exception as exc:
+            self._json_response(500, {"error": f"Test email dispatch failed: {exc}"})
+
+    def _handle_security_agent_report_html(self) -> None:
+        try:
+            cfg = SecurityAgentConfig()
+            reports = cfg.get_latest_reports()
+            html_info = reports.get("html", {})
+            if not html_info.get("available") or not html_info.get("path"):
+                self._json_response(404, {"error": "No HTML security report has been generated yet."})
+                return
+            html_path = Path(html_info["path"])
+            if not html_path.exists():
+                self._json_response(404, {"error": "HTML report file not found on disk."})
+                return
+            raw = html_path.read_bytes()
+            self._set_headers(200, "text/html; charset=utf-8", content_length=len(raw), extra_headers={"Content-Disposition": f"inline; filename=\"{html_path.name}\""})
+            self.wfile.write(raw)
+        except Exception as exc:
+            self._json_response(500, {"error": f"Failed serving HTML report: {exc}"})
+
+    def _handle_security_agent_report_pdf(self) -> None:
+        try:
+            cfg = SecurityAgentConfig()
+            reports = cfg.get_latest_reports()
+            pdf_info = reports.get("pdf", {})
+            if not pdf_info.get("available") or not pdf_info.get("path"):
+                self._json_response(404, {"error": "No PDF security report has been generated yet."})
+                return
+            pdf_path = Path(pdf_info["path"])
+            if not pdf_path.exists():
+                self._json_response(404, {"error": "PDF report file not found on disk."})
+                return
+            raw = pdf_path.read_bytes()
+            self._set_headers(200, "application/pdf", content_length=len(raw), extra_headers={"Content-Disposition": f"attachment; filename=\"{pdf_path.name}\""})
+            self.wfile.write(raw)
+        except Exception as exc:
+            self._json_response(500, {"error": f"Failed serving PDF report: {exc}"})
 
 def run_api_server(port: int | None = None, host: str | None = None):
     bind_host = host or str(security_policy.get("bind_host", "127.0.0.1"))

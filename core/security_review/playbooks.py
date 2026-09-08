@@ -39,6 +39,24 @@ def attach_remediation_playbooks(incident: Incident) -> None:
                 "4. Check VPN ➔ SSL-VPN Monitor to terminate any active sessions for this IP"
             ])
 
+    # 1b. FortiAnalyzer Central Analytics Playbooks
+    if "FortiAnalyzer" in device:
+        cli_commands.extend([
+            f"# Query aggregated security logs for attacker IP across all 14 firewalls:",
+            f"execute log filter srcip {ip}",
+            f"execute log display",
+            f"# Filter by threat category:",
+            f"execute log filter category {incident.category.value.lower()}",
+            f"execute log display",
+        ])
+        gui_steps.extend([
+            "1. Log in to FortiAnalyzer Web Console at https://172.23.71.206",
+            "2. Navigate to FortiView ➔ Threats ➔ Threats Map / Top Threats",
+            f"3. Filter search by Attacker IP '{ip}' to inspect all impacted ministry firewalls",
+            "4. Navigate to Log View ➔ Traffic / Security to export correlated event timeline",
+            "5. If confirmed malicious, push address ban to affected branch firewalls via FortiGate G_BLACK_LIST"
+        ])
+
     # 2. F5 BIG-IP Playbooks
     if "F5" in device or "BIG-IP" in device:
         if incident.category == ThreatCategory.WAF_EXPLOIT:
