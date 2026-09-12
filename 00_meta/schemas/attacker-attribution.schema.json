@@ -1,0 +1,183 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "http://mne-brain.org/schemas/attacker-attribution.schema.json",
+  "title": "Attacker Attribution Schema",
+  "description": "Schema governing deterministic local attacker identity attribution, device correlation, and evidence tracking.",
+  "type": "object",
+  "required": [
+    "ip_address",
+    "network_scope",
+    "status",
+    "confidence",
+    "confidence_score"
+  ],
+  "properties": {
+    "ip_address": {
+      "type": "string"
+    },
+    "network_scope": {
+      "type": "string",
+      "enum": ["LOCAL", "EXTERNAL", "INVALID", "UNKNOWN"]
+    },
+    "pc_name": {
+      "type": "string"
+    },
+    "fqdn": {
+      "type": "string"
+    },
+    "domain": {
+      "type": "string"
+    },
+    "username": {
+      "type": "string"
+    },
+    "user_display_name": {
+      "type": "string"
+    },
+    "device_owner": {
+      "type": "string"
+    },
+    "primary_device_user": {
+      "type": "string"
+    },
+    "claimed_username": {
+      "type": "string"
+    },
+    "target_account": {
+      "type": "string"
+    },
+    "mac_address": {
+      "type": "string"
+    },
+    "branch": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["RESOLVED", "PARTIAL", "AMBIGUOUS", "NOT_FOUND", "NOT_CONFIGURED", "NOT_APPLICABLE", "FAILED"]
+    },
+    "confidence": {
+      "type": "string",
+      "enum": ["HIGH", "MEDIUM", "LOW", "UNKNOWN"]
+    },
+    "confidence_score": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 100
+    },
+    "observed_at": {
+      "type": ["string", "null"],
+      "format": "date-time"
+    },
+    "incident_time_match": {
+      "type": "string",
+      "enum": ["EXACT", "WITHIN_WINDOW", "CURRENT_ONLY", "UNKNOWN"]
+    },
+    "sources_queried": {
+      "type": "array",
+      "items": { "type": "string" },
+      "default": []
+    },
+    "successful_sources": {
+      "type": "array",
+      "items": { "type": "string" },
+      "default": []
+    },
+    "confidence_rationale": {
+      "type": "string"
+    },
+    "attribution_history": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["status", "confidence_score"],
+        "properties": {
+          "run_id": { "type": ["string", "null"] },
+          "incident_time": { "type": ["string", "null"], "format": "date-time" },
+          "attempt_time": { "type": "string", "format": "date-time" },
+          "observed_at": { "type": ["string", "null"], "format": "date-time" },
+          "snapshot_index": { "type": "integer" },
+          "status": {
+            "type": "string",
+            "enum": ["RESOLVED", "PARTIAL", "AMBIGUOUS", "NOT_FOUND", "NOT_CONFIGURED", "NOT_APPLICABLE", "FAILED"]
+          },
+          "confidence": {
+            "type": "string",
+            "enum": ["HIGH", "MEDIUM", "LOW", "UNKNOWN"]
+          },
+          "confidence_score": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "pc_name": { "type": ["string", "null"] },
+          "username": { "type": ["string", "null"] },
+          "sources": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "diagnostic": { "type": "string" }
+        },
+        "additionalProperties": false
+      },
+      "default": []
+    },
+    "evidence_sources": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["source_type", "result_status"],
+        "properties": {
+          "source_type": { "type": "string" },
+          "source_entity_or_binding_id": { "type": "string" },
+          "matched_fields": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "observation_time": { "type": ["string", "null"], "format": "date-time" },
+          "event_time_distance_seconds": { "type": ["number", "null"] },
+          "freshness": {
+            "type": "string",
+            "enum": ["CURRENT", "HISTORICAL", "STALE", "UNKNOWN"]
+          },
+          "evidence_reference": { "type": "string" },
+          "result_status": {
+            "type": "string",
+            "enum": ["SUCCESS", "NO_MATCH", "NOT_CONFIGURED", "NOT_AUTHORIZED", "UNREACHABLE", "AUTHENTICATION_FAILED", "QUERY_TIMEOUT", "SKIPPED_DEADLINE", "STALE_RESULT", "AMBIGUOUS", "MALFORMED_RESPONSE", "FAILED"]
+          }
+        },
+        "additionalProperties": false
+      },
+      "default": []
+    },
+    "candidates": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["candidate_id", "rationale"],
+        "properties": {
+          "candidate_id": { "type": "string" },
+          "pc_name": { "type": ["string", "null"] },
+          "fqdn": { "type": ["string", "null"] },
+          "username": { "type": ["string", "null"] },
+          "mac_address": { "type": ["string", "null"] },
+          "sources": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "confidence": { "type": "string" },
+          "confidence_score": { "type": "integer" },
+          "rationale": { "type": "string" }
+        },
+        "additionalProperties": false
+      },
+      "default": []
+    },
+    "diagnostics": {
+      "type": "array",
+      "items": { "type": "string" },
+      "default": []
+    }
+  },
+  "additionalProperties": false
+}

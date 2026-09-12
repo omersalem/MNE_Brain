@@ -10,21 +10,127 @@ import os
 import re
 import subprocess
 import sys
+import time
+import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
+DEFAULT_PROFILES: List[Dict[str, Any]] = [
+    {
+        "profile_id": "daily-full-review",
+        "name": "Daily Full Review",
+        "description": "Comprehensive 24-hour review across all perimeter, appliance, identity, and branch security sources.",
+        "is_builtin": True,
+        "options": {
+            "selected_collectors": ["fortigate", "f5", "fmc", "sophos", "ad", "exchange", "fortianalyzer"],
+            "time_window": {"mode": "HOURS", "hours": 24},
+            "min_severity": "INFO",
+            "report_types": ["EXECUTIVE", "TECHNICAL", "JSON", "CSV"],
+            "ai_engine": "NONE",
+        },
+    },
+    {
+        "profile_id": "quick-perimeter-check",
+        "name": "Quick Perimeter Check",
+        "description": "Fast 2-hour pulse on FortiGate edge firewalls, FortiAnalyzer, and F5 BIG-IP WAF.",
+        "is_builtin": True,
+        "options": {
+            "selected_collectors": ["fortigate", "f5", "fortianalyzer"],
+            "time_window": {"mode": "HOURS", "hours": 2},
+            "min_severity": "LOW",
+            "report_types": ["TECHNICAL"],
+            "ai_engine": "NONE",
+        },
+    },
+    {
+        "profile_id": "identity-investigation",
+        "name": "Identity Investigation",
+        "description": "12-hour audit focused on Active Directory authentication failures, lockouts, and Exchange mail flow.",
+        "is_builtin": True,
+        "options": {
+            "selected_collectors": ["ad", "exchange"],
+            "time_window": {"mode": "HOURS", "hours": 12},
+            "min_severity": "LOW",
+            "report_types": ["TECHNICAL"],
+            "ai_engine": "NONE",
+        },
+    },
+    {
+        "profile_id": "email-threat-review",
+        "name": "Email Threat Review",
+        "description": "24-hour analysis of Sophos Email Gateway quarantine, malware, phishing, and Exchange transport.",
+        "is_builtin": True,
+        "options": {
+            "selected_collectors": ["sophos", "exchange"],
+            "time_window": {"mode": "HOURS", "hours": 24},
+            "min_severity": "INFO",
+            "report_types": ["TECHNICAL"],
+            "ai_engine": "NONE",
+        },
+    },
+    {
+        "profile_id": "branch-investigation",
+        "name": "Branch Investigation",
+        "description": "6-hour sweep across FortiGate branch firewalls and FortiAnalyzer central logs.",
+        "is_builtin": True,
+        "options": {
+            "selected_collectors": ["fortigate", "fortianalyzer"],
+            "time_window": {"mode": "HOURS", "hours": 6},
+            "min_severity": "INFO",
+            "report_types": ["TECHNICAL"],
+            "ai_engine": "NONE",
+        },
+    },
+]
+
+DEFAULT_IDENTITY_ENRICHMENT_CONFIG: Dict[str, Any] = {
+    "enabled": True,
+    "local_cidrs": [
+        "10.0.0.0/8",
+        "172.16.0.0/12",
+        "192.168.0.0/16",
+        "fc00::/7",
+    ],
+    "excluded_cidrs": [],
+    "source_priority": [
+        "event_native",
+        "fortianalyzer",
+        "dhcp",
+        "sccm",
+        "dns_ad",
+        "fortigate_auth",
+    ],
+    "enabled_sources": [
+        "event_native",
+        "fortianalyzer",
+        "dhcp",
+        "sccm",
+        "dns_ad",
+        "fortigate_auth",
+    ],
+    "per_source_timeout_seconds": 5.0,
+    "overall_timeout_seconds": 15.0,
+    "event_time_tolerance_seconds": 3600,
+    "current_record_max_age_hours": 24,
+    "max_candidates": 5,
+    "in_run_caching": True,
+}
+
 DEFAULT_CONFIG: Dict[str, Any] = {
     "schedule_time": "07:00",
     "schedule_enabled": True,
+    "active_profile": "Daily Full Review",
+    "profiles": DEFAULT_PROFILES,
     "recipients": [
         "omersalem@mne.gov.ps",
         "omersalem2008@gmail.com",
     ],
     "last_run": None,
     "last_status": None,
+    "identity_enrichment": DEFAULT_IDENTITY_ENRICHMENT_CONFIG,
 }
 
 TASK_NAME = "MNE_Daily_Security_Review_Agent"
@@ -33,7 +139,7 @@ EMAIL_REGEX = re.compile(r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$")
 
 class SecurityAgentConfig:
     """Manages Security Agent configuration, recipient lists, schedule parameters,
-    and Windows Task Scheduler synchronization.
+    review profiles, and Windows Task Scheduler synchronization.
     """
 
     def __init__(self, config_path: Optional[str] = None):
@@ -52,23 +158,43 @@ class SecurityAgentConfig:
         try:
             with open(self.config_path, "r", encoding="utf-8") as f:
                 data = json.load(f)
-            # Ensure required keys exist
+            # Ensure required keys exist and migrate profiles if needed
             for key, val in DEFAULT_CONFIG.items():
                 if key not in data:
                     data[key] = val
+            if "profiles" not in data or not data["profiles"]:
+                data["profiles"] = list(DEFAULT_PROFILES)
+            if "active_profile" not in data:
+                data["active_profile"] = "Daily Full Review"
             return data
         except Exception as exc:
             logger.warning("Failed loading %s: %s. Using defaults.", self.config_path, exc)
             return dict(DEFAULT_CONFIG)
 
     def save(self, config_data: Dict[str, Any]) -> Dict[str, Any]:
-        """Persists configuration to disk atomically."""
+        """Persists configuration to disk atomically with Windows lock-resilience."""
         self.config_path.parent.mkdir(parents=True, exist_ok=True)
-        temp_path = self.config_path.with_suffix(".tmp")
-        with open(temp_path, "w", encoding="utf-8") as f:
-            json.dump(config_data, f, indent=2, ensure_ascii=False)
-        temp_path.replace(self.config_path)
-        return config_data
+        unique_id = uuid.uuid4().hex[:8]
+        temp_path = self.config_path.with_name(f"{self.config_path.stem}_{unique_id}.tmp")
+        try:
+            with open(temp_path, "w", encoding="utf-8") as f:
+                json.dump(config_data, f, indent=2, ensure_ascii=False)
+            for attempt in range(10):
+                try:
+                    temp_path.replace(self.config_path)
+                    return config_data
+                except (PermissionError, OSError):
+                    time.sleep(0.03 * (attempt + 1))
+            # Fallback: direct write
+            with open(self.config_path, "w", encoding="utf-8") as f:
+                json.dump(config_data, f, indent=2, ensure_ascii=False)
+            return config_data
+        finally:
+            if temp_path.exists():
+                try:
+                    temp_path.unlink(missing_ok=True)
+                except Exception:
+                    pass
 
     def get_recipients(self) -> List[str]:
         """Returns the list of recipient email addresses."""
@@ -145,6 +271,88 @@ class SecurityAgentConfig:
             self.save(config)
         except Exception as exc:
             logger.warning("Failed to record run result in config: %s", exc)
+
+    def get_profiles(self) -> List[Dict[str, Any]]:
+        """Returns all review profiles (built-in and custom)."""
+        config = self.load()
+        return config.get("profiles", list(DEFAULT_PROFILES))
+
+    def get_profile(self, profile_id_or_name: str) -> Optional[Dict[str, Any]]:
+        """Finds a review profile by profile_id or name (case-insensitive)."""
+        target = str(profile_id_or_name).strip().lower()
+        for p in self.get_profiles():
+            if p.get("profile_id", "").lower() == target or p.get("name", "").lower() == target:
+                return dict(p)
+        return None
+
+    def save_profile(self, profile_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Saves a new or updated review profile."""
+        name = str(profile_data.get("name", "")).strip()
+        if not name:
+            raise ValueError("Profile name is required.")
+        profile_id = str(profile_data.get("profile_id", "")).strip() or re.sub(r"[^a-z0-9]+", "-", name.lower()).strip("-")
+        config = self.load()
+        profiles = list(config.get("profiles", []))
+
+        idx = next((i for i, p in enumerate(profiles) if p.get("profile_id") == profile_id or p.get("name", "").lower() == name.lower()), -1)
+        record = {
+            "profile_id": profile_id,
+            "name": name,
+            "description": str(profile_data.get("description", "")).strip(),
+            "is_builtin": profile_data.get("is_builtin", False),
+            "options": dict(profile_data.get("options", {})),
+        }
+        if idx >= 0:
+            profiles[idx] = record
+        else:
+            profiles.append(record)
+        config["profiles"] = profiles
+        self.save(config)
+        return record
+
+    def delete_profile(self, profile_id: str) -> bool:
+        """Deletes a custom review profile. Built-in profiles cannot be deleted."""
+        config = self.load()
+        profiles = config.get("profiles", [])
+        initial_len = len(profiles)
+        profiles = [p for p in profiles if not (p.get("profile_id") == profile_id and not p.get("is_builtin", False))]
+        if len(profiles) < initial_len:
+            config["profiles"] = profiles
+            self.save(config)
+            return True
+        return False
+
+    def set_active_profile(self, profile_name: str) -> Dict[str, Any]:
+        """Sets the active review profile for scheduled runs."""
+        prof = self.get_profile(profile_name)
+        if not prof:
+            raise ValueError(f"Unknown review profile: '{profile_name}'")
+        config = self.load()
+        config["active_profile"] = prof["name"]
+        self.save(config)
+        return prof
+
+    def get_identity_enrichment_config(self) -> Dict[str, Any]:
+        """Returns the attacker identity enrichment configuration, falling back to defaults."""
+        config = self.load()
+        cfg = config.get("identity_enrichment")
+        if not isinstance(cfg, dict):
+            return dict(DEFAULT_IDENTITY_ENRICHMENT_CONFIG)
+        merged = dict(DEFAULT_IDENTITY_ENRICHMENT_CONFIG)
+        merged.update(cfg)
+        return merged
+
+    def set_identity_enrichment_config(self, enrichment_config: Dict[str, Any]) -> Dict[str, Any]:
+        """Updates and persists identity enrichment configuration."""
+        if not isinstance(enrichment_config, dict):
+            raise ValueError("Identity enrichment config must be a dictionary.")
+        config = self.load()
+        current = self.get_identity_enrichment_config()
+        current.update(enrichment_config)
+        config["identity_enrichment"] = current
+        self.save(config)
+        logger.info("Updated identity enrichment configuration.")
+        return current
 
     def sync_windows_task(self, schedule_time: str, enabled: bool) -> Dict[str, Any]:
         """Synchronizes Windows Task Scheduler with the specified schedule and status."""

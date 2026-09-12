@@ -17,6 +17,8 @@ from core.codex.app_server import CodexAppServerError, CodexAppServerHarness, Sa
 class _FakeBroker:
     def __init__(self):
         self.calls = []
+        self.permissions = SimpleNamespace(modes={"OWNER_DIRECT": set()})
+        self.registry = SimpleNamespace(provider_tools=lambda allowed: [])
 
     def prepare_patch(self, diff):
         self.calls.append(("prepare", diff))
@@ -34,11 +36,20 @@ class _FakeBroker:
 class _FakeRpc:
     def __init__(self):
         self.responses = []
+        self.requests = []
         self.initialized = True
         self.process = SimpleNamespace(poll=lambda: None)
 
     def respond(self, request_id, *, result=None, error=None):
         self.responses.append((request_id, result, error))
+
+    def request(self, method, params=None, timeout=None):
+        self.requests.append((method, params, timeout))
+        if method == "thread/start":
+            return {"thread": {"id": "cth_test"}}
+        if method == "turn/start":
+            return {"turn": {"id": "ctr_test"}}
+        return {}
 
 
 def _git_repo(path: Path) -> Path:
@@ -322,3 +333,29 @@ def test_file_change_requires_exact_single_use_approval_and_exposes_rollback(tmp
     assert harness._rpc.responses[-1][1] == {"decision": "accept"}
     with pytest.raises(CodexAppServerError, match="already used"):
         harness.decide_approval(proposal["approval_id"], phrase=proposal["approval_phrase"], owner_session_digest="b" * 64, approve=True)
+
+
+def test_codex_app_server_start_turn_passes_pack_content_directly_without_mirroring(tmp_path):
+    repo = _git_repo(tmp_path / "repo")
+    (repo / "README.md").write_text("# Test Repo\n", encoding="utf-8")
+    harness, events = _harness(repo)
+
+    pack_content = "Analyze this security incident:\n```json\n{\"incident_id\": \"inc_001\", \"severity\": \"HIGH\"}\n```"
+    harness.start_turn(
+        gui_thread_id="thr_preloaded",
+        gui_turn_id="trn_preloaded",
+        content=pack_content,
+        owner_session_digest="c" * 64,
+    )
+
+    # Verify turn/start was called with the direct pack text
+    turn_requests = [r for r in harness._rpc.requests if r[0] == "turn/start"]
+    assert len(turn_requests) == 1
+    params = turn_requests[0][1]
+    assert params["input"] == [{"type": "text", "text": pack_content}]
+
+    # Verify no incident pack files were mirrored or written to disk in workspace root
+    mapping = harness._threads["thr_preloaded"]
+    workspace_root = mapping["workspace"].root
+    disk_files = [f.name for f in workspace_root.iterdir()]
+    assert disk_files == ["README.md"]

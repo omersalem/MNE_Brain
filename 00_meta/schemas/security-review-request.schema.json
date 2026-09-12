@@ -1,0 +1,97 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "http://mne-brain.org/schemas/security-review-request.schema.json",
+  "title": "Security Review Request Schema",
+  "description": "Defines parameters for starting an asynchronous or synchronous security review run.",
+  "type": "object",
+  "required": [
+    "mode",
+    "collector_ids",
+    "analysis_engine",
+    "send_email",
+    "report_formats"
+  ],
+  "anyOf": [
+    { "required": ["hours_back"] },
+    { "required": ["start_time", "end_time"] }
+  ],
+  "properties": {
+    "mode": {
+      "type": "string",
+      "enum": ["QUICK", "FULL", "DEEP"]
+    },
+    "collector_ids": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "hours_back": {
+      "type": "number",
+      "minimum": 0.1
+    },
+    "start_time": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "end_time": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "analysis_engine": {
+      "type": "string",
+      "enum": ["NONE", "CODEX", "ANTIGRAVITY", "BOTH"]
+    },
+    "analysis_model": {
+      "type": ["string", "null"]
+    },
+    "send_email": {
+      "type": "boolean"
+    },
+    "recipients": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "report_formats": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": ["HTML", "PDF", "JSON", "CSV"]
+      },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "categories": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "branches": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "source_addresses": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "destination_addresses": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "usernames": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "max_records_per_collector": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "only_failed_collectors": {
+      "type": "boolean",
+      "default": false
+    },
+    "prior_run_id": {
+      "type": ["string", "null"]
+    }
+  },
+  "additionalProperties": false
+}

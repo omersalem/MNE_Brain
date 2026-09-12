@@ -205,133 +205,621 @@
     </form>
 
     <div class="sec-dialog-content">
-      <!-- Quick Action Toolbar -->
-      <section class="sec-action-toolbar" aria-label="Quick Actions">
-        <div class="sec-action-left">
-          <button id="sec-btn-run" class="primary sec-btn-prominent" type="button">
-            <span class="btn-icon" aria-hidden="true">⚡</span>
-            <span>Run Review Now</span>
-          </button>
-          <button id="sec-btn-view-html" class="sec-btn-action" type="button" title="Open the latest HTML Executive Report in a new tab">
-            <span class="btn-icon" aria-hidden="true">📄</span>
-            <span>View HTML Report</span>
-          </button>
-          <button id="sec-btn-download-pdf" class="sec-btn-action" type="button" title="Download the latest Executive PDF Briefing">
-            <span class="btn-icon" aria-hidden="true">📥</span>
-            <span>Download PDF</span>
-          </button>
-        </div>
-        <div class="sec-action-right">
-          <button id="sec-btn-test-email" class="sec-btn-quiet" type="button" title="Dispatch a lightweight test email to verify SMTP delivery">
-            <span class="btn-icon" aria-hidden="true">✉️</span>
-            <span>Send Test Email</span>
-          </button>
-        </div>
-      </section>
+      <!-- 5 Operational Navigation Tabs -->
+      <nav class="sec-nav-tabs" role="tablist" aria-label="Security Agent Views">
+        <button id="sec-tab-overview" class="sec-tab-btn active" type="button" role="tab" aria-selected="true" data-target="sec-panel-overview">Overview</button>
+        <button id="sec-tab-run" class="sec-tab-btn" type="button" role="tab" aria-selected="false" data-target="sec-panel-run">Run Review</button>
+        <button id="sec-tab-incidents" class="sec-tab-btn" type="button" role="tab" aria-selected="false" data-target="sec-panel-incidents">Incidents</button>
+        <button id="sec-tab-analysis" class="sec-tab-btn" type="button" role="tab" aria-selected="false" data-target="sec-panel-analysis">AI Analysis</button>
+        <button id="sec-tab-history" class="sec-tab-btn" type="button" role="tab" aria-selected="false" data-target="sec-panel-history">History</button>
+      </nav>
 
-      <!-- Threat Stat Metric Strip -->
-      <section class="sec-metrics-strip" aria-label="Threat Overview">
-        <div class="sec-stat-card critical">
-          <span class="sec-stat-label">Critical Risks</span>
-          <span id="sec-stat-critical" class="sec-stat-value">0</span>
-          <span class="sec-stat-hint">Immediate action</span>
-        </div>
-        <div class="sec-stat-card high">
-          <span class="sec-stat-label">High Risks</span>
-          <span id="sec-stat-high" class="sec-stat-value">0</span>
-          <span class="sec-stat-hint">Elevated threats</span>
-        </div>
-        <div class="sec-stat-card medium">
-          <span class="sec-stat-label">Medium Risks</span>
-          <span id="sec-stat-medium" class="sec-stat-value">0</span>
-          <span class="sec-stat-hint">Warnings & anomalies</span>
-        </div>
-        <div class="sec-stat-card total">
-          <span class="sec-stat-label">Total Incidents</span>
-          <span id="sec-stat-total" class="sec-stat-value">0</span>
-          <span class="sec-stat-hint">Consolidated events</span>
-        </div>
-        <div class="sec-stat-card appliances">
-          <span class="sec-stat-label">Appliances</span>
-          <span id="sec-stat-devices" class="sec-stat-value">7 / 7</span>
-          <span class="sec-stat-hint">Infrastructure active</span>
-        </div>
-      </section>
-
-      <!-- Main Controls Grid (Schedule & Recipients) -->
-      <div class="sec-grid-two-col">
-        <!-- Schedule Automation Card -->
-        <section class="sec-card" aria-labelledby="sec-schedule-heading">
-          <div class="sec-card-header">
-            <h3 id="sec-schedule-heading">⏰ Daily Schedule Automation</h3>
-            <span id="sec-scheduler-badge" class="status-pill safe">Checking…</span>
+      <!-- Panel 1: Overview -->
+      <section id="sec-panel-overview" class="sec-tab-panel active" role="tabpanel" aria-labelledby="sec-tab-overview">
+        <!-- Quick Action Toolbar -->
+        <div class="sec-action-toolbar" aria-label="Quick Actions">
+          <div class="sec-action-left">
+            <button id="sec-btn-run" class="primary sec-btn-prominent" type="button">
+              <span class="btn-icon" aria-hidden="true">⚡</span>
+              <span>Run Review Now</span>
+            </button>
+            <button id="sec-btn-view-html" class="sec-btn-action" type="button" title="Open the latest HTML Executive Report in a new tab">
+              <span class="btn-icon" aria-hidden="true">📄</span>
+              <span>View HTML Report</span>
+            </button>
+            <button id="sec-btn-download-pdf" class="sec-btn-action" type="button" title="Download the latest Executive PDF Briefing">
+              <span class="btn-icon" aria-hidden="true">📥</span>
+              <span>Download PDF</span>
+            </button>
           </div>
-          <p class="sec-card-desc">Automatically executes 24-hour log reviews across all 7 appliances and emails reports every morning.</p>
-          <form id="sec-schedule-form" class="sec-form">
-            <div class="sec-form-row">
-              <label class="sec-switch-label" for="sec-schedule-enabled">
-                <input id="sec-schedule-enabled" type="checkbox" checked>
-                <span class="sec-switch-text">Enable Daily Automation</span>
-              </label>
+          <div class="sec-action-right">
+            <button id="sec-btn-test-email" class="sec-btn-quiet" type="button" title="Dispatch a lightweight test email to verify SMTP delivery">
+              <span class="btn-icon" aria-hidden="true">✉️</span>
+              <span>Send Test Email</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Threat Stat Metric Strip -->
+        <div class="sec-metrics-strip" aria-label="Threat Overview">
+          <div class="sec-stat-card critical">
+            <span class="sec-stat-label">Critical Risks</span>
+            <span id="sec-stat-critical" class="sec-stat-value">0</span>
+            <span class="sec-stat-hint">Immediate action</span>
+          </div>
+          <div class="sec-stat-card high">
+            <span class="sec-stat-label">High Risks</span>
+            <span id="sec-stat-high" class="sec-stat-value">0</span>
+            <span class="sec-stat-hint">Elevated threats</span>
+          </div>
+          <div class="sec-stat-card medium">
+            <span class="sec-stat-label">Medium Risks</span>
+            <span id="sec-stat-medium" class="sec-stat-value">0</span>
+            <span class="sec-stat-hint">Warnings & anomalies</span>
+          </div>
+          <div class="sec-stat-card total">
+            <span class="sec-stat-label">Total Incidents</span>
+            <span id="sec-stat-total" class="sec-stat-value">0</span>
+            <span class="sec-stat-hint">Consolidated events</span>
+          </div>
+          <div class="sec-stat-card appliances">
+            <span class="sec-stat-label">Appliances</span>
+            <span id="sec-stat-devices" class="sec-stat-value">7 / 7</span>
+            <span class="sec-stat-hint">Infrastructure active</span>
+          </div>
+        </div>
+
+        <!-- Main Controls Grid (Schedule & Recipients) -->
+        <div class="sec-grid-two-col">
+          <!-- Schedule Automation Card -->
+          <div class="sec-card" aria-labelledby="sec-schedule-heading">
+            <div class="sec-card-header">
+              <h3 id="sec-schedule-heading">⏰ Daily Schedule Automation</h3>
+              <span id="sec-scheduler-badge" class="status-pill safe">Checking…</span>
             </div>
-            <div class="sec-form-row">
-              <label for="sec-schedule-time">Daily Trigger Time (24h format)</label>
-              <div class="sec-time-input-group">
-                <input id="sec-schedule-time" type="time" value="07:00" required>
-                <span class="sec-input-hint">Morning briefing</span>
+            <p class="sec-card-desc">Automatically executes 24-hour log reviews across all 7 appliances and emails reports every morning.</p>
+            <form id="sec-schedule-form" class="sec-form">
+              <div class="sec-form-row">
+                <label class="sec-switch-label" for="sec-schedule-enabled">
+                  <input id="sec-schedule-enabled" type="checkbox" checked>
+                  <span class="sec-switch-text">Enable Daily Automation</span>
+                </label>
+              </div>
+              <div class="sec-form-row">
+                <label for="sec-schedule-time">Daily Trigger Time (24h format)</label>
+                <div class="sec-time-input-group">
+                  <input id="sec-schedule-time" type="time" value="07:00" required>
+                  <span class="sec-input-hint">Morning briefing</span>
+                </div>
+              </div>
+              <div class="sec-scheduler-details">
+                <div class="sec-detail-line"><span>Windows Task:</span> <strong id="sec-task-state">Ready</strong></div>
+                <div class="sec-detail-line"><span>Next Scheduled Run:</span> <span id="sec-task-next">Tomorrow 07:00</span></div>
+              </div>
+              <div class="sec-form-actions">
+                <button id="sec-btn-save-schedule" class="primary compact" type="submit">Save Schedule & Sync Task</button>
+                <output id="sec-schedule-status" class="sec-status-msg" role="status"></output>
+              </div>
+            </form>
+          </div>
+
+          <!-- Email Distribution List Card -->
+          <div class="sec-card" aria-labelledby="sec-recipients-heading">
+            <div class="sec-card-header">
+              <h3 id="sec-recipients-heading">📧 Report Email Distribution List</h3>
+              <span id="sec-recipients-count" class="badge-code">Loading…</span>
+            </div>
+            <p class="sec-card-desc">Daily cyber briefings, executive HTML summaries, and PDF attachments are dispatched to these addresses.</p>
+            <div class="sec-recipients-box">
+              <div id="sec-recipients-list" class="sec-tags-container"></div>
+              <div class="sec-add-email-row">
+                <input id="sec-new-email" type="email" placeholder="Add administrator email (e.g. admin@mne.gov.ps)..." autocomplete="off">
+                <button id="sec-btn-add-email" class="compact" type="button">+ Add</button>
               </div>
             </div>
-            <div class="sec-scheduler-details">
-              <div class="sec-detail-line"><span>Windows Task:</span> <strong id="sec-task-state">Ready</strong></div>
-              <div class="sec-detail-line"><span>Next Scheduled Run:</span> <span id="sec-task-next">Tomorrow 07:00</span></div>
-            </div>
             <div class="sec-form-actions">
-              <button id="sec-btn-save-schedule" class="primary compact" type="submit">Save Schedule & Sync Task</button>
-              <output id="sec-schedule-status" class="sec-status-msg" role="status"></output>
+              <button id="sec-btn-save-recipients" class="primary compact" type="button">Save Distribution List</button>
+              <output id="sec-recipients-status" class="sec-status-msg" role="status"></output>
+            </div>
+          </div>
+        </div>
+
+        <!-- Monitored Security Appliances Card -->
+        <div class="sec-card" aria-labelledby="sec-appliances-heading">
+          <div class="sec-card-header">
+            <h3 id="sec-appliances-heading">🛡️ Monitored Security Appliances (7 Systems)</h3>
+            <span class="trust-badge">Read-Only Telemetry</span>
+          </div>
+          <div id="sec-devices-grid" class="sec-devices-table">
+            <!-- Populated dynamically by JS -->
+          </div>
+        </div>
+      </section>
+
+      <!-- Panel 2: Run Review & Controls -->
+      <section id="sec-panel-run" class="sec-tab-panel" role="tabpanel" aria-labelledby="sec-tab-run" hidden>
+        <div class="sec-card">
+          <div class="sec-card-header">
+            <h3>⚡ Execute On-Demand Cybersecurity Review</h3>
+            <span class="status-pill safe">Interactive Workspace</span>
+          </div>
+          <p class="sec-card-desc">Configure scope, time window, appliances, threat categories, and optional AI correlation engines.</p>
+
+          <form id="sec-run-config-form" class="sec-config-form">
+            <!-- Mode & Profile Grid -->
+            <div class="sec-form-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
+              <div class="sec-field">
+                <label for="sec-profile-select"><strong>Review Profile</strong></label>
+                <select id="sec-profile-select">
+                  <option value="daily-full-review" selected>Daily Full Review</option>
+                  <option value="quick-perimeter-check">Quick Perimeter Check</option>
+                  <option value="identity-investigation">Identity Investigation</option>
+                  <option value="email-threat-review">Email Threat Review</option>
+                  <option value="branch-investigation">Branch Investigation</option>
+                </select>
+              </div>
+
+              <div class="sec-field">
+                <label for="sec-run-mode"><strong>Review Mode</strong></label>
+                <select id="sec-run-mode">
+                  <option value="FULL" selected>Full Review (All Checks & Threat Correlations)</option>
+                  <option value="QUICK">Quick Review (Fast Perimeter & WAN Checks)</option>
+                  <option value="DEEP">Deep Review (Exhaustive Historic Analysis)</option>
+                </select>
+              </div>
+
+              <div class="sec-field">
+                <label for="sec-time-preset"><strong>Time Window</strong></label>
+                <select id="sec-time-preset">
+                  <option value="1">Last 1 Hour</option>
+                  <option value="6">Last 6 Hours</option>
+                  <option value="12">Last 12 Hours</option>
+                  <option value="24" selected>Last 24 Hours</option>
+                  <option value="48">Last 48 Hours</option>
+                  <option value="168">Last 7 Days</option>
+                  <option value="custom">Custom Date Range…</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Custom Time Range (Hidden unless custom selected) -->
+            <div id="sec-custom-time-group" class="sec-form-grid sec-custom-time" hidden>
+              <div class="sec-field">
+                <label for="sec-start-time">Start Time</label>
+                <input id="sec-start-time" type="datetime-local">
+              </div>
+              <div class="sec-field">
+                <label for="sec-end-time">End Time</label>
+                <input id="sec-end-time" type="datetime-local">
+              </div>
+            </div>
+
+            <!-- Appliance Selection -->
+            <div class="sec-field sec-field-full">
+              <div class="sec-field-header">
+                <label><strong>Monitored Collectors (7 Appliances)</strong></label>
+                <div class="sec-sub-actions">
+                  <button id="sec-btn-select-all-collectors" type="button" class="link-btn">Select All</button>
+                  <span class="sep">·</span>
+                  <button id="sec-btn-deselect-all-collectors" type="button" class="link-btn">Deselect All</button>
+                </div>
+              </div>
+              <div class="sec-checkbox-grid">
+                <label class="sec-checkbox-card">
+                  <input type="checkbox" name="sec-collector" value="fortigate_core" checked>
+                  <span><strong>FortiGate Core Firewall</strong> (172.23.70.4)</span>
+                </label>
+                <label class="sec-checkbox-card">
+                  <input type="checkbox" name="sec-collector" value="fortianalyzer" checked>
+                  <span><strong>FortiAnalyzer</strong> (172.23.71.206)</span>
+                </label>
+                <label class="sec-checkbox-card">
+                  <input type="checkbox" name="sec-collector" value="f5_bigip" checked>
+                  <span><strong>F5 BIG-IP / ASM WAF</strong> (172.23.70.89)</span>
+                </label>
+                <label class="sec-checkbox-card">
+                  <input type="checkbox" name="sec-collector" value="cisco_fmc" checked>
+                  <span><strong>Cisco FMC Firepower</strong> (172.23.70.77)</span>
+                </label>
+                <label class="sec-checkbox-card">
+                  <input type="checkbox" name="sec-collector" value="sophos_email" checked>
+                  <span><strong>Sophos Email Protection</strong> (172.23.71.39)</span>
+                </label>
+                <label class="sec-checkbox-card">
+                  <input type="checkbox" name="sec-collector" value="active_directory" checked>
+                  <span><strong>Active Directory Domain Controller</strong> (172.23.71.27)</span>
+                </label>
+                <label class="sec-checkbox-card">
+                  <input type="checkbox" name="sec-collector" value="exchange_2019" checked>
+                  <span><strong>Exchange 2019 Mailbox</strong> (172.23.71.36)</span>
+                </label>
+              </div>
+            </div>
+
+            <!-- Threat Categories Filter -->
+            <div class="sec-field sec-field-full">
+              <label><strong>Threat Category Focus (Optional Filters)</strong></label>
+              <div class="sec-chips-grid">
+                <label class="sec-chip-check"><input type="checkbox" name="sec-category" value="INTRUSION" checked><span>Intrusion / IPS</span></label>
+                <label class="sec-chip-check"><input type="checkbox" name="sec-category" value="MALWARE" checked><span>Malware & Viruses</span></label>
+                <label class="sec-chip-check"><input type="checkbox" name="sec-category" value="BRUTE_FORCE" checked><span>Brute Force & Auth</span></label>
+                <label class="sec-chip-check"><input type="checkbox" name="sec-category" value="WAF_EXPLOIT" checked><span>WAF Exploits & Web</span></label>
+                <label class="sec-chip-check"><input type="checkbox" name="sec-category" value="PHISHING" checked><span>Phishing & Spam</span></label>
+                <label class="sec-chip-check"><input type="checkbox" name="sec-category" value="PRIVILEGE_CHANGE" checked><span>Privilege Changes</span></label>
+                <label class="sec-chip-check"><input type="checkbox" name="sec-category" value="SYSTEM_HEALTH" checked><span>System Health</span></label>
+                <label class="sec-chip-check"><input type="checkbox" name="sec-category" value="ANOMALY" checked><span>Traffic Anomalies</span></label>
+              </div>
+            </div>
+
+            <!-- AI Engine & Model Grid -->
+            <div class="sec-form-grid">
+              <div class="sec-field">
+                <label for="sec-analysis-engine"><strong>AI Investigation Engine</strong></label>
+                <select id="sec-analysis-engine">
+                  <option value="NONE" selected>None (Rule-Based Correlation Only)</option>
+                  <option value="CODEX">Codex App Server (OpenAI ChatGPT Session)</option>
+                  <option value="ANTIGRAVITY">Antigravity CLI (Google Agent Engine)</option>
+                  <option value="BOTH">Both (Concurrent Multi-Engine Comparison)</option>
+                </select>
+              </div>
+              <div class="sec-field">
+                <label for="sec-analysis-model"><strong>AI Model Override</strong></label>
+                <input id="sec-analysis-model" list="sec-analysis-model-list" type="text" placeholder="Default provider model" autocomplete="off">
+                <datalist id="sec-analysis-model-list"></datalist>
+              </div>
+            </div>
+
+            <!-- Report & Dispatch Options -->
+            <div class="sec-form-grid">
+              <div class="sec-field">
+                <label><strong>Report Outputs</strong></label>
+                <div class="sec-horizontal-checks">
+                  <label><input type="checkbox" name="sec-report-format" value="HTML" checked> HTML</label>
+                  <label><input type="checkbox" name="sec-report-format" value="PDF" checked> PDF</label>
+                  <label><input type="checkbox" name="sec-report-format" value="JSON" checked> JSON</label>
+                  <label><input type="checkbox" name="sec-report-format" value="CSV" checked> CSV</label>
+                </div>
+              </div>
+              <div class="sec-field">
+                <label><strong>Email Dispatch</strong></label>
+                <label class="sec-switch-label" for="sec-send-email-check">
+                  <input id="sec-send-email-check" type="checkbox" checked>
+                  <span class="sec-switch-text">Send Email to Distribution List</span>
+                </label>
+              </div>
+            </div>
+
+            <div class="sec-form-actions">
+              <button id="sec-btn-start-review" class="primary sec-btn-prominent" type="button">
+                <span class="btn-icon" aria-hidden="true">⚡</span>
+                <span>Start Security Review</span>
+              </button>
             </div>
           </form>
-        </section>
+        </div>
 
-        <!-- Email Distribution List Card -->
-        <section class="sec-card" aria-labelledby="sec-recipients-heading">
+        <!-- Genuine Live Execution Log Console -->
+        <div id="sec-console-section" class="sec-card sec-console-card" aria-labelledby="sec-console-heading" hidden>
           <div class="sec-card-header">
-            <h3 id="sec-recipients-heading">📧 Report Email Distribution List</h3>
-            <span id="sec-recipients-count" class="badge-code">Loading…</span>
-          </div>
-          <p class="sec-card-desc">Daily cyber briefings, executive HTML summaries, and PDF attachments are dispatched to these addresses.</p>
-          <div class="sec-recipients-box">
-            <div id="sec-recipients-list" class="sec-tags-container"></div>
-            <div class="sec-add-email-row">
-              <input id="sec-new-email" type="email" placeholder="Add administrator email (e.g. admin@mne.gov.ps)..." autocomplete="off">
-              <button id="sec-btn-add-email" class="compact" type="button">+ Add</button>
+            <div class="sec-console-header-left">
+              <h3 id="sec-console-heading">💻 Live Review Execution Log</h3>
+              <span id="sec-run-stage" class="badge-code">INITIALIZING</span>
+              <span id="sec-current-collector" class="badge-subtle">Waiting…</span>
+            </div>
+            <div class="sec-console-header-right">
+              <span id="sec-elapsed-time" class="badge-code">00:00</span>
+              <span id="sec-run-status-indicator" class="activity-state">IDLE</span>
             </div>
           </div>
-          <div class="sec-form-actions">
-            <button id="sec-btn-save-recipients" class="primary compact" type="button">Save Distribution List</button>
-            <output id="sec-recipients-status" class="sec-status-msg" role="status"></output>
+
+          <!-- Collector Diagnostics Summary Strip -->
+          <div id="sec-console-counts" class="sec-console-stats">
+            <div class="stat-pill">Fetched: <strong id="sec-count-fetched">0</strong></div>
+            <div class="stat-pill">Parsed: <strong id="sec-count-parsed">0</strong></div>
+            <div class="stat-pill">Duration: <strong id="sec-collector-duration">0s</strong></div>
           </div>
-        </section>
+
+          <div id="sec-run-console" class="sec-console-output" role="log" aria-live="polite"></div>
+
+          <!-- Real-Time Run Controls -->
+          <div class="sec-console-controls">
+            <button id="sec-btn-cancel-run" class="danger compact" type="button" disabled>⏹ Cancel Run</button>
+            <button id="sec-btn-retry-failed" class="compact" type="button" hidden>🔄 Retry Failed Collectors</button>
+            <button id="sec-btn-run-again" class="compact" type="button" hidden>⚡ Run Again</button>
+            <button id="sec-btn-open-results" class="primary compact" type="button" hidden>📄 Open Results</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Panel 3: Incidents Drill-Down -->
+      <section id="sec-panel-incidents" class="sec-tab-panel" role="tabpanel" aria-labelledby="sec-tab-incidents" hidden>
+        <div class="sec-card">
+          <div class="sec-card-header">
+            <h3>🚨 Consolidated Security Incidents</h3>
+            <div class="sec-search-group">
+              <input id="sec-incidents-search" type="search" placeholder="Search incidents by IP, entity, category…" autocomplete="off">
+              <select id="sec-incidents-filter-sev">
+                <option value="ALL">All Severities</option>
+                <option value="CRITICAL">Critical</option>
+                <option value="HIGH">High</option>
+                <option value="MEDIUM">Medium</option>
+                <option value="LOW">Low</option>
+              </select>
+              <select id="sec-incidents-filter-status">
+                <option value="ALL">All Statuses</option>
+                <option value="NEW">New</option>
+                <option value="RECURRING">Recurring</option>
+                <option value="INVESTIGATING">Investigating</option>
+                <option value="RESOLVED">Resolved</option>
+                <option value="REOPENED">Reopened</option>
+              </select>
+            </div>
+          </div>
+          <div class="sec-table-container">
+            <table id="sec-incidents-table" class="sec-data-table">
+              <thead>
+                <tr>
+                  <th>Severity</th>
+                  <th>Incident ID / Fingerprint</th>
+                  <th>Category</th>
+                  <th>Device / Source</th>
+                  <th>Attacker & Target</th>
+                  <th>Events</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="sec-incidents-tbody">
+                <tr><td colspan="7" class="sec-empty-cell">Run a security review to populate detected incidents.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- Panel 4: AI Analysis -->
+      <section id="sec-panel-analysis" class="sec-tab-panel" role="tabpanel" aria-labelledby="sec-tab-analysis" hidden>
+        <div class="sec-card">
+          <div class="sec-card-header">
+            <h3>🧠 Autonomous AI Security Investigation</h3>
+            <div class="sec-provider-badges">
+              <span id="sec-codex-badge" class="badge-code">Codex: Ready</span>
+              <span id="sec-antigravity-badge" class="badge-code">Antigravity: Ready</span>
+            </div>
+          </div>
+          <p class="sec-card-desc">Execute multi-model autonomous troubleshooting across Codex App Server and Antigravity CLI without leaving the presentation console.</p>
+          <div class="sec-filter-bar" style="margin-bottom: 1rem;">
+            <div class="filter-group">
+              <label for="sec-analysis-target-type">Target:</label>
+              <select id="sec-analysis-target-type">
+                <option value="LATEST_RUN">Latest Run</option>
+                <option value="ACTIVE_INCIDENT">Active Incident</option>
+              </select>
+            </div>
+            <div class="filter-group">
+              <label for="sec-analysis-engine-select">Engine:</label>
+              <select id="sec-analysis-engine-select">
+                <option value="BOTH">Both (Codex & Antigravity)</option>
+                <option value="CODEX">Codex App Server</option>
+                <option value="ANTIGRAVITY">Antigravity CLI</option>
+              </select>
+            </div>
+            <button id="sec-run-analysis-btn" class="primary compact" type="button">🚀 Run AI Analysis</button>
+          </div>
+          <div id="sec-analysis-progress" class="sec-console-stream" style="display: none; margin-bottom: 1rem; max-height: 180px;"></div>
+          <div id="sec-analysis-container" class="sec-analysis-box">
+            <div class="sec-empty-hint">No active AI security analysis. Choose an AI Engine above or select an incident in the Incidents tab.</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Panel 5: History -->
+      <section id="sec-panel-history" class="sec-tab-panel" role="tabpanel" aria-labelledby="sec-tab-history" hidden>
+        <div class="sec-card">
+          <div class="sec-card-header">
+            <h3>📜 Security Review Run History</h3>
+            <button id="sec-history-refresh-btn" class="compact" type="button">🔄 Refresh History</button>
+          </div>
+          <div class="sec-table-container">
+            <table id="sec-history-table" class="sec-data-table">
+              <thead>
+                <tr>
+                  <th>Run ID</th>
+                  <th>Date & Time</th>
+                  <th>State</th>
+                  <th>Incidents</th>
+                  <th>Collectors</th>
+                  <th>Email</th>
+                  <th>Downloads</th>
+                </tr>
+              </thead>
+              <tbody id="sec-history-tbody">
+                <tr><td colspan="7" class="sec-empty-cell">Loading historical runs…</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="sec-card-header" style="margin-top: 1.5rem;">
+            <h3>📊 7-Day & 30-Day Fleet Threat Trends</h3>
+            <span class="status-pill safe">Fleet Intelligence</span>
+          </div>
+          <div id="sec-trends-container" class="sec-trends-box" style="margin-top: 0.5rem;">
+            <p class="sec-empty-cell">Loading fleet analytics…</p>
+          </div>
+        </div>
+      </section>
+    </div>
+  </dialog>
+
+  <!-- Incident Drill-Down Detail Modal -->
+  <dialog id="sec-incident-detail-dialog" class="security-agent-dialog sec-detail-modal" aria-labelledby="sec-detail-title">
+    <div class="sec-dialog-header">
+      <div class="sec-header-left">
+        <span class="brand-mark" aria-hidden="true">🛡️</span>
+        <div>
+          <h2 id="sec-detail-title">Incident Details</h2>
+          <span id="sec-detail-subtitle" class="badge-subtle">Stable Fingerprint</span>
+        </div>
+      </div>
+      <div class="sec-header-actions">
+        <span id="sec-detail-severity-pill" class="status-pill warning">MEDIUM</span>
+        <span id="sec-detail-lifecycle-pill" class="status-pill info">NEW</span>
+        <button id="sec-detail-close-btn" class="close-btn" type="button" aria-label="Close dialog">✕</button>
+      </div>
+    </div>
+    <div class="sec-dialog-body sec-detail-body">
+      <!-- Quick Info Strip -->
+      <div class="sec-detail-strip">
+        <div class="detail-item"><span>Fingerprint:</span> <strong id="sec-detail-fingerprint" class="badge-code">—</strong></div>
+        <div class="detail-item"><span>Display ID:</span> <strong id="sec-detail-display-id" class="badge-code">—</strong></div>
+        <div class="detail-item"><span>First Seen:</span> <strong id="sec-detail-first-seen">—</strong></div>
+        <div class="detail-item"><span>Last Seen:</span> <strong id="sec-detail-last-seen">—</strong></div>
+        <div class="detail-item"><span>Occurrences:</span> <strong id="sec-detail-occurrences">1</strong></div>
+        <div class="detail-item"><span>Total Events:</span> <strong id="sec-detail-events">1</strong></div>
       </div>
 
-      <!-- Monitored Security Appliances Card -->
-      <section class="sec-card" aria-labelledby="sec-appliances-heading">
-        <div class="sec-card-header">
-          <h3 id="sec-appliances-heading">🛡️ Monitored Security Appliances (7 Systems)</h3>
-          <span class="trust-badge">Read-Only Telemetry</span>
-        </div>
-        <div id="sec-devices-grid" class="sec-devices-table">
-          <!-- Populated dynamically by JS -->
-        </div>
-      </section>
+      <!-- Severity Rationale -->
+      <div class="sec-detail-section">
+        <h4>Severity Rationale</h4>
+        <p id="sec-detail-rationale" class="sec-rationale-text">—</p>
+      </div>
 
-      <!-- Live Execution Log Console -->
-      <section id="sec-console-section" class="sec-card sec-console-card" aria-labelledby="sec-console-heading" hidden>
-        <div class="sec-card-header">
-          <h3 id="sec-console-heading">💻 Live Review Execution Log</h3>
-          <span id="sec-run-status-indicator" class="activity-state">RUNNING</span>
+      <!-- Scope & Targets -->
+      <div class="sec-detail-grid">
+        <div class="sec-detail-col">
+          <h4>Attacker Identity</h4>
+          <p id="sec-detail-attacker" class="badge-code">—</p>
         </div>
-        <div id="sec-run-console" class="sec-console-output" role="log" aria-live="polite"></div>
-      </section>
+        <div class="sec-detail-col">
+          <h4>Target Scope</h4>
+          <p id="sec-detail-targets" class="badge-code">—</p>
+        </div>
+        <div class="sec-detail-col">
+          <h4>Devices Involved</h4>
+          <p id="sec-detail-devices">—</p>
+        </div>
+        <div class="sec-detail-col">
+          <h4>Branches Involved</h4>
+          <p id="sec-detail-branches">—</p>
+        </div>
+      </div>
+
+      <!-- Attacker Local Identity Attribution -->
+      <div id="sec-detail-identity-section" class="sec-detail-section" style="background:#0b172b;border:1px solid #1e293b;border-radius:8px;padding:12px 16px;margin-bottom:12px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+          <h4 style="margin:0;color:#38bdf8;font-size:13px;">Attacker Identity Attribution</h4>
+          <button id="sec-detail-btn-resolve-identity" class="compact" type="button" style="border-color:#38bdf8;color:#38bdf8;font-size:11px;padding:3px 8px;">🔍 Resolve Identity</button>
+        </div>
+        <div class="sec-detail-grid" style="grid-template-columns:repeat(auto-fit, minmax(180px, 1fr));gap:10px;">
+          <div class="sec-detail-col">
+            <span style="font-size:11px;color:#94a3b8;">Computer / PC:</span>
+            <strong id="sec-detail-pc-name" class="badge-code" style="display:block;margin-top:2px;">—</strong>
+          </div>
+          <div class="sec-detail-col">
+            <span style="font-size:11px;color:#94a3b8;">Domain Username:</span>
+            <strong id="sec-detail-username" class="badge-code" style="display:block;margin-top:2px;">—</strong>
+          </div>
+          <div class="sec-detail-col">
+            <span style="font-size:11px;color:#94a3b8;">Device Owner:</span>
+            <span id="sec-detail-device-owner" style="display:block;margin-top:2px;font-size:12px;">—</span>
+          </div>
+          <div class="sec-detail-col">
+            <span style="font-size:11px;color:#94a3b8;">MAC Address:</span>
+            <span id="sec-detail-mac" class="badge-code" style="display:block;margin-top:2px;">—</span>
+          </div>
+          <div class="sec-detail-col">
+            <span style="font-size:11px;color:#94a3b8;">Network Scope:</span>
+            <span id="sec-detail-scope" class="badge-subtle" style="display:block;margin-top:2px;">—</span>
+          </div>
+          <div class="sec-detail-col">
+            <span style="font-size:11px;color:#94a3b8;">Status / Confidence:</span>
+            <div style="margin-top:2px;">
+              <span id="sec-detail-id-status" class="status-pill">—</span>
+              <span id="sec-detail-confidence" style="font-size:11px;color:#94a3b8;margin-left:4px;"></span>
+            </div>
+          </div>
+        </div>
+        <div style="margin-top:8px;font-size:11px;color:#94a3b8;">
+          <span>Sources:</span> <span id="sec-detail-id-sources" style="color:#e2e8f0;">—</span>
+          <span style="margin-left:12px;">Observed:</span> <span id="sec-detail-id-observed" style="color:#e2e8f0;">—</span>
+        </div>
+        <div id="sec-detail-id-diagnostics-container" style="margin-top:6px;font-size:11px;color:#f59e0b;display:none;">
+          <span>Diagnostics:</span> <span id="sec-detail-id-diagnostics"></span>
+        </div>
+      </div>
+
+      <!-- Action & Disposition -->
+      <div class="sec-detail-section">
+        <h4>Dispositions & Counts</h4>
+        <div class="sec-console-stats">
+          <div class="stat-pill">Action: <strong id="sec-detail-action">UNKNOWN</strong></div>
+          <div class="stat-pill">Blocked: <strong id="sec-detail-blocked">0</strong></div>
+          <div class="stat-pill">Allowed: <strong id="sec-detail-allowed">0</strong></div>
+        </div>
+      </div>
+
+      <!-- AI & Action Buttons -->
+      <div class="sec-detail-section sec-action-bar">
+        <h4>Investigation & AI Analysis</h4>
+        <div class="sec-action-buttons">
+          <button id="sec-detail-btn-analyze-codex" class="compact" type="button">🤖 Analyze with Codex</button>
+          <button id="sec-detail-btn-analyze-antigravity" class="compact" type="button">⚡ Analyze with Antigravity</button>
+          <button id="sec-detail-btn-analyze-both" class="compact" type="button">🔬 Analyze Both & Compare</button>
+          <button id="sec-detail-btn-open-chat" class="compact" type="button">💬 Open in Chat</button>
+          <button id="sec-detail-btn-troubleshoot" class="compact" type="button" style="border-color:#38bdf8;color:#38bdf8;font-weight:600;">🛠️ Start Troubleshooting</button>
+        </div>
+      </div>
+
+      <!-- Troubleshooting Result Box -->
+      <div id="sec-incident-troubleshoot-container" class="sec-detail-section" style="display:none;background:#0c1c2e;border:1px solid #0284c7;border-radius:8px;padding:14px;margin-bottom:14px;">
+        <!-- Populated dynamically by JS -->
+      </div>
+
+      <!-- Lifecycle Management Form -->
+      <div class="sec-detail-section">
+        <h4>Update Lifecycle State</h4>
+        <div class="sec-status-update-form">
+          <select id="sec-detail-status-select">
+            <option value="NEW">NEW</option>
+            <option value="RECURRING">RECURRING</option>
+            <option value="INVESTIGATING">INVESTIGATING</option>
+            <option value="RESOLVED">RESOLVED</option>
+            <option value="REOPENED">REOPENED</option>
+          </select>
+          <input id="sec-detail-status-note" type="text" placeholder="Optional status change note..." autocomplete="off">
+          <button id="sec-detail-update-status-btn" class="primary compact" type="button">Update Status</button>
+        </div>
+        <output id="sec-detail-status-msg" class="sec-status-msg" role="status"></output>
+      </div>
+
+      <!-- Analyst Notes Section -->
+      <div class="sec-detail-section">
+        <h4>Analyst Notes</h4>
+        <div id="sec-detail-notes-list" class="sec-notes-container">
+          <span class="sec-empty-hint">No analyst notes recorded yet.</span>
+        </div>
+        <div class="sec-add-note-row">
+          <input id="sec-detail-new-note-input" type="text" placeholder="Add analyst investigation note..." autocomplete="off">
+          <button id="sec-detail-add-note-btn" class="compact" type="button">+ Add Note</button>
+        </div>
+      </div>
+
+      <!-- Timeline Section -->
+      <div class="sec-detail-section">
+        <h4>Incident Event Timeline</h4>
+        <div id="sec-detail-timeline-list" class="sec-timeline-container">
+          <span class="sec-empty-hint">Loading timeline…</span>
+        </div>
+      </div>
+
+      <!-- Remediation Playbook Section -->
+      <div class="sec-detail-section">
+        <h4>Remediation Procedures</h4>
+        <div class="sec-playbook-box">
+          <h5>CLI Commands</h5>
+          <pre id="sec-detail-playbook-cli" class="sec-code-block"><code>No specific CLI remediation available.</code></pre>
+          <h5>GUI Steps</h5>
+          <div id="sec-detail-playbook-gui" class="sec-gui-steps">No specific GUI remediation available.</div>
+        </div>
+      </div>
     </div>
   </dialog>
 
@@ -344,6 +832,6 @@
   </dialog>
 
   <noscript>This console requires JavaScript for presentation. Server safety controls remain authoritative.</noscript>
-  <script type="module" src="/scripts/auth.js"></script><script type="module" src="/scripts/threads.js"></script><script type="module" src="/scripts/composer.js"></script><script type="module" src="/scripts/activity.js"></script><script type="module" src="/scripts/evidence.js"></script><script type="module" src="/scripts/tool_calls.js"></script><script type="module" src="/scripts/providers.js"></script><script type="module" src="/scripts/approvals.js"></script><script type="module" src="/scripts/p10.js"></script>
+  <script type="module" src="/scripts/auth.js"></script><script type="module" src="/scripts/threads.js"></script><script type="module" src="/scripts/composer.js"></script><script type="module" src="/scripts/activity.js"></script><script type="module" src="/scripts/evidence.js"></script><script type="module" src="/scripts/tool_calls.js"></script><script type="module" src="/scripts/providers.js"></script><script type="module" src="/scripts/approvals.js"></script><script type="module" src="/scripts/p10.js"></script><script type="module" src="/scripts/security_agent.js"></script>
 </body>
 </html>

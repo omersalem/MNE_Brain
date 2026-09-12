@@ -1,0 +1,98 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "http://mne-brain.org/schemas/security-review-run.schema.json",
+  "title": "Security Review Run Schema",
+  "description": "Represents an individual security review run, its lifecycle state, collector diagnostics, incidents, and reports.",
+  "type": "object",
+  "required": [
+    "run_id",
+    "request",
+    "state",
+    "stage",
+    "created_at"
+  ],
+  "properties": {
+    "run_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "request": {
+      "type": "object"
+    },
+    "state": {
+      "type": "string",
+      "enum": ["QUEUED", "RUNNING", "COMPLETED", "PARTIAL", "FAILED", "CANCELLED"]
+    },
+    "stage": {
+      "type": "string"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "started_at": {
+      "type": ["string", "null"]
+    },
+    "completed_at": {
+      "type": ["string", "null"]
+    },
+    "collector_diagnostics": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object"
+      }
+    },
+    "incident_counts": {
+      "type": "object",
+      "properties": {
+        "total": { "type": "integer", "minimum": 0, "default": 0 },
+        "critical": { "type": "integer", "minimum": 0, "default": 0 },
+        "high": { "type": "integer", "minimum": 0, "default": 0 },
+        "medium": { "type": "integer", "minimum": 0, "default": 0 },
+        "low": { "type": "integer", "minimum": 0, "default": 0 },
+        "info": { "type": "integer", "minimum": 0, "default": 0 }
+      },
+      "additionalProperties": false
+    },
+    "report_artifacts": {
+      "type": "object",
+      "properties": {
+        "html": { "type": ["string", "null"] },
+        "pdf": { "type": ["string", "null"] },
+        "json": { "type": ["string", "null"] },
+        "csv": { "type": ["string", "null"] }
+      },
+      "additionalProperties": false
+    },
+    "email_result": {
+      "type": ["object", "null"],
+      "properties": {
+        "sent": { "type": "boolean" },
+        "recipients": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "sent_at": { "type": ["string", "null"] },
+        "error": { "type": ["string", "null"] }
+      },
+      "additionalProperties": false
+    },
+    "analysis_refs": {
+      "type": "array",
+      "items": { "type": "string" },
+      "default": []
+    },
+    "warnings": {
+      "type": "array",
+      "items": { "type": "string" },
+      "default": []
+    },
+    "failure_summary": {
+      "type": ["string", "null"]
+    },
+    "retry_of_run_id": {
+      "type": ["string", "null"]
+    }
+  },
+  "additionalProperties": false
+}

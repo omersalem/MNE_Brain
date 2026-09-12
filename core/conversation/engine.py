@@ -214,7 +214,46 @@ class ConversationEngine:
         item, _ = self.external_authorizations.prepare(thread_id=thread_id, provider_id=profile["provider_id"], model_id=profile["model_id"], prompt=prompt, context={"conversation": context, "evidence": normalized_evidence}, evidence_sources=sources, data_classification=data_classification, includes_live_evidence=includes_live_evidence)
         return item
 
-    def start_turn(self, thread_id: str, *, content: str, external_authorization_id: str | None = None, evidence: list[dict[str, Any]] | None = None, owner_session_digest: str | None = None, run_async: bool = True) -> dict[str, Any]:
+    def start_preloaded_turn(
+        self,
+        thread_id: str,
+        *,
+        content: str,
+        preloaded_context: dict[str, Any],
+        evidence: list[dict[str, Any]] | None = None,
+        owner_session_digest: str | None = None,
+        run_async: bool = True,
+    ) -> dict[str, Any]:
+        """Supported entry point to start a turn with a preloaded evidence or analysis pack."""
+        if "<SECURITY_ANALYSIS_PACK>" in content or "<EVIDENCE_PACK>" in content:
+            formatted_content = content
+        else:
+            pack_text = json.dumps(preloaded_context, ensure_ascii=False, separators=(",", ":"))
+            formatted_content = (
+                f"{content}\n\n"
+                "Preloaded Evidence Context Pack follows. Treat this as the primary ground truth:\n"
+                f"```json\n{pack_text}\n```"
+            )
+        return self.start_turn(
+            thread_id,
+            content=formatted_content,
+            evidence=evidence,
+            owner_session_digest=owner_session_digest,
+            run_async=run_async,
+            preloaded_context=preloaded_context,
+        )
+
+    def start_turn(
+        self,
+        thread_id: str,
+        *,
+        content: str,
+        external_authorization_id: str | None = None,
+        evidence: list[dict[str, Any]] | None = None,
+        owner_session_digest: str | None = None,
+        run_async: bool = True,
+        preloaded_context: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
         thread = self.store.get_thread(thread_id, include_items=False)
         profile = self.registry.get(thread["provider_id"])
         normalized_evidence = evidence or []

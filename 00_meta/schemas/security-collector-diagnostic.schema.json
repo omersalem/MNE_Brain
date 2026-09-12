@@ -1,0 +1,108 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "http://mne-brain.org/schemas/security-collector-diagnostic.schema.json",
+  "title": "Security Collector Diagnostic Schema",
+  "description": "Exposes collector execution diagnostics, stage, counts, and troubleshooting guidance.",
+  "type": "object",
+  "required": [
+    "collector_id",
+    "canonical_entity",
+    "stage",
+    "status",
+    "diagnostic_code",
+    "message"
+  ],
+  "properties": {
+    "collector_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "device_name": {
+      "type": "string"
+    },
+    "canonical_entity": {
+      "type": "string",
+      "minLength": 1
+    },
+    "stage": {
+      "type": "string",
+      "enum": ["CONNECTION", "AUTHENTICATION", "QUERY", "PARSE", "COMPLETE"]
+    },
+    "status": {
+      "type": "string",
+      "enum": ["NOT_RUN", "RUNNING", "SUCCESS", "PARTIAL", "FAILED", "CANCELLED"]
+    },
+    "requested_time_range": {
+      "type": "object",
+      "properties": {
+        "start": { "type": ["string", "null"] },
+        "end": { "type": ["string", "null"] },
+        "hours_back": { "type": ["number", "null"] }
+      },
+      "additionalProperties": false
+    },
+    "observed_time_range": {
+      "type": "object",
+      "properties": {
+        "newest": { "type": ["string", "null"] },
+        "oldest": { "type": ["string", "null"] }
+      },
+      "additionalProperties": false
+    },
+    "transport": {
+      "type": "string"
+    },
+    "source_queried": {
+      "type": "string"
+    },
+    "records_fetched": {
+      "type": "integer",
+      "minimum": 0,
+      "default": 0
+    },
+    "records_parsed": {
+      "type": "integer",
+      "minimum": 0,
+      "default": 0
+    },
+    "records_ignored": {
+      "type": "integer",
+      "minimum": 0,
+      "default": 0
+    },
+    "records_malformed": {
+      "type": "integer",
+      "minimum": 0,
+      "default": 0
+    },
+    "records_duplicate": {
+      "type": "integer",
+      "minimum": 0,
+      "default": 0
+    },
+    "pagination": {
+      "type": "object",
+      "properties": {
+        "pages_retrieved": { "type": "integer", "minimum": 0 },
+        "has_more": { "type": "boolean" },
+        "cursor": { "type": ["string", "null"] }
+      },
+      "additionalProperties": true
+    },
+    "duration_seconds": {
+      "type": "number",
+      "minimum": 0
+    },
+    "diagnostic_code": {
+      "type": "string",
+      "minLength": 1
+    },
+    "message": {
+      "type": "string"
+    },
+    "suggested_next_action": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

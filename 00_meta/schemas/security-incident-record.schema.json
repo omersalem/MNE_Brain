@@ -1,0 +1,205 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "http://mne-brain.org/schemas/security-incident-record.schema.json",
+  "title": "Security Incident Record Schema",
+  "description": "Represents a security incident with stable cross-run fingerprint and full lifecycle tracking.",
+  "type": "object",
+  "required": [
+    "fingerprint",
+    "display_id",
+    "title",
+    "category",
+    "signature_family",
+    "lifecycle_state",
+    "current_severity"
+  ],
+  "properties": {
+    "fingerprint": {
+      "type": "string",
+      "minLength": 1
+    },
+    "display_id": {
+      "type": "string"
+    },
+    "title": {
+      "type": "string"
+    },
+    "category": {
+      "type": "string"
+    },
+    "signature_family": {
+      "type": "string"
+    },
+    "source_device": {
+      "type": "string"
+    },
+    "source_entity": {
+      "type": "string"
+    },
+    "attacker_identity": {
+      "type": "string"
+    },
+    "target_identity": {
+      "type": "string"
+    },
+    "branch": {
+      "type": "string"
+    },
+    "lifecycle_state": {
+      "type": "string",
+      "enum": ["NEW", "RECURRING", "INVESTIGATING", "RESOLVED", "REOPENED"]
+    },
+    "first_seen": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "last_seen": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "occurrence_count": {
+      "type": "integer",
+      "minimum": 1,
+      "default": 1
+    },
+    "run_references": {
+      "type": "array",
+      "items": { "type": "string" },
+      "default": []
+    },
+    "peak_severity": {
+      "type": "string",
+      "enum": ["CRITICAL", "HIGH", "MEDIUM", "LOW", "INFO"]
+    },
+    "current_severity": {
+      "type": "string",
+      "enum": ["CRITICAL", "HIGH", "MEDIUM", "LOW", "INFO"]
+    },
+    "description": {
+      "type": "string"
+    },
+    "action_taken": {
+      "type": "string"
+    },
+    "event_count": {
+      "type": "integer",
+      "minimum": 1,
+      "default": 1
+    },
+    "analyst_notes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["timestamp", "author", "note"],
+        "properties": {
+          "timestamp": { "type": "string", "format": "date-time" },
+          "author": { "type": "string" },
+          "note": { "type": "string" }
+        },
+        "additionalProperties": false
+      },
+      "default": []
+    },
+    "linked_conversation_thread_id": {
+      "type": ["string", "null"]
+    },
+    "linked_p8_session_id": {
+      "type": ["string", "null"]
+    },
+    "linked_p9_session_id": {
+      "type": ["string", "null"]
+    },
+    "analysis_references": {
+      "type": "array",
+      "items": { "type": "string" },
+      "default": []
+    },
+    "remediation_cli": {
+      "type": "array",
+      "items": { "type": "string" },
+      "default": []
+    },
+    "remediation_gui": {
+      "type": "array",
+      "items": { "type": "string" },
+      "default": []
+    },
+    "remediation_mode_b_command": {
+      "type": ["string", "null"]
+    },
+    "attacker_pc_name": {
+      "type": "string"
+    },
+    "attacker_fqdn": {
+      "type": "string"
+    },
+    "attacker_username": {
+      "type": "string"
+    },
+    "attacker_user_display_name": {
+      "type": "string"
+    },
+    "attacker_device_owner": {
+      "type": "string"
+    },
+    "attacker_primary_device_user": {
+      "type": "string"
+    },
+    "attacker_claimed_username": {
+      "type": "string"
+    },
+    "attacker_target_account": {
+      "type": "string"
+    },
+    "attacker_mac_address": {
+      "type": "string"
+    },
+    "attacker_network_scope": {
+      "type": "string",
+      "enum": ["LOCAL", "EXTERNAL", "INVALID", "UNKNOWN"]
+    },
+    "attacker_identity_status": {
+      "type": "string",
+      "enum": ["RESOLVED", "PARTIAL", "AMBIGUOUS", "NOT_FOUND", "NOT_CONFIGURED", "NOT_APPLICABLE", "FAILED"]
+    },
+    "attacker_identity_confidence": {
+      "type": "string",
+      "enum": ["HIGH", "MEDIUM", "LOW", "UNKNOWN"]
+    },
+    "attacker_identity_confidence_score": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 100
+    },
+    "attacker_identity_observed_at": {
+      "type": ["string", "null"]
+    },
+    "attacker_identity_sources": {
+      "type": "array",
+      "items": { "type": "string" },
+      "default": []
+    },
+    "attacker_identity_candidates": {
+      "type": "array",
+      "items": { "type": "object" },
+      "default": []
+    },
+    "attacker_identity_diagnostics": {
+      "type": "array",
+      "items": { "type": "string" },
+      "default": []
+    },
+    "supporting_event_ids": {
+      "type": "array",
+      "items": { "type": "string" },
+      "default": []
+    },
+    "attacker_attribution": {
+      "anyOf": [
+        { "type": "null" },
+        { "$ref": "attacker-attribution.schema.json" }
+      ]
+    }
+  },
+  "additionalProperties": false
+}

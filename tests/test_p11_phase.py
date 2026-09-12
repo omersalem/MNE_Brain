@@ -662,7 +662,7 @@ def test_api_unauthorized_csrf_replay_and_concurrency(local_api_server):
         assert status == 200 and result["status"] == "CONFIG_VALID" and result["network_attempted"] is False and result["secrets_returned"] is False
 
 
-def test_live_read_http_prepare_approve_execute_is_owner_bound(local_api_server, monkeypatch):
+def test_live_read_http_runs_automatically_for_authenticated_owner(local_api_server, monkeypatch):
     from core.api import server as api_server
     runner = _FakeP7Runner()
     monkeypatch.setattr(api_server.tool_broker, "_p7_runner", runner)
@@ -681,23 +681,8 @@ def test_live_read_http_prepare_approve_execute_is_owner_bound(local_api_server,
     assert status == 201
     status, _, prepared = _request_http(port, "POST", f"/api/v2/tool-calls/{call['tool_call_id']}/invoke", {"request_nonce": "live-invoke-nonce-01"}, auth)
     assert status == 200
-    plan = prepared["result"]
-    status, _, approval = _request_http(
-        port,
-        "POST",
-        f"/api/v2/live-reads/{plan['live_read_id']}/approve",
-        {"approval_phrase": plan["approval_phrase"], "request_nonce": "live-approve-nonce-1"},
-        auth,
-    )
-    assert status == 200
-    status, _, result = _request_http(
-        port,
-        "POST",
-        f"/api/v2/live-reads/{plan['live_read_id']}/execute",
-        {"approval_id": approval["approval_id"], "request_nonce": "live-execute-nonce-1"},
-        auth,
-    )
-    assert status == 200 and result["status"] == "LIVE_VERIFIED"
+    result = prepared["result"]
+    assert result["status"] == "LIVE_VERIFIED"
     assert result["evidence"]["verification_target"] == "10.165.18.3" and len(runner.calls) == 1
 
 

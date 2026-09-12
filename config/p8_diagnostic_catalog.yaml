@@ -66,6 +66,7 @@ reconciliations:
   - {binding_id: p7-switch-floor-gnd, disposition: MATCHED_CANONICAL, canonical_entity_id: sw-cisco-floor-gnd, canonical_promotion_allowed: false, note: "Exact pinned access-switch scope."}
   - {binding_id: p7-switch-floor-svc, disposition: MATCHED_CANONICAL, canonical_entity_id: sw-cisco-floor-svc, canonical_promotion_allowed: false, note: "Exact pinned access-switch scope."}
   - {binding_id: p7-switch-jenin, disposition: MATCHED_CANONICAL, canonical_entity_id: sw-cisco-jenin-01, canonical_promotion_allowed: false, note: "Exact pinned branch access-switch scope."}
+  - {binding_id: p7-fortiedr-cloud, disposition: MATCHED_CANONICAL, canonical_entity_id: edr-fortiedr-cloud-01, canonical_promotion_allowed: false, note: "Exact pinned REST endpoint for FortiEDR Cloud Central Manager."}
 scenarios:
   - scenario_id: p8-branch-outage
     title: Branch connectivity outage

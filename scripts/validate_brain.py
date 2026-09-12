@@ -109,6 +109,13 @@ def run_master_validation() -> dict[str, Any]:
             "workspace-rollback-plan.schema.json",
             "owner-full-control-coverage.schema.json",
             "task.schema.json",
+            "security-analysis-pack.schema.json",
+            "security-analysis-result.schema.json",
+            "security-collector-diagnostic.schema.json",
+            "security-incident-record.schema.json",
+            "security-review-request.schema.json",
+            "security-review-run.schema.json",
+            "attacker-attribution.schema.json",
         }
         for path in schema_paths:
             schema = json.loads(path.read_text(encoding="utf-8"))
@@ -318,7 +325,7 @@ def run_master_validation() -> dict[str, Any]:
         turn = engine.start_turn(thread["thread_id"], content="offline deterministic check", run_async=False)
         broker = ToolBroker(base_dir)
         modules = {path.name for path in (base_dir / "gui/scripts").glob("*.js")}
-        required_modules = {"api.js", "auth.js", "threads.js", "composer.js", "streaming.js", "activity.js", "evidence.js", "tool_calls.js", "approvals.js", "providers.js", "p10.js"}
+        required_modules = {"api.js", "auth.js", "threads.js", "composer.js", "streaming.js", "activity.js", "evidence.js", "tool_calls.js", "approvals.js", "providers.js", "p10.js", "security_agent.js"}
         passed = (
             len(providers) == 8
             and {profile["provider_type"] for profile in providers if profile["enabled"]} == {"codex_app_server", "opencode", "antigravity_cli", "deterministic_local"}
@@ -327,7 +334,7 @@ def run_master_validation() -> dict[str, Any]:
             and not broker.p10.execution_enabled
             and modules == required_modules
         )
-        return passed, "8 provider profiles including Codex App Server, OpenCode, and Antigravity CLI; local fallback lifecycle passed; P7/P10 live execution disabled; 11 GUI modules"
+        return passed, "8 provider profiles including Codex App Server, OpenCode, and Antigravity CLI; local fallback lifecycle passed; P7/P10 live execution disabled; 12 GUI modules"
 
     def presentation_automation_check() -> tuple[bool, str]:
         html = (base_dir / "gui" / "index.html").read_text(encoding="utf-8")
@@ -449,14 +456,14 @@ def run_master_validation() -> dict[str, Any]:
             and p7["retention"] == "NONE"
             and p7["persistence_enabled"] is False
             and p7["remediation_enabled"] is False
-            and bindings["total_bindings"] == 62
-            and bindings["active_bindings"] == 61
+            and bindings["total_bindings"] == 63
+            and bindings["active_bindings"] == 62
             and bindings["owner_excluded_bindings"] == 1
-            and bindings["identity_pinned_bindings"] == 50
+            and bindings["identity_pinned_bindings"] == 51
             and bindings["kerberos_bindings"] == 8
             and bindings["permanent_mapping_complete"] is True
             and p8_status["scenario_count"] == 8
-            and p8_status["reconciliation_count"] == 62
+            and p8_status["reconciliation_count"] == 63
             and p8_status["live_enabled"] is False
             and p8_plan["status"] == "EVIDENCE_REQUIRED"
             and 1 <= len(p8_plan["planned_checks"]) <= 3

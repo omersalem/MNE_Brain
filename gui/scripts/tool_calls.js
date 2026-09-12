@@ -15,12 +15,12 @@ function appendCard(card){
 }
 function renderWorkspacePlan(card,plan){
   const rollback=Boolean(plan.rollback_id);addText(card,'h3',rollback?'Exact proposed reverse diff':'Exact proposed diff');const diff=addText(card,'pre',plan.unified_diff);diff.className='workspace-diff';addText(card,'p',`Direction ${plan.apply_direction||'FORWARD'} - expires ${plan.expires_at} - ${plan.paths.length} path(s)`);
-  const label=document.createElement('label');label.textContent='Exact server approval phrase';const phrase=document.createElement('input');phrase.type='text';phrase.autocomplete='off';phrase.spellcheck=false;label.append(phrase);card.append(label);
-  const approve=document.createElement('button');approve.type='button';approve.textContent=rollback?'Approve exact rollback':'Approve exact diff';
-  const execute=document.createElement('button');execute.type='button';execute.textContent=rollback?'Apply approved rollback':'Apply approved change';execute.disabled=true;let approvalId='';
-  approve.addEventListener('click',async()=>{try{const path=rollback?`/api/v2/workspace/rollbacks/${plan.rollback_id}/approve`:`/api/v2/workspace/plans/${plan.plan_id}/approve`;const result=await mutateJSON(path,{approval_phrase:phrase.value});phrase.value='';approvalId=result.approval_id;approve.disabled=true;execute.disabled=false;addText(card,'p',`Approved once - ${result.approval_id}`);setStatus('Approved. Review once more, then apply.');}catch(error){setStatus(error.message);}});
-  execute.addEventListener('click',async()=>{execute.disabled=true;try{const id=rollback?plan.rollback_id:plan.plan_id;const path=rollback?`/api/v2/workspace/rollbacks/${id}/execute`:`/api/v2/workspace/plans/${id}/execute`;const result=await mutateJSON(path,{approval_id:approvalId});addText(card,'pre',JSON.stringify(result,null,2));setStatus(result.status);if(!rollback&&result.rollback_available){const prepare=document.createElement('button');prepare.type='button';prepare.textContent='Prepare rollback';prepare.addEventListener('click',async()=>{prepare.disabled=true;try{const reverse=await mutateJSON(`/api/v2/workspace/plans/${plan.plan_id}/rollback/prepare`,{});renderWorkspacePlan(card,reverse);}catch(error){setStatus(error.message);prepare.disabled=false;}});card.append(prepare);}}catch(error){addText(card,'p',error.message,'tool-error');setStatus(error.message);}});
-  card.append(approve,execute);
+  addText(card,'p','Review the displayed risk and exact diff. Accept sends the server-bound approval and applies this one plan; Deny leaves it unapplied.');
+  const accept=document.createElement('button');accept.type='button';accept.textContent=rollback?'Accept and apply rollback once':'Accept and apply change once';
+  const deny=document.createElement('button');deny.type='button';deny.textContent='Deny - leave unchanged';
+  accept.addEventListener('click',async()=>{accept.disabled=true;deny.disabled=true;try{const approvalPath=rollback?`/api/v2/workspace/rollbacks/${plan.rollback_id}/approve`:`/api/v2/workspace/plans/${plan.plan_id}/approve`;const approval=await mutateJSON(approvalPath,{approval_phrase:plan.approval_phrase});const id=rollback?plan.rollback_id:plan.plan_id;const executePath=rollback?`/api/v2/workspace/rollbacks/${id}/execute`:`/api/v2/workspace/plans/${id}/execute`;const result=await mutateJSON(executePath,{approval_id:approval.approval_id});addText(card,'pre',JSON.stringify(result,null,2));setStatus(result.status);if(!rollback&&result.rollback_available){const prepare=document.createElement('button');prepare.type='button';prepare.textContent='Prepare rollback';prepare.addEventListener('click',async()=>{prepare.disabled=true;try{const reverse=await mutateJSON(`/api/v2/workspace/plans/${plan.plan_id}/rollback/prepare`,{});renderWorkspacePlan(card,reverse);}catch(error){setStatus(error.message);prepare.disabled=false;}});card.append(prepare);}}catch(error){addText(card,'p',error.message,'tool-error');setStatus(error.message);}});
+  deny.addEventListener('click',()=>{accept.disabled=true;deny.disabled=true;addText(card,'p','Denied. No workspace change was sent.');setStatus('Workspace change denied.');});
+  card.append(accept,deny);
 }
 function renderAgentApproval(payload,providerId){
   if(providerId!=='prv_codex_app_server')return;
@@ -38,12 +38,12 @@ function renderAgentApproval(payload,providerId){
   addText(card,'p',`Post-change validation: ${(payload.post_change_validation||[]).join(' · ')}`);
   addText(card,'p',`Rollback: ${payload.rollback_procedure||payload.rollback}`);
   addText(card,'pre',payload.approval_phrase,'workspace-diff');
-  const label=document.createElement('label');label.textContent='Type the exact one-time approval phrase';const phrase=document.createElement('input');phrase.autocomplete='off';phrase.spellcheck=false;label.append(phrase);card.append(label);
+  addText(card,'p','Accept submits the displayed server-bound approval once. Deny keeps the exact action unapplied.');
   const approve=document.createElement('button');approve.type='button';approve.textContent=payload.kind==='FILE_CHANGE'?'Approve and apply once':'Approve command once';
   const deny=document.createElement('button');deny.type='button';deny.textContent='Deny';
   const approvalBase='/api/v2/codex/approvals';
   deny.addEventListener('click',async()=>{approve.disabled=true;deny.disabled=true;try{const result=await mutateJSON(`${approvalBase}/${payload.approval_id}/deny`,{});addText(card,'p',result.status);setStatus('Codex action denied.');}catch(error){approve.disabled=false;deny.disabled=false;setStatus(error.message);}});
-  approve.addEventListener('click',async()=>{approve.disabled=true;deny.disabled=true;try{const result=await mutateJSON(`${approvalBase}/${payload.approval_id}/approve`,{approval_phrase:phrase.value});phrase.value='';addText(card,'pre',JSON.stringify(result,null,2));setStatus(result.status);if(result.workspace_plan_id&&result.rollback_available){const rollback=document.createElement('button');rollback.type='button';rollback.textContent='Prepare governed rollback';rollback.addEventListener('click',async()=>{rollback.disabled=true;try{renderWorkspacePlan(card,await mutateJSON(`/api/v2/workspace/plans/${result.workspace_plan_id}/rollback/prepare`,{}));}catch(error){rollback.disabled=false;setStatus(error.message);}});card.append(rollback);}}catch(error){approve.disabled=false;deny.disabled=false;addText(card,'p',error.message,'tool-error');setStatus(error.message);}});
+  approve.addEventListener('click',async()=>{approve.disabled=true;deny.disabled=true;try{const result=await mutateJSON(`${approvalBase}/${payload.approval_id}/approve`,{approval_phrase:payload.approval_phrase});addText(card,'pre',JSON.stringify(result,null,2));setStatus(result.status);if(result.workspace_plan_id&&result.rollback_available){const rollback=document.createElement('button');rollback.type='button';rollback.textContent='Prepare governed rollback';rollback.addEventListener('click',async()=>{rollback.disabled=true;try{renderWorkspacePlan(card,await mutateJSON(`/api/v2/workspace/plans/${result.workspace_plan_id}/rollback/prepare`,{}));}catch(error){rollback.disabled=false;setStatus(error.message);}});card.append(rollback);}}catch(error){approve.disabled=false;deny.disabled=false;addText(card,'p',error.message,'tool-error');setStatus(error.message);}});
   card.append(approve,deny);appendCard(card);
 }
 const operationCards=new Map();
@@ -74,15 +74,13 @@ function renderP10Plan(card,plan){
   addText(card,'pre',JSON.stringify({success_conditions:plan.success_conditions,failure_conditions:plan.failure_conditions,rollback_strategy:plan.rollback_strategy,rollback_conditions:plan.rollback_conditions,non_rollbackable_operations:plan.non_rollbackable_operations},null,2));
   addText(card,'p',`Prepared ${plan.created_at}; expires ${plan.expires_at}; timeout ${plan.timeout_seconds}s; dry run ${plan.supports_dry_run?'supported':'not supported'}. No live connection or persistence occurred during this preview.`);
   if(plan.critical_warning)addText(card,'pre',JSON.stringify(plan.critical_warning,null,2),'tool-error');
-  const label=document.createElement('label');label.textContent='Type the exact server approval phrase';const phrase=document.createElement('input');phrase.autocomplete='off';phrase.spellcheck=false;label.append(phrase);card.append(label);
   addText(card,'pre',plan.approval_phrase,'workspace-diff');
-  const approve=document.createElement('button');approve.type='button';approve.textContent='Approve exact infrastructure change';
-  const execute=document.createElement('button');execute.type='button';execute.textContent='Execute approved change';execute.disabled=true;
-  const cancel=document.createElement('button');cancel.type='button';cancel.textContent='Cancel before mutation';
-  approve.addEventListener('click',async()=>{try{await mutateJSON(`/api/v2/p10/plans/${plan.plan_id}/approve`,{approval_phrase:phrase.value});phrase.value='';approve.disabled=true;execute.disabled=false;setStatus('Infrastructure plan approved once; it has not executed.');}catch(error){setStatus(error.message);}});
-  execute.addEventListener('click',async()=>{execute.disabled=true;try{const result=await mutateJSON(`/api/v2/p10/plans/${plan.plan_id}/execute`,{});addText(card,'pre',JSON.stringify(result,null,2));setStatus(result.status);}catch(error){addText(card,'p',error.message,'tool-error');setStatus(error.message);}});
-  cancel.addEventListener('click',async()=>{cancel.disabled=true;execute.disabled=true;try{const result=await mutateJSON(`/api/v2/p10/plans/${plan.plan_id}/cancel`,{});addText(card,'p',result.status);setStatus(result.status);}catch(error){cancel.disabled=false;setStatus(error.message);}});
-  card.append(approve,execute,cancel);
+  addText(card,'p','Review the risk preview, exact action, prechecks, postchecks, and rollback. Accept sends the server-bound approval and executes this one plan; Deny cancels it before mutation.');
+  const accept=document.createElement('button');accept.type='button';accept.textContent='Accept and execute once';
+  const cancel=document.createElement('button');cancel.type='button';cancel.textContent='Deny - cancel before mutation';
+  accept.addEventListener('click',async()=>{accept.disabled=true;cancel.disabled=true;try{await mutateJSON(`/api/v2/p10/plans/${plan.plan_id}/approve`,{approval_phrase:plan.approval_phrase});const result=await mutateJSON(`/api/v2/p10/plans/${plan.plan_id}/execute`,{});addText(card,'pre',JSON.stringify(result,null,2));setStatus(result.status);}catch(error){addText(card,'p',error.message,'tool-error');setStatus(error.message);}});
+  cancel.addEventListener('click',async()=>{cancel.disabled=true;accept.disabled=true;try{const result=await mutateJSON(`/api/v2/p10/plans/${plan.plan_id}/cancel`,{});addText(card,'p',result.status);setStatus(result.status);}catch(error){cancel.disabled=false;accept.disabled=false;setStatus(error.message);}});
+  card.append(accept,cancel);
 }
 function renderOwnerDirect(card,payload){
   if(payload.status==='AWAITING_FINAL_CONFIRMATION'){
@@ -123,9 +121,11 @@ function renderOwnerDirect(card,payload){
     addText(card,'h3','Rollback details');
     addText(card,'p',warning.rollback_summary||(canRollback?'Rollback steps declared below:':'No safe automated rollback is available for this change.'));
     addText(card,'pre',(warning.rollback_steps||[]).join('\n'),'workspace-diff');
-    const confirm=document.createElement('button');confirm.type='button';confirm.textContent='Confirm & Apply: Send This Exact Change (Admin Authorization)';
-    confirm.addEventListener('click',async()=>{confirm.disabled=true;setStatus('Sending the exact Owner Direct operation once…');try{const result=await mutateJSON(`/api/v2/owner-direct/writes/${payload.plan_id}/confirm`,{});addText(card,'pre',JSON.stringify(result,null,2));setStatus(`${result.status} · postcheck ${result.postcheck_status||'NOT_RUN'}`);}catch(error){confirm.disabled=false;addText(card,'p',error.message,'tool-error');setStatus(error.message);}});
-    card.append(confirm);return;
+    const confirm=document.createElement('button');confirm.type='button';confirm.textContent='Accept & Apply Once';
+    const deny=document.createElement('button');deny.type='button';deny.textContent='Deny - leave unchanged';
+    confirm.addEventListener('click',async()=>{confirm.disabled=true;deny.disabled=true;setStatus('Sending the exact Owner Direct operation once…');try{const result=await mutateJSON(`/api/v2/owner-direct/writes/${payload.plan_id}/confirm`,{});addText(card,'pre',JSON.stringify(result,null,2));setStatus(`${result.status} · postcheck ${result.postcheck_status||'NOT_RUN'}`);}catch(error){confirm.disabled=false;deny.disabled=false;addText(card,'p',error.message,'tool-error');setStatus(error.message);}});
+    deny.addEventListener('click',()=>{confirm.disabled=true;deny.disabled=true;addText(card,'p','Denied. No Owner Direct change was sent.');setStatus('Owner Direct change denied.');});
+    card.append(confirm,deny);return;
   }
   addText(card,'h3','Owner Direct discovery result');
   addText(card,'p',`Target ${payload.target||'unknown'} · ${payload.protocol||'unknown'} · ${payload.status||'UNKNOWN'}`);
@@ -148,16 +148,30 @@ function renderLiveReadPlan(card,plan){
   execute.addEventListener('click',async()=>{execute.disabled=true;setStatus('Running one exact pinned P7 read...');try{const result=await mutateJSON(`/api/v2/live-reads/${plan.live_read_id}/execute`,{approval_id:approvalId});if(result.live_verified&&result.evidence){const evidence=result.evidence;addText(card,'span','LIVE VERIFIED','provider-health configured');addText(card,'p',`Evidence ${evidence.evidence_id} - observed ${evidence.observed_at} - target ${evidence.verification_target} - check ${evidence.verification_check_id}`);document.dispatchEvent(new CustomEvent('live-evidence',{detail:{sources:[`${evidence.source} - ${evidence.evidence_id} - ${evidence.observed_at}`],unknowns:[]}}));setStatus(`LIVE VERIFIED - ${evidence.evidence_id}`);}else{addText(card,'p',`Live read not verified: ${result.status}`,'tool-error');document.dispatchEvent(new CustomEvent('live-evidence',{detail:{sources:[],unknowns:[`Live read was not verified: ${result.status}. No automatic retry was made.`]}}));setStatus(`Live read not verified - ${result.status}`);}}catch(error){addText(card,'p',error.message,'tool-error');document.dispatchEvent(new CustomEvent('live-evidence',{detail:{sources:[],unknowns:[`Live read could not run: ${error.message}`]}}));setStatus(error.message);}});
   card.append(approve,execute);
 }
+function renderLiveReadResult(card,result){
+  const evidence=result.evidence;
+  if(result.live_verified&&evidence){
+    addText(card,'span','LIVE VERIFIED','provider-health configured');
+    addText(card,'p',`Evidence ${evidence.evidence_id} - observed ${evidence.observed_at} - target ${evidence.verification_target} - check ${evidence.verification_check_id}`);
+    document.dispatchEvent(new CustomEvent('live-evidence',{detail:{sources:[`${evidence.source} - ${evidence.evidence_id} - ${evidence.observed_at}`],unknowns:[]}}));
+    setStatus(`LIVE VERIFIED - ${evidence.evidence_id}`);
+    return;
+  }
+  const status=result.status||'NOT_VERIFIED';
+  addText(card,'p',`Live read not verified: ${status}. No automatic retry was made.`,'tool-error');
+  document.dispatchEvent(new CustomEvent('live-evidence',{detail:{sources:[],unknowns:[`Live read was not verified: ${status}. No automatic retry was made.`]}}));
+  setStatus(`Live read not verified - ${status}`);
+}
 async function invoke(card,payload,button){
   button.disabled=true;setStatus(`Reviewing ${payload.tool_name}`);
-  try{const response=await mutateJSON(`/api/v2/tool-calls/${payload.tool_call_id}/invoke`,{});const result=response.result||{};if(result.live_read_id)renderLiveReadPlan(card,result);else if(result.mode==='OWNER_DIRECT'||result.evidence_id)renderOwnerDirect(card,result);else if((result.plan_id||result.rollback_id)&&result.unified_diff)renderWorkspacePlan(card,result);else if(result.plan_id&&result.command_bundle)renderP10Plan(card,result);else addText(card,'pre',JSON.stringify(result,null,2));setStatus(`${payload.tool_name} prepared`);}catch(error){button.disabled=false;addText(card,'p',error.message,'tool-error');setStatus(error.message);}
+  try{const response=await mutateJSON(`/api/v2/tool-calls/${payload.tool_call_id}/invoke`,{});const result=response.result||{};if(typeof result.live_verified==='boolean')renderLiveReadResult(card,result);else if(result.live_read_id)renderLiveReadPlan(card,result);else if(result.mode==='OWNER_DIRECT'||result.evidence_id)renderOwnerDirect(card,result);else if((result.plan_id||result.rollback_id)&&result.unified_diff)renderWorkspacePlan(card,result);else if(result.plan_id&&result.command_bundle)renderP10Plan(card,result);else addText(card,'pre',JSON.stringify(result,null,2));if(typeof result.live_verified!=='boolean')setStatus(`${payload.tool_name} prepared`);}catch(error){button.disabled=false;addText(card,'p',error.message,'tool-error');setStatus(error.message);}
 }
 const automaticCards=new Map();
 document.addEventListener('tool-event',event=>{
   const envelope=event.detail.envelope;const payload=envelope.redacted_payload;
   if(envelope.event_type==='tool.approval_required'){renderAgentApproval(payload,envelope.provider_id);return;}
   if(envelope.event_type.startsWith('command.')||envelope.event_type.startsWith('file.')){renderAgentOperation(envelope);return;}
-  if(envelope.event_type==='tool.completed'&&automaticCards.has(payload.tool_call_id)){const card=automaticCards.get(payload.tool_call_id);const result=payload.result||{};addText(card,'p',`Completed - ${envelope.status}`);if(result.live_read_id)renderLiveReadPlan(card,result);else if(result.mode==='OWNER_DIRECT'||result.evidence_id)renderOwnerDirect(card,result);else if((result.plan_id||result.rollback_id)&&result.unified_diff)renderWorkspacePlan(card,result);else if(result.plan_id&&result.command_bundle)renderP10Plan(card,result);return;}
+  if(envelope.event_type==='tool.completed'&&automaticCards.has(payload.tool_call_id)){const card=automaticCards.get(payload.tool_call_id);const result=payload.result||{};addText(card,'p',`Completed - ${envelope.status}`);if(typeof result.live_verified==='boolean')renderLiveReadResult(card,result);else if(result.live_read_id)renderLiveReadPlan(card,result);else if(result.mode==='OWNER_DIRECT'||result.evidence_id)renderOwnerDirect(card,result);else if((result.plan_id||result.rollback_id)&&result.unified_diff)renderWorkspacePlan(card,result);else if(result.plan_id&&result.command_bundle)renderP10Plan(card,result);return;}
   if(envelope.event_type!=='tool.proposed')return;const card=document.createElement('article');card.className='provider-card tool-card';
   addText(card,'span','Server validated proposal','provider-health configured');addText(card,'h3',payload.tool_name);addText(card,'p',`Proposal ${payload.tool_call_id} - immutable argument digest ${payload.argument_digest}`);
   if(['AUTOMATIC_READ','AUTOMATIC_PREPARATION'].includes(envelope.status)){addText(card,'p',envelope.status==='AUTOMATIC_READ'?'Running automatically under the authenticated owner read policy.':'Building the exact server preview automatically. No write will execute without your approval.');automaticCards.set(payload.tool_call_id,card);if(proposals.classList.contains('empty-tools')){proposals.replaceChildren();proposals.classList.remove('empty-tools');}proposals.append(card);return;}

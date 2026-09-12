@@ -30,3 +30,36 @@ To maintain total consistency, machine-readability, and clean maintainability ac
 1. **YAML / JSON Keys:** Lowercase snake_case (`trust_level`, `target_file`, `normalize_policy`).
 2. **Environment Variable Keys:** Uppercase snake_case with domain prefix (`FORTIGATE_HOST`, `VMWARE_VCENTER_IP`).
 3. **Markdown Headings:** H1 (`#`) for main title, H2 (`##`) for section, H3 (`###`) for sub-element.
+
+---
+
+## 🛡️ 3. FortiGate Firewall Policy & Object Naming Grammar
+
+All firewall policies and objects on enterprise firewalls (`FG-MNE`) conform to the following deterministic grammar:
+
+### 3.1 Firewall Policy Naming Patterns
+
+1. **Active Policies:**
+   ```
+   P_<ORIGIN>_TO_<DESTINATION>_<ACTION>[_<MODIFIER>]
+   ```
+   - `P_`: Prefix indicating a firewall policy (`config firewall policy`).
+   - `<ORIGIN>`: Source security zone, network segment, or entity (e.g. `USR`, `FLR1`, `BISAN`, `BRN`, `VPN`, `DMZ`).
+   - `TO`: Directional delimiter.
+   - `<DESTINATION>`: Destination security zone, network segment, or entity (e.g. `SRV`, `WAN`, `INET`, `PRN`, `SCN`, `ORACLE`).
+   - `<ACTION>`: Action type (`A` for Accept, `D` for Deny).
+   - `[_<MODIFIER>]`: Optional semantic qualifier for disambiguation (e.g. `KASPER`, `SP114`, `TRADE212`, `SMB`).
+   - *Example:* `P_USR_TO_SRV_KASPER_A`, `P_BISAN_TO_SCN_SCANER_A`
+
+2. **Disabled / Quarantined Policies:**
+   ```
+   P_DIS_<ORIGIN>_TO_<DESTINATION>_<ACTION>[_<MODIFIER>]
+   ```
+   - `P_DIS_`: Prefix indicating an administratively disabled firewall policy (`set status disable`).
+   - Retains the full source-to-destination semantic lineage while explicitly flagging inactive status for auditing and lifecycle management.
+   - *Example:* `P_DIS_BEET_TO_MAIL_A`, `P_DIS_IT_TO_CISCOFMC_A`, `P_DIS_VPN_TO_SRV_HANAN_A`
+
+### 3.2 Address & Service Group Naming Patterns
+
+- **Address Groups:** `AG_<TYPE>_<NAME>` (e.g. `AG_SRV_CORE_INFRA`, `AG_FLR_ALL_PRINTERS`)
+- **Service Groups:** `SG_<PURPOSE>_<FUNCTION>` (e.g. `SG_PRINT_DIRECT`, `SG_SCAN_SMB`, `SG_MGMT_WEB`)

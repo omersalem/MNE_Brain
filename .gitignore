@@ -28,6 +28,8 @@ operations/uploads/*
 !operations/uploads/.gitkeep
 operations/reports/*
 !operations/reports/.gitkeep
+operations/security_review/*
+!operations/security_review/.gitkeep
 *.csv
 
 # Local editor and operating-system files

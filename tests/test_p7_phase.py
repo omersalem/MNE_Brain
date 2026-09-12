@@ -29,12 +29,12 @@ def test_p7_catalog_covers_every_entity_and_is_disabled():
     assert status["persistence_enabled"] is False
     assert status["remediation_enabled"] is False
     bindings = status["credential_bindings"]
-    assert bindings["total_bindings"] == 62
-    assert bindings["active_bindings"] == 61
+    assert bindings["total_bindings"] == 63
+    assert bindings["active_bindings"] == 62
     assert bindings["owner_excluded_bindings"] == 1
-    assert bindings["identity_pinned_bindings"] == 50
+    assert bindings["identity_pinned_bindings"] == 51
     assert bindings["host_key_pinned_bindings"] == 44
-    assert bindings["tls_pinned_bindings"] == 6
+    assert bindings["tls_pinned_bindings"] == 7
     assert bindings["kerberos_bindings"] == 8
     assert bindings["permanent_mapping_complete"] is True
     assert bindings["operations_included"] is False
@@ -99,7 +99,7 @@ def test_transport_api_is_redacted_and_non_connecting():
     assert payload["credentials_included"] is False
     assert payload["raw_output_included"] is False
     assert payload["authenticated_validation_results_persisted"] is False
-    assert payload["credential_bindings"]["active_bindings"] == 61
+    assert payload["credential_bindings"]["active_bindings"] == 62
     assert payload["credential_bindings"]["owner_excluded_bindings"] == 1
     assert not any(marker in serialized for marker in ("password", "credential_reference", "canonical_target", "candidate_target", "172.23.", "10.60."))
 
@@ -131,7 +131,7 @@ def test_authenticated_baseline_is_owner_gated_without_connections():
     result = AuthenticatedBaselineRunner(base_dir=ROOT).run(owner_proceed=False)
     assert result["status"] == "NOT_RUN"
     assert result["reason"] == "OWNER_PROCEED_REQUIRED"
-    assert result["total_bindings"] == 61
+    assert result["total_bindings"] == 62
     assert result["results"] == []
 
 

@@ -16,7 +16,7 @@ def validate() -> bool:
         print("GUI JavaScript validation failed: node is unavailable")
         return False
     scripts = sorted((base / "gui/scripts").glob("*.js"))
-    required = {"api.js", "auth.js", "threads.js", "composer.js", "streaming.js", "activity.js", "evidence.js", "tool_calls.js", "approvals.js", "providers.js", "p10.js"}
+    required = {"api.js", "auth.js", "threads.js", "composer.js", "streaming.js", "activity.js", "evidence.js", "tool_calls.js", "approvals.js", "providers.js", "p10.js", "security_agent.js"}
     if {path.name for path in scripts} != required:
         print("GUI JavaScript validation failed: P11 module inventory mismatch")
         return False

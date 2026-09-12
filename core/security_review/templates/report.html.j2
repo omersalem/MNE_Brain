@@ -3,259 +3,1478 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MNE Daily Security Review</title>
+<title>MNE Daily Cyber Threat &amp; Risk Intelligence Briefing</title>
 <style>
+  :root {
+    --bg-page: #0b1329;
+    --bg-surface: #0f172a;
+    --bg-card: #1e293b;
+    --bg-card-subtle: #172033;
+    --border-color: #334155;
+    --border-light: #1e293b;
+    --text-main: #f8fafc;
+    --text-muted: #94a3b8;
+    --text-subtle: #64748b;
+    --accent-blue: #0284c7;
+    --accent-cyan: #38bdf8;
+    --crit-color: #ef4444;
+    --crit-bg: rgba(239, 68, 68, 0.12);
+    --crit-border: #dc2626;
+    --high-color: #f97316;
+    --high-bg: rgba(249, 115, 22, 0.12);
+    --high-border: #ea580c;
+    --med-color: #f59e0b;
+    --med-bg: rgba(245, 158, 11, 0.12);
+    --med-border: #d97706;
+    --low-color: #38bdf8;
+    --low-bg: rgba(56, 189, 248, 0.12);
+    --low-border: #0284c7;
+    --ok-color: #10b981;
+    --ok-bg: rgba(16, 185, 129, 0.12);
+    --ok-border: #059669;
+  }
+
+  * { box-sizing: border-box; }
   body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    background-color: #f1f5f9;
-    color: #1e293b;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background-color: #0b1329;
+    color: #f8fafc;
     margin: 0;
-    padding: 20px;
+    padding: 24px 16px;
     line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
   }
-  .container {
-    max-width: 900px;
+
+  .report-container {
+    max-width: 1240px;
     margin: 0 auto;
-    background: #ffffff;
-    border-radius: 10px;
+    background: #0f172a;
+    border-radius: 12px;
     overflow: hidden;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-    border: 1px solid #e2e8f0;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+    border: 1px solid #1e293b;
   }
-  .header {
-    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-    color: #ffffff;
-    padding: 28px 32px;
-    border-bottom: 4px solid #0284c7;
+
+  /* Header Section */
+  .report-header {
+    background: linear-gradient(135deg, #070d1d 0%, #0f172a 60%, #1e293b 100%);
+    border-bottom: 2px solid #0284c7;
+    padding: 32px 36px 28px 36px;
+    position: relative;
   }
-  .header h1 {
-    margin: 0 0 6px 0;
-    font-size: 24px;
-    font-weight: 700;
-    letter-spacing: -0.5px;
+
+  .header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 20px;
   }
-  .header p {
-    margin: 0;
-    font-size: 13px;
-    color: #94a3b8;
-  }
-  .kpi-grid {
-    display: table;
-    width: 100%;
-    table-layout: fixed;
-    background: #f8fafc;
-    border-bottom: 1px solid #e2e8f0;
-  }
-  .kpi-cell {
-    display: table-cell;
-    padding: 18px 20px;
-    text-align: center;
-    border-right: 1px solid #e2e8f0;
-  }
-  .kpi-cell:last-child {
-    border-right: none;
-  }
-  .kpi-value {
-    font-size: 28px;
-    font-weight: 800;
-    line-height: 1;
-    margin-bottom: 4px;
-  }
-  .kpi-label {
+
+  .gov-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
     font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: #38bdf8;
+    background: rgba(2, 132, 199, 0.15);
+    padding: 6px 14px;
+    border-radius: 9999px;
+    border: 1px solid rgba(56, 189, 248, 0.3);
+  }
+
+  .gov-badge .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #38bdf8;
+  }
+
+  .classification-badge {
+    display: inline-flex;
+    align-items: center;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: #f59e0b;
+    background: rgba(245, 158, 11, 0.15);
+    border: 1px solid rgba(245, 158, 11, 0.4);
+    padding: 6px 12px;
+    border-radius: 6px;
+  }
+
+  .header-title-block h1 {
+    font-size: 26px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    margin: 0 0 6px 0;
+    color: #ffffff;
+  }
+
+  .header-title-block p {
+    font-size: 14px;
+    color: #94a3b8;
+    margin: 0;
+    font-weight: 400;
+  }
+
+  .header-meta-strip {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 24px;
+    margin-top: 22px;
+    padding-top: 18px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    font-size: 12px;
+    color: #cbd5e1;
+  }
+
+  .meta-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .meta-label {
+    color: #64748b;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-size: 11px;
+  }
+
+  .meta-val {
+    font-weight: 600;
+    color: #f1f5f9;
+  }
+
+  /* Threat Posture Banner */
+  .posture-banner {
+    padding: 20px 36px;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 20px;
+  }
+
+  .posture-banner.crit { background: linear-gradient(90deg, rgba(239, 68, 68, 0.18) 0%, rgba(15, 23, 42, 0.9) 100%); border-left: 6px solid var(--crit-color); }
+  .posture-banner.high { background: linear-gradient(90deg, rgba(249, 115, 22, 0.18) 0%, rgba(15, 23, 42, 0.9) 100%); border-left: 6px solid var(--high-color); }
+  .posture-banner.med  { background: linear-gradient(90deg, rgba(245, 158, 11, 0.18) 0%, rgba(15, 23, 42, 0.9) 100%); border-left: 6px solid var(--med-color); }
+  .posture-banner.ok   { background: linear-gradient(90deg, rgba(16, 185, 129, 0.18) 0%, rgba(15, 23, 42, 0.9) 100%); border-left: 6px solid var(--ok-color); }
+
+  .posture-info {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .posture-pill {
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+  }
+  .posture-pill.crit { background: var(--crit-color); color: #ffffff; }
+  .posture-pill.high { background: var(--high-color); color: #ffffff; }
+  .posture-pill.med  { background: var(--med-color); color: #ffffff; }
+  .posture-pill.ok   { background: var(--ok-color); color: #ffffff; }
+
+  .posture-text {
+    font-size: 14px;
+    font-weight: 500;
+    color: #e2e8f0;
+  }
+
+  /* Severity Ratio Bar */
+  .ratio-bar-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 220px;
+  }
+
+  .ratio-bar-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: #94a3b8;
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+
+  .ratio-bar {
+    display: flex;
+    height: 8px;
+    border-radius: 4px;
+    overflow: hidden;
+    background: #334155;
+    width: 100%;
+  }
+
+  .ratio-seg { height: 100%; transition: width 0.3s; }
+  .seg-crit { background: var(--crit-color); }
+  .seg-high { background: var(--high-color); }
+  .seg-med  { background: var(--med-color); }
+  .seg-low  { background: var(--low-color); }
+
+  /* KPI Cards Grid */
+  .kpi-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1px;
+    background: var(--border-color);
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  .kpi-card {
+    background: #131d35;
+    padding: 22px 24px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .kpi-card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: transparent;
+  }
+
+  .kpi-card.kpi-crit::before { background: var(--crit-color); }
+  .kpi-card.kpi-high::before { background: var(--high-color); }
+  .kpi-card.kpi-med::before  { background: var(--med-color); }
+  .kpi-card.kpi-ok::before   { background: var(--ok-color); }
+  .kpi-card.kpi-info::before { background: var(--low-color); }
+
+  .kpi-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+
+  .kpi-title {
+    font-size: 11px;
+    font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.8px;
-    font-weight: 600;
+    color: #94a3b8;
+  }
+
+  .kpi-subtext {
+    font-size: 11px;
     color: #64748b;
+    margin-top: 4px;
   }
-  .crit { color: #dc2626; }
-  .high { color: #ea580c; }
-  .med  { color: #d97706; }
-  .ok   { color: #16a34a; }
-  .content {
-    padding: 32px;
+
+  .kpi-num {
+    font-size: 32px;
+    font-weight: 800;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
   }
+  .kpi-crit .kpi-num { color: var(--crit-color); }
+  .kpi-high .kpi-num { color: var(--high-color); }
+  .kpi-med .kpi-num  { color: var(--med-color); }
+  .kpi-ok .kpi-num   { color: var(--ok-color); }
+  .kpi-info .kpi-num { color: var(--low-color); }
+
+  /* Body Content Layout */
+  .report-body {
+    padding: 36px;
+  }
+
+  .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 36px 0 16px 0;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  .section-header:first-of-type {
+    margin-top: 0;
+  }
+
   .section-title {
     font-size: 16px;
     font-weight: 700;
-    color: #0f172a;
+    color: #ffffff;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin: 24px 0 16px 0;
-    border-left: 4px solid #0284c7;
-    padding-left: 10px;
+    letter-spacing: 0.6px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
   }
-  .device-health-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-bottom: 24px;
-    font-size: 13px;
+
+  .section-title::before {
+    content: "";
+    width: 4px;
+    height: 18px;
+    background: #0284c7;
+    border-radius: 2px;
   }
-  .device-health-table th, .device-health-table td {
-    padding: 10px 14px;
-    border: 1px solid #e2e8f0;
-    text-align: left;
-  }
-  .device-health-table th {
-    background: #f8fafc;
-    color: #475569;
+
+  .section-badge {
+    font-size: 11px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    background: #1e293b;
+    color: #94a3b8;
     font-weight: 600;
   }
+
+  /* Data Tables */
+  .table-responsive {
+    width: 100%;
+    overflow-x: auto;
+    margin-bottom: 28px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    background: #111a2e;
+  }
+
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    text-align: left;
+  }
+
+  .data-table th {
+    background: #17223b;
+    color: #94a3b8;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 11px;
+    letter-spacing: 0.6px;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border-color);
+    white-space: nowrap;
+  }
+
+  .data-table td {
+    padding: 12px 16px;
+    border-bottom: 1px solid #1e293b;
+    color: #cbd5e1;
+    vertical-align: middle;
+  }
+
+  .data-table tbody tr:last-child td {
+    border-bottom: none;
+  }
+
+  .data-table tbody tr:hover {
+    background: rgba(30, 41, 59, 0.6);
+  }
+
+  /* Badges */
   .badge {
-    display: inline-block;
-    padding: 2px 8px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 8px;
     border-radius: 4px;
     font-size: 11px;
     font-weight: 700;
     text-transform: uppercase;
+    letter-spacing: 0.4px;
+    white-space: nowrap;
   }
-  .badge-CRITICAL { background: #fee2e2; color: #991b1b; }
-  .badge-HIGH     { background: #ffedd5; color: #9a3412; }
-  .badge-MEDIUM   { background: #fef3c7; color: #92400e; }
-  .badge-SUCCESS  { background: #dcfce7; color: #166534; }
-  .badge-WARNING  { background: #fef9c3; color: #854d0e; }
-  .badge-FAILED   { background: #fee2e2; color: #991b1b; }
-  .incident-card {
-    border: 1px solid #e2e8f0;
+
+  .badge-CRITICAL { background: var(--crit-bg); color: var(--crit-color); border: 1px solid var(--crit-border); }
+  .badge-HIGH     { background: var(--high-bg); color: var(--high-color); border: 1px solid var(--high-border); }
+  .badge-MEDIUM   { background: var(--med-bg); color: var(--med-color); border: 1px solid var(--med-border); }
+  .badge-LOW      { background: var(--low-bg); color: var(--low-color); border: 1px solid var(--low-border); }
+  .badge-INFO     { background: var(--low-bg); color: var(--low-color); border: 1px solid var(--low-border); }
+  .badge-SUCCESS  { background: var(--ok-bg); color: var(--ok-color); border: 1px solid var(--ok-border); }
+  .badge-WARNING  { background: var(--med-bg); color: var(--med-color); border: 1px solid var(--med-border); }
+  .badge-FAILED   { background: var(--crit-bg); color: var(--crit-color); border: 1px solid var(--crit-border); }
+  .badge-RESOLVED { background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4); }
+  .badge-PARTIAL { background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.4); }
+  .badge-AMBIGUOUS { background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.4); }
+  .badge-NOT_FOUND { background: rgba(148, 163, 184, 0.2); color: #94a3b8; border: 1px solid rgba(148, 163, 184, 0.4); }
+  .badge-NOT_CONFIGURED { background: rgba(100, 116, 139, 0.2); color: #cbd5e1; border: 1px solid rgba(100, 116, 139, 0.4); }
+  .badge-NOT_APPLICABLE { background: rgba(100, 116, 139, 0.15); color: #64748b; border: 1px solid rgba(100, 116, 139, 0.3); }
+
+  .mono-code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+    font-size: 12px;
+    color: #38bdf8;
+    background: rgba(15, 23, 42, 0.8);
+    padding: 2px 6px;
+    border-radius: 4px;
+    border: 1px solid #1e293b;
+  }
+
+  /* 2-Column Intelligence Grid */
+  .intel-grid {
+    display: grid;
+    grid-template-columns: 1.2fr 0.8fr;
+    gap: 24px;
+    margin-bottom: 28px;
+  }
+
+  @media (max-width: 900px) {
+    .intel-grid { grid-template-columns: 1fr; }
+  }
+
+  .intel-card {
+    background: #111a2e;
     border-radius: 8px;
-    margin-bottom: 20px;
-    background: #ffffff;
+    border: 1px solid var(--border-color);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .intel-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  .intel-card-title {
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: #e2e8f0;
+  }
+
+  /* Progress List for Categories */
+  .cat-list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .cat-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .cat-header {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    font-weight: 600;
+    color: #cbd5e1;
+  }
+
+  .cat-track {
+    height: 6px;
+    background: #1e293b;
+    border-radius: 3px;
     overflow: hidden;
   }
-  .incident-header {
-    background: #f8fafc;
+
+  .cat-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #0284c7 0%, #38bdf8 100%);
+    border-radius: 3px;
+  }
+
+  /* Filter Toolbar */
+  .filter-toolbar {
+    background: #131d35;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
     padding: 14px 18px;
-    border-bottom: 1px solid #e2e8f0;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    margin-bottom: 24px;
   }
-  .incident-body {
-    padding: 18px;
+
+  .search-box {
+    flex: 1;
+    min-width: 240px;
+    position: relative;
+  }
+
+  .search-input {
+    width: 100%;
+    background: #0b1329;
+    border: 1px solid var(--border-color);
+    color: #f8fafc;
+    padding: 8px 12px;
+    border-radius: 6px;
     font-size: 13px;
+    outline: none;
+    transition: border-color 0.2s;
   }
-  .code-block {
-    background: #0f172a;
+
+  .search-input:focus {
+    border-color: #38bdf8;
+  }
+
+  .filter-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .filter-btn {
+    background: #1e293b;
+    border: 1px solid var(--border-color);
+    color: #94a3b8;
+    padding: 5px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    user-select: none;
+  }
+
+  .filter-btn:hover {
+    background: #334155;
+    color: #f8fafc;
+  }
+
+  .filter-btn.active {
+    background: #0284c7;
+    color: #ffffff;
+    border-color: #38bdf8;
+  }
+
+  .action-btn {
+    background: transparent;
+    border: 1px solid var(--border-color);
+    color: #94a3b8;
+    padding: 5px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .action-btn:hover { background: #1e293b; color: #f8fafc; }
+
+  /* Incident Cards */
+  .incidents-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .incident-card {
+    background: #111a2e;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    overflow: hidden;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+
+  .incident-card:hover {
+    border-color: #475569;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  }
+
+  .incident-card.sev-CRITICAL { border-left: 5px solid var(--crit-color); }
+  .incident-card.sev-HIGH     { border-left: 5px solid var(--high-color); }
+  .incident-card.sev-MEDIUM   { border-left: 5px solid var(--med-color); }
+  .incident-card.sev-LOW      { border-left: 5px solid var(--low-color); }
+  .incident-card.sev-INFO     { border-left: 5px solid var(--low-color); }
+
+  .incident-header {
+    background: #142038;
+    padding: 14px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    border-bottom: 1px solid #1e293b;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .incident-header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .incident-id-tag {
+    font-family: ui-monospace, monospace;
+    font-size: 12px;
+    font-weight: 700;
+    color: #94a3b8;
+  }
+
+  .incident-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #ffffff;
+  }
+
+  .incident-device-tag {
+    font-size: 11px;
+    background: #1e293b;
     color: #38bdf8;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: 600;
+  }
+
+  .incident-header-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .event-count-badge {
+    font-size: 11px;
+    background: rgba(255, 255, 255, 0.08);
+    color: #cbd5e1;
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-weight: 600;
+  }
+
+  .incident-body {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .incident-details-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+    background: #0b1329;
     padding: 14px;
     border-radius: 6px;
-    font-family: Consolas, Monaco, "Courier New", monospace;
+    border: 1px solid #1e293b;
+  }
+
+  .detail-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .detail-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #64748b;
+    font-weight: 600;
+  }
+
+  .detail-val {
+    font-size: 13px;
+    font-weight: 600;
+    color: #f1f5f9;
+    word-break: break-all;
+  }
+
+  .incident-desc {
+    font-size: 13px;
+    color: #cbd5e1;
+    line-height: 1.6;
+  }
+
+  /* Playbook Box */
+  .playbook-box {
+    background: #0d172a;
+    border: 1px solid #1e2e4a;
+    border-radius: 6px;
+    overflow: hidden;
+  }
+
+  .playbook-header {
+    background: #13223f;
+    padding: 10px 16px;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: #38bdf8;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .playbook-body {
+    padding: 14px 16px;
+    font-size: 13px;
+  }
+
+  .code-container {
+    position: relative;
+    margin: 8px 0 12px 0;
+  }
+
+  .code-block {
+    background: #060b17;
+    color: #38bdf8;
+    padding: 12px 14px;
+    border-radius: 6px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
     font-size: 12px;
     overflow-x: auto;
-    margin: 10px 0;
-    white-space: pre;
+    white-space: pre-wrap;
+    border: 1px solid #1e293b;
+    margin: 0;
   }
+
+  .copy-cli-btn {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    background: #1e293b;
+    color: #94a3b8;
+    border: 1px solid #334155;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .copy-cli-btn:hover { background: #334155; color: #ffffff; }
+
+  .gui-steps-list {
+    margin: 6px 0;
+    padding-left: 20px;
+    color: #cbd5e1;
+  }
+
+  .gui-steps-list li {
+    margin-bottom: 4px;
+  }
+
   .mode-b-box {
-    background: #eff6ff;
-    border-left: 4px solid #3b82f6;
-    padding: 12px 16px;
-    margin-top: 14px;
+    background: rgba(2, 132, 199, 0.1);
+    border: 1px solid rgba(2, 132, 199, 0.3);
+    border-left: 4px solid #0284c7;
+    padding: 10px 14px;
+    margin-top: 12px;
     border-radius: 0 6px 6px 0;
     font-size: 12px;
   }
-  .footer {
-    background: #f8fafc;
-    border-top: 1px solid #e2e8f0;
-    padding: 20px 32px;
-    font-size: 11px;
-    color: #94a3b8;
+
+  .mode-b-cmd {
+    font-family: ui-monospace, monospace;
+    font-weight: 700;
+    color: #38bdf8;
+    margin-top: 4px;
+    background: #060b17;
+    padding: 4px 8px;
+    border-radius: 4px;
+    display: inline-block;
+  }
+
+  /* Empty State */
+  .empty-state {
     text-align: center;
+    padding: 40px 20px;
+    background: #111a2e;
+    border: 1px dashed var(--border-color);
+    border-radius: 8px;
+    color: #10b981;
+    font-weight: 600;
+  }
+
+  /* Footer */
+  .report-footer {
+    background: #070d1d;
+    border-top: 1px solid var(--border-color);
+    padding: 28px 36px;
+    font-size: 12px;
+    color: #64748b;
+    text-align: center;
+    line-height: 1.7;
+  }
+
+  .footer-signoff {
+    color: #94a3b8;
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+
+  /* Print Stylesheet */
+  @media print {
+    body {
+      background: #ffffff !important;
+      color: #0f172a !important;
+      padding: 0 !important;
+    }
+
+    .report-container {
+      max-width: 100% !important;
+      box-shadow: none !important;
+      border: none !important;
+      background: #ffffff !important;
+    }
+
+    .report-header {
+      background: #f8fafc !important;
+      color: #0f172a !important;
+      border-bottom: 2px solid #0284c7 !important;
+      padding: 20px !important;
+    }
+
+    .header-title-block h1 { color: #0f172a !important; }
+    .header-title-block p { color: #475569 !important; }
+    .meta-val { color: #0f172a !important; }
+
+    .posture-banner {
+      background: #f1f5f9 !important;
+      color: #0f172a !important;
+      border: 1px solid #cbd5e1 !important;
+    }
+
+    .posture-text { color: #0f172a !important; }
+
+    .kpi-container {
+      background: #ffffff !important;
+      gap: 8px !important;
+      border-bottom: 1px solid #cbd5e1 !important;
+    }
+
+    .kpi-card {
+      background: #f8fafc !important;
+      border: 1px solid #cbd5e1 !important;
+      padding: 12px !important;
+    }
+
+    .report-body { padding: 20px 0 !important; }
+
+    .section-title { color: #0f172a !important; }
+    .table-responsive {
+      border: 1px solid #cbd5e1 !important;
+      background: #ffffff !important;
+    }
+
+    .data-table th {
+      background: #f1f5f9 !important;
+      color: #334155 !important;
+      border-bottom: 1px solid #cbd5e1 !important;
+    }
+
+    .data-table td {
+      border-bottom: 1px solid #e2e8f0 !important;
+      color: #1e293b !important;
+    }
+
+    .intel-card {
+      background: #ffffff !important;
+      border: 1px solid #cbd5e1 !important;
+    }
+
+    .intel-card-title { color: #0f172a !important; }
+    .cat-header { color: #334155 !important; }
+
+    .filter-toolbar { display: none !important; }
+    .copy-cli-btn { display: none !important; }
+
+    .incident-card {
+      background: #ffffff !important;
+      border: 1px solid #cbd5e1 !important;
+      break-inside: avoid !important;
+      page-break-inside: avoid !important;
+      margin-bottom: 16px !important;
+    }
+
+    .incident-header {
+      background: #f8fafc !important;
+      border-bottom: 1px solid #cbd5e1 !important;
+    }
+
+    .incident-title { color: #0f172a !important; }
+    .incident-details-grid {
+      background: #f8fafc !important;
+      border: 1px solid #cbd5e1 !important;
+    }
+
+    .detail-val { color: #0f172a !important; }
+    .incident-desc { color: #334155 !important; }
+
+    .playbook-box {
+      background: #ffffff !important;
+      border: 1px solid #cbd5e1 !important;
+    }
+
+    .playbook-header {
+      background: #f1f5f9 !important;
+      color: #0369a1 !important;
+    }
+
+    .code-block {
+      background: #f8fafc !important;
+      color: #0f172a !important;
+      border: 1px solid #cbd5e1 !important;
+    }
+
+    .gui-steps-list { color: #334155 !important; }
+    .mode-b-box {
+      background: #f0f9ff !important;
+      color: #0f172a !important;
+      border: 1px solid #bae6fd !important;
+    }
+
+    .mode-b-cmd {
+      background: #ffffff !important;
+      color: #0369a1 !important;
+      border: 1px solid #cbd5e1 !important;
+    }
+
+    .report-footer {
+      background: #ffffff !important;
+      color: #64748b !important;
+      border-top: 1px solid #cbd5e1 !important;
+    }
   }
 </style>
 </head>
 <body>
-<div class="container">
-  <div class="header">
-    <h1>Ministry of National Economy (MNE)</h1>
-    <p>Daily Cyber Threat & Risk Intelligence Briefing | Generated: {{ generated_at }} | Window: Past 24 Hours</p>
-  </div>
 
-  <div class="kpi-grid">
-    <div class="kpi-cell">
-      <div class="kpi-value crit">{{ critical_count }}</div>
-      <div class="kpi-label">Critical Risks</div>
-    </div>
-    <div class="kpi-cell">
-      <div class="kpi-value high">{{ high_count }}</div>
-      <div class="kpi-label">High Risks</div>
-    </div>
-    <div class="kpi-cell">
-      <div class="kpi-value med">{{ medium_count }}</div>
-      <div class="kpi-label">Medium Risks</div>
-    </div>
-    <div class="kpi-cell">
-      <div class="kpi-value ok">{{ collectors|selectattr('status.value', 'equalto', 'SUCCESS')|list|length }}/{{ collectors|length }}</div>
-      <div class="kpi-label">Devices Online</div>
-    </div>
-  </div>
+<div class="report-container">
 
-  <div class="content">
-    <div class="section-title">Perimeter & Identity Log Ingestion Health</div>
-    <table class="device-health-table">
-      <thead>
-        <tr>
-          <th>Target System</th>
-          <th>Ingestion Status</th>
-          <th>Events Collected</th>
-          <th>Query Time</th>
-          <th>Diagnostics / Notes</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for col in collectors %}
-        <tr>
-          <td><strong>{{ col.device_name }}</strong></td>
-          <td><span class="badge badge-{{ col.status.value }}">{{ col.status.value }}</span></td>
-          <td>{{ col.events|length }}</td>
-          <td>{{ col.collection_duration_seconds }}s</td>
-          <td>{{ col.error_message or 'Healthy read-only log synchronization' }}</td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+  <!-- Header Section -->
+  <header class="report-header">
+    <div class="header-top">
+      <div class="gov-badge">
+        <span class="dot"></span>
+        State of Palestine &bull; Ministry of National Economy (MNE)
+      </div>
+      <div class="classification-badge">
+        TLP:AMBER &bull; STRICTLY CONFIDENTIAL
+      </div>
+    </div>
 
-    <div class="section-title">Identified Security Risks & Threat Incidents</div>
-    {% if not incidents %}
-    <p style="color: #16a34a; font-weight: 600;">No Critical, High, or Medium security risks identified during the past 24 hours.</p>
+    <div class="header-title-block">
+      <h1>Daily Cyber Threat &amp; Risk Intelligence Briefing</h1>
+      <p>Automated telemetry correlation, attack vector identification, and containment playbooks</p>
+    </div>
+
+    <div class="header-meta-strip">
+      <div class="meta-item">
+        <span class="meta-label">Generated:</span>
+        <span class="meta-val">{{ generated_at }}</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">Observation Window:</span>
+        <span class="meta-val">Past 24 Hours</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">Run ID:</span>
+        <span class="meta-val mono-code">{{ run_id }}</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">Security Engine:</span>
+        <span class="meta-val">MNE_Brain Autonomous Defense v2</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Threat Posture Banner -->
+  <section class="posture-banner {{ threat_posture_class }}">
+    <div class="posture-info">
+      <span class="posture-pill {{ threat_posture_class }}">{{ threat_posture }}</span>
+      <span class="posture-text">{{ posture_summary }}</span>
+    </div>
+
+    <div class="ratio-bar-wrap">
+      <div class="ratio-bar-label">
+        <span>Risk Distribution</span>
+        <span>{{ total_incidents }} Incidents</span>
+      </div>
+      <div class="ratio-bar">
+        {% set tot = total_incidents if total_incidents > 0 else 1 %}
+        <div class="ratio-seg seg-crit" style="width: {{ (critical_count / tot * 100)|round(1) }}%;" title="Critical: {{ critical_count }}"></div>
+        <div class="ratio-seg seg-high" style="width: {{ (high_count / tot * 100)|round(1) }}%;" title="High: {{ high_count }}"></div>
+        <div class="ratio-seg seg-med" style="width: {{ (medium_count / tot * 100)|round(1) }}%;" title="Medium: {{ medium_count }}"></div>
+        <div class="ratio-seg seg-low" style="width: {{ (low_count / tot * 100)|round(1) }}%;" title="Low: {{ low_count }}"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- KPI Cards Grid -->
+  <section class="kpi-container">
+    <div class="kpi-card kpi-crit">
+      <div class="kpi-card-header">
+        <span class="kpi-title">Critical Threats</span>
+      </div>
+      <div class="kpi-num">{{ critical_count }}</div>
+      <div class="kpi-subtext">Immediate containment required</div>
+    </div>
+
+    <div class="kpi-card kpi-high">
+      <div class="kpi-card-header">
+        <span class="kpi-title">High Severity Risks</span>
+      </div>
+      <div class="kpi-num">{{ high_count }}</div>
+      <div class="kpi-subtext">Active perimeter/auth attacks</div>
+    </div>
+
+    <div class="kpi-card kpi-med">
+      <div class="kpi-card-header">
+        <span class="kpi-title">Medium Anomalies</span>
+      </div>
+      <div class="kpi-num">{{ medium_count }}</div>
+      <div class="kpi-subtext">Policy &amp; threshold exceptions</div>
+    </div>
+
+    <div class="kpi-card kpi-info">
+      <div class="kpi-card-header">
+        <span class="kpi-title">Total Attack Events</span>
+      </div>
+      <div class="kpi-num">{{ total_events }}</div>
+      <div class="kpi-subtext">Aggregated security signals</div>
+    </div>
+
+    <div class="kpi-card kpi-ok">
+      <div class="kpi-card-header">
+        <span class="kpi-title">Sensors Monitored</span>
+      </div>
+      <div class="kpi-num">{{ online_collectors_count }}/{{ total_collectors_count }}</div>
+      <div class="kpi-subtext">Log feeds operational</div>
+    </div>
+  </section>
+
+  <div class="report-body">
+
+    <!-- Section 1: Ingestion Health -->
+    <div class="section-header">
+      <div class="section-title">Perimeter &amp; Identity Telemetry Sensors</div>
+      <span class="section-badge">Read-Only Health Check</span>
+    </div>
+
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Monitored Infrastructure</th>
+            <th>Feed Status</th>
+            <th>Events Collected</th>
+            <th>Query Latency</th>
+            <th>Operational Diagnostics</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for col in collectors %}
+          <tr>
+            <td><strong>{{ col.device_name }}</strong></td>
+            <td><span class="badge badge-{{ col.status.value }}">{{ col.status.value }}</span></td>
+            <td><strong>{{ col.events_count }}</strong> events</td>
+            <td>{{ col.collection_duration_seconds }}s</td>
+            <td>{{ col.error_message or 'Healthy read-only log synchronization' }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Section 2: Threat Intelligence & Offending Entity Analysis (2 Columns) -->
+    <div class="intel-grid">
+      <!-- Top Attacking Entities -->
+      <div class="intel-card">
+        <div class="intel-card-header">
+          <span class="intel-card-title">Top Offending Entities (Attacking IPs)</span>
+          <span class="section-badge">{{ top_attackers|length }} Tracked</span>
+        </div>
+        {% if top_attackers %}
+        <div class="table-responsive" style="margin-bottom: 0; border: none;">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Offending IP</th>
+                <th>Attempts</th>
+                <th>Target Asset</th>
+                <th>Enforcement</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for atk in top_attackers %}
+              <tr>
+                <td><span class="mono-code">{{ atk.ip }}</span></td>
+                <td><strong>{{ atk.count }}</strong></td>
+                <td>{{ atk.target }}</td>
+                <td><span class="badge badge-SUCCESS">{{ atk.action }}</span></td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <div class="empty-state" style="padding: 20px;">No external attacking entities detected.</div>
+        {% endif %}
+      </div>
+
+      <!-- Threat Category Distribution -->
+      <div class="intel-card">
+        <div class="intel-card-header">
+          <span class="intel-card-title">Threat Category Distribution</span>
+          <span class="section-badge">{{ category_breakdown|length }} Families</span>
+        </div>
+        {% if category_breakdown %}
+        <div class="cat-list">
+          {% for cat in category_breakdown %}
+          <div class="cat-item">
+            <div class="cat-header">
+              <span>{{ cat.name }}</span>
+              <span><strong>{{ cat.count }}</strong> ({{ cat.pct }}%)</span>
+            </div>
+            <div class="cat-track">
+              <div class="cat-fill" style="width: {{ cat.pct }}%;"></div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state" style="padding: 20px;">No threat categories classified.</div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Section 3: Threat Signature Clusters -->
+    {% if threat_clusters %}
+    <div class="section-header">
+      <div class="section-title">Threat Signature Clusters</div>
+      <span class="section-badge">Aggregated Pattern Matrix</span>
+    </div>
+
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Threat Signature / Pattern</th>
+            <th>Sensor</th>
+            <th>Severity</th>
+            <th>Incidents</th>
+            <th>Total Events</th>
+            <th>Primary Mitigation Preview</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for cluster in threat_clusters %}
+          <tr>
+            <td><strong>{{ cluster.title or cluster.signature }}</strong></td>
+            <td><span class="badge" style="background: #1e293b; color: #38bdf8;">{{ cluster.source_device }}</span></td>
+            <td><span class="badge badge-{{ cluster.severity.value }}">{{ cluster.severity.value }}</span></td>
+            <td><strong>{{ cluster.incident_count }}</strong></td>
+            <td><strong>{{ cluster.total_events }}</strong></td>
+            <td>
+              {% if cluster.primary_cli %}
+              <span class="mono-code" style="max-width: 320px; display: inline-block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ cluster.primary_cli }}</span>
+              {% else %}
+              <span style="color: #64748b;">Review advisory</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
     {% endif %}
 
-    {% for inc in incidents %}
-    <div class="incident-card">
-      <div class="incident-header">
-        <span class="badge badge-{{ inc.severity.value }}">{{ inc.severity.value }}</span>
-        <strong style="margin-left: 8px; font-size: 14px;">[{{ inc.incident_id }}] {{ inc.title }}</strong>
+    <!-- Section 4: Detailed Incident Dossiers -->
+    <div class="section-header">
+      <div class="section-title">Comprehensive Incident Dossiers &amp; Containment Playbooks</div>
+      <span class="section-badge">{{ total_incidents }} Incidents</span>
+    </div>
+
+    <!-- Filter Toolbar (Client-Side JS) -->
+    <div class="filter-toolbar" id="filterToolbar">
+      <div class="search-box">
+        <input type="text" id="incidentSearch" class="search-input" placeholder="Search incidents by IP, device, title, or ID..." aria-label="Search incidents">
       </div>
-      <div class="incident-body">
-        <p><strong>Device:</strong> {{ inc.source_device }} | <strong>Attacker IP:</strong> {{ inc.attacker_ip or 'N/A' }} | <strong>Target:</strong> {{ inc.target or 'N/A' }} | <strong>Attempts:</strong> {{ inc.event_count }}</p>
-        <p><strong>Description:</strong> {{ inc.description }}</p>
-
-        {% if inc.remediation_cli %}
-        <div style="font-weight: 600; margin-top: 12px; color: #0f172a;">Immediate Containment CLI Playbook:</div>
-        <div class="code-block">{% for cmd in inc.remediation_cli %}{{ cmd }}
-{% endfor %}</div>
-        {% endif %}
-
-        {% if inc.remediation_gui %}
-        <div style="font-weight: 600; margin-top: 12px; color: #0f172a;">Standard Management GUI Procedure:</div>
-        <ul style="margin: 6px 0; padding-left: 20px;">
-          {% for step in inc.remediation_gui %}
-          <li>{{ step }}</li>
-          {% endfor %}
-        </ul>
-        {% endif %}
-
-        {% if inc.remediation_mode_b_command %}
-        <div class="mode-b-box">
-          <strong>Mode B Assisted Remediation:</strong> To have MNE_Brain safely execute this mitigation under your approval, execute:
-          <div style="font-family: monospace; font-weight: bold; margin-top: 4px;">{{ inc.remediation_mode_b_command }}</div>
-        </div>
-        {% endif %}
+      <div class="filter-pills">
+        <button type="button" class="filter-btn active" data-sev="ALL">All ({{ total_incidents }})</button>
+        {% if critical_count > 0 %}<button type="button" class="filter-btn" data-sev="CRITICAL">Critical ({{ critical_count }})</button>{% endif %}
+        {% if high_count > 0 %}<button type="button" class="filter-btn" data-sev="HIGH">High ({{ high_count }})</button>{% endif %}
+        {% if medium_count > 0 %}<button type="button" class="filter-btn" data-sev="MEDIUM">Medium ({{ medium_count }})</button>{% endif %}
+        {% if low_count > 0 %}<button type="button" class="filter-btn" data-sev="LOW">Low ({{ low_count }})</button>{% endif %}
+      </div>
+      <div>
+        <button type="button" class="action-btn" id="toggleAllBtn">Collapse All</button>
       </div>
     </div>
-    {% endfor %}
+
+    {% if not incidents %}
+    <div class="empty-state">
+      &#10004; Zero Critical, High, or Medium security incidents identified during the past 24-hour observation window.
+    </div>
+    {% endif %}
+
+    <div class="incidents-list" id="incidentsContainer">
+      {% for inc in incidents %}
+      <div class="incident-card sev-{{ inc.severity.value }}" data-severity="{{ inc.severity.value }}" data-search="{{ inc.incident_id|lower }} {{ inc.title|lower }} {{ inc.source_device|lower }} {{ (inc.attacker_ip or '')|lower }} {{ (inc.attacker_pc_name or '')|lower }} {{ (inc.attacker_username or '')|lower }} {{ (inc.attacker_mac_address or '')|lower }} {{ (inc.target or '')|lower }}">
+        <div class="incident-header" onclick="toggleCard(this)">
+          <div class="incident-header-left">
+            <span class="badge badge-{{ inc.severity.value }}">{{ inc.severity.value }}</span>
+            <span class="incident-id-tag">[{{ inc.incident_id }}]</span>
+            <span class="incident-title">{{ inc.title }}</span>
+            <span class="incident-device-tag">{{ inc.source_device }}</span>
+          </div>
+          <div class="incident-header-right">
+            <span class="event-count-badge">{{ inc.event_count }} event{% if inc.event_count != 1 %}s{% endif %}</span>
+            <span style="color: #64748b; font-size: 12px;" class="chevron-indicator">&#9660;</span>
+          </div>
+        </div>
+
+        <div class="incident-body">
+          <div class="incident-details-grid">
+            <div class="detail-cell">
+              <span class="detail-label">Attacker IP</span>
+              <span class="detail-val">
+                {% if inc.attacker_ip and inc.attacker_ip not in ['N/A', 'None', '', 'Unknown'] %}
+                <span class="mono-code">{{ inc.attacker_ip }}</span>
+                {% if inc.attacker_network_scope %}
+                <span class="badge" style="font-size: 10px; padding: 1px 5px; margin-left: 4px; background: {% if inc.attacker_network_scope == 'LOCAL' %}#065f46{% else %}#1e293b{% endif %}; color: #f8fafc;">{{ inc.attacker_network_scope }}</span>
+                {% endif %}
+                {% else %}
+                <span style="color: #64748b;">Not Specified / Local</span>
+                {% endif %}
+              </span>
+            </div>
+            {% if inc.attacker_network_scope == 'LOCAL' or inc.attacker_pc_name %}
+            <div class="detail-cell">
+              <span class="detail-label">Attacker Computer</span>
+              <span class="detail-val">
+                {% if inc.attacker_pc_name and inc.attacker_pc_name not in ['Unknown', 'Not applicable'] %}
+                <strong style="color: #38bdf8;">{{ inc.attacker_pc_name }}</strong>
+                {% if inc.attacker_fqdn and inc.attacker_fqdn != inc.attacker_pc_name %}<span style="font-size: 11px; color: #94a3b8;"> ({{ inc.attacker_fqdn }})</span>{% endif %}
+                {% else %}
+                <span style="color: #94a3b8;">Unknown / Unresolved</span>
+                {% endif %}
+              </span>
+            </div>
+            <div class="detail-cell">
+              <span class="detail-label">Active User / Owner</span>
+              <span class="detail-val">
+                {% if inc.attacker_username and inc.attacker_username not in ['Unknown', 'Not applicable'] %}
+                <strong style="color: #a7f3d0;">{{ inc.attacker_username }}</strong>
+                {% elif inc.attacker_device_owner and inc.attacker_device_owner not in ['Unknown', 'Not applicable'] %}
+                <span style="color: #cbd5e1;">Owner: {{ inc.attacker_device_owner }}</span>
+                {% else %}
+                <span style="color: #94a3b8;">Unknown / Unauthenticated</span>
+                {% endif %}
+              </span>
+            </div>
+            {% if inc.attacker_mac_address and inc.attacker_mac_address not in ['Unknown', 'Not applicable'] %}
+            <div class="detail-cell">
+              <span class="detail-label">MAC Address</span>
+              <span class="detail-val mono-code">{{ inc.attacker_mac_address }}</span>
+            </div>
+            {% endif %}
+            <div class="detail-cell">
+              <span class="detail-label">Identity Resolution</span>
+              <span class="detail-val">
+                <span class="badge badge-{{ inc.attacker_identity_status or 'UNKNOWN' }}" style="font-size: 10px;">{{ inc.attacker_identity_status or 'UNKNOWN' }}</span>
+                {% if inc.attacker_identity_confidence and inc.attacker_identity_confidence != 'UNKNOWN' %}
+                <span style="font-size: 11px; color: #94a3b8; margin-left: 4px;">({{ inc.attacker_identity_confidence }})</span>
+                {% endif %}
+                {% if inc.attacker_identity_sources %}
+                <span style="font-size: 10px; color: #64748b; display: block; margin-top: 2px;">via {{ inc.attacker_identity_sources|join(', ') }}</span>
+                {% endif %}
+              </span>
+            </div>
+            {% endif %}
+            <div class="detail-cell">
+              <span class="detail-label">Target Asset</span>
+              <span class="detail-val">{{ inc.target or 'Perimeter Gateway' }}</span>
+            </div>
+            <div class="detail-cell">
+              <span class="detail-label">Threat Category</span>
+              <span class="detail-val">{{ inc.category }}</span>
+            </div>
+            <div class="detail-cell">
+              <span class="detail-label">Automated Enforcement</span>
+              <span class="detail-val"><span class="badge badge-SUCCESS">{{ inc.action_taken or 'LOGGED' }}</span></span>
+            </div>
+          </div>
+
+          <div class="incident-desc">
+            <strong>Forensic Summary:</strong> {{ inc.description }}
+          </div>
+
+          {% if inc.remediation_cli or inc.remediation_gui or inc.remediation_mode_b_command %}
+          <div class="playbook-box">
+            <div class="playbook-header">
+              <span>Containment &amp; Remediation Playbook</span>
+              <span style="font-size: 11px; color: #94a3b8; font-weight: normal;">Authorized SOC Actions</span>
+            </div>
+            <div class="playbook-body">
+              {% if inc.remediation_cli %}
+              <div style="font-weight: 600; color: #e2e8f0; margin-bottom: 4px; font-size: 12px;">Immediate CLI Containment:</div>
+              <div class="code-container">
+                <button type="button" class="copy-cli-btn" onclick="copyCliCommand(this)">Copy CLI</button>
+                <pre class="code-block">{% for cmd in inc.remediation_cli %}{{ cmd }}
+{% endfor %}</pre>
+              </div>
+              {% endif %}
+
+              {% if inc.remediation_gui %}
+              <div style="font-weight: 600; color: #e2e8f0; margin-top: 10px; font-size: 12px;">Standard Management Console Procedure:</div>
+              <ol class="gui-steps-list">
+                {% for step in inc.remediation_gui %}
+                <li>{{ step }}</li>
+                {% endfor %}
+              </ol>
+              {% endif %}
+
+              {% if inc.remediation_mode_b_command %}
+              <div class="mode-b-box">
+                <strong style="color: #38bdf8;">Mode B Autonomous Remediation:</strong> To instruct MNE_Brain to execute this containment plan under owner authorization, submit:
+                <div class="mode-b-cmd">{{ inc.remediation_mode_b_command }}</div>
+              </div>
+              {% endif %}
+            </div>
+          </div>
+          {% endif %}
+
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
   </div>
 
-  <div class="footer">
-    Ministry of National Economy (MNE) — Cybersecurity & Infrastructure Operations Center.<br>
-    This report is strictly confidential and intended solely for authorized MNE security personnel.
-  </div>
+  <!-- Footer -->
+  <footer class="report-footer">
+    <div class="footer-signoff">
+      State of Palestine &bull; Ministry of National Economy (MNE) &bull; Cybersecurity &amp; Infrastructure Operations Center
+    </div>
+    <div>
+      CONFIDENTIAL &bull; This report is automatically generated by MNE_Brain v2 for authorized infrastructure administrators.<br>
+      Contains sensitive telemetry. Unauthorized distribution or copying is strictly prohibited under Palestinian Cybercrime Law.
+    </div>
+  </footer>
+
 </div>
+
+<script>
+  function toggleCard(headerEl) {
+    const card = headerEl.closest('.incident-card');
+    const body = card.querySelector('.incident-body');
+    const chev = card.querySelector('.chevron-indicator');
+    if (!body) return;
+    if (body.style.display === 'none') {
+      body.style.display = 'flex';
+      if (chev) chev.textContent = '\u25BC';
+    } else {
+      body.style.display = 'none';
+      if (chev) chev.textContent = '\u25B6';
+    }
+  }
+
+  function copyCliCommand(btn) {
+    const codeEl = btn.parentElement.querySelector('pre');
+    if (!codeEl) return;
+    const text = codeEl.textContent.trim();
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function() {
+        const orig = btn.textContent;
+        btn.textContent = 'Copied!';
+        btn.style.color = '#10b981';
+        setTimeout(function() {
+          btn.textContent = orig;
+          btn.style.color = '';
+        }, 2000);
+      });
+    } else {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      const orig = btn.textContent;
+      btn.textContent = 'Copied!';
+      btn.style.color = '#10b981';
+      setTimeout(function() {
+        btn.textContent = orig;
+        btn.style.color = '';
+      }, 2000);
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('incidentSearch');
+    const filterBtns = document.querySelectorAll('.filter-btn');
+    const cards = document.querySelectorAll('.incident-card');
+    const toggleAllBtn = document.getElementById('toggleAllBtn');
+    let currentSev = 'ALL';
+    let allExpanded = true;
+
+    function applyFilter() {
+      const q = (searchInput ? searchInput.value : '').toLowerCase().trim();
+      cards.forEach(function(card) {
+        const sev = card.getAttribute('data-severity');
+        const hay = card.getAttribute('data-search') || '';
+        const matchesSev = (currentSev === 'ALL' || sev === currentSev);
+        const matchesQuery = (!q || hay.indexOf(q) !== -1);
+        if (matchesSev && matchesQuery) {
+          card.style.display = '';
+        } else {
+          card.style.display = 'none';
+        }
+      });
+    }
+
+    if (searchInput) {
+      searchInput.addEventListener('input', applyFilter);
+    }
+
+    filterBtns.forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        filterBtns.forEach(function(b) { b.classList.remove('active'); });
+        btn.classList.add('active');
+        currentSev = btn.getAttribute('data-sev') || 'ALL';
+        applyFilter();
+      });
+    });
+
+    if (toggleAllBtn) {
+      toggleAllBtn.addEventListener('click', function() {
+        allExpanded = !allExpanded;
+        cards.forEach(function(card) {
+          const body = card.querySelector('.incident-body');
+          const chev = card.querySelector('.chevron-indicator');
+          if (body) {
+            body.style.display = allExpanded ? 'flex' : 'none';
+          }
+          if (chev) {
+            chev.textContent = allExpanded ? '\u25BC' : '\u25B6';
+          }
+        });
+        toggleAllBtn.textContent = allExpanded ? 'Collapse All' : 'Expand All';
+      });
+    }
+  });
+</script>
+
 </body>
 </html>

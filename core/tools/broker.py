@@ -570,7 +570,21 @@ class ToolBroker:
         elif name == "mne.plan_investigation":
             result = InvestigationPlanner(self.base_dir).plan(args["question"])
         elif name == "mne.prepare_live_read":
-            result = self.prepare_live_read(args, tool_call_id=tool_call_id)
+            # An authenticated owner session is the standing authorization for
+            # bounded read-only telemetry. Keep the immutable P7 plan and the
+            # single-use internal approval, but remove the extra GUI click.
+            # Unbound callers still receive the legacy plan so they cannot
+            # bypass the owner gate or execute a read anonymously.
+            if owner_session_digest and call["permission_mode"] in {
+                "LIVE_READ", "OWNER_AUTONOMOUS", "OWNER_FULL_CONTROL", "INFRASTRUCTURE_WRITE",
+            }:
+                result = self.run_owner_autonomous_live_read(
+                    args,
+                    owner_session_digest=owner_session_digest,
+                    tool_call_id=tool_call_id,
+                )
+            else:
+                result = self.prepare_live_read(args, tool_call_id=tool_call_id)
         elif name == "mne.execute_approved_live_read":
             if not owner_session_digest:
                 raise ToolBrokerError("Owner session binding is required.")

@@ -53,6 +53,9 @@ export async function selectThread(threadId){
   document.querySelector('#provider-select').value=thread.engine_id;
   document.querySelector('#model-select').value=thread.model_id;
   document.querySelector('#permission-mode').value=thread.permission_mode;
+  if(window.location.hash!==`#thread=${thread.thread_id}`){
+    window.history.replaceState(null,'',`#thread=${thread.thread_id}`);
+  }
   renderThreads(); emit('thread-selected',{thread});
   const active=[...(thread.turns||[])].reverse().find(turn=>['QUEUED','RUNNING'].includes(turn.status));
   if(active)startTurnStream(active);
@@ -168,6 +171,30 @@ importFile.addEventListener('change',async()=>{
   }catch(error){setStatus(error.message);}finally{importFile.value='';}
 });
 
-loadThreads().then(async threads=>{
-  if(threads.length) await selectThread(threads[0].thread_id); else await newThread();
-}).catch(error=>setStatus(error.message));
+function getHashThreadId() {
+  const match = window.location.hash.match(/#thread=([A-Za-z0-9_-]+)/);
+  return match ? match[1] : null;
+}
+
+window.addEventListener('hashchange', async () => {
+  const tid = getHashThreadId();
+  if (tid && appState().currentThread?.thread_id !== tid) {
+    try {
+      await loadThreads();
+      await selectThread(tid);
+    } catch (e) {
+      console.warn('Could not select thread from hash:', e);
+    }
+  }
+});
+
+const initialThreadId = getHashThreadId();
+loadThreads().then(async threads => {
+  if (initialThreadId && threads.some(t => t.thread_id === initialThreadId)) {
+    await selectThread(initialThreadId);
+  } else if (threads.length) {
+    await selectThread(threads[0].thread_id);
+  } else {
+    await newThread();
+  }
+}).catch(error => setStatus(error.message));

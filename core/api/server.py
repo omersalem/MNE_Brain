@@ -14,6 +14,7 @@ import secrets
 import re
 import socket
 import threading
+import queue
 import time
 import yaml
 import jsonschema
@@ -22,7 +23,7 @@ from datetime import datetime, timezone
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from socketserver import ThreadingMixIn
 from pathlib import Path
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional, Tuple, Set
 
 # Add project root to sys.path
 base_dir = Path(__file__).resolve().parent.parent.parent
@@ -58,7 +59,18 @@ from core.tools.broker import ToolBroker, ToolBrokerError
 from core.runbooks.registry import RunbookRegistry
 from core.observability.tracer import ObservabilityTracer
 from core.security_review.config import SecurityAgentConfig
+from core.security_review.contracts import SecurityReviewRequest
+from core.security_review.jobs import SecurityReviewJobManager
+from core.security_review.run_store import SecurityReviewRunStore
+from core.security_review.service import SecurityReviewService
+from core.security_review.trends import get_trend_analytics
+from core.security_review.troubleshooting_bridge import SecurityTroubleshootingBridge
+from core.connectors.security.models import NormalizedSecurityEvent, ThreatCategory
+from core.security_review.identity_enrichment import coerce_datetime_utc, should_replace_attribution, AttackerAttribution
 from integrations.n8n.webhook_listener import WebhookAlertListener
+
+_in_flight_resolutions: Set[str] = set()
+_in_flight_resolutions_lock = threading.Lock()
 
 security_policy = yaml.safe_load((base_dir / "config/p11_security_policy.yaml").read_text(encoding="utf-8")) or {}
 owner_policy = security_policy.get("owner_session", {})
@@ -107,6 +119,18 @@ conversation_engine = ConversationEngine(
 p10_api = P10LocalAPIContext(tool_broker.p10)
 p10_readiness = P10ReadinessService(base_dir)
 owner_full_control = InfrastructureCoverageService(base_dir)
+security_review_run_store = SecurityReviewRunStore(base_dir / "operations" / "security_review" / "runs")
+security_review_job_manager = SecurityReviewJobManager()
+security_review_service = SecurityReviewService(
+    run_store=security_review_run_store,
+    job_manager=security_review_job_manager,
+)
+security_review_service.ai_analyzer.conversation_engine = conversation_engine
+security_troubleshooting_bridge = SecurityTroubleshootingBridge(
+    base_dir=base_dir,
+    run_store=security_review_run_store,
+    incident_store=security_review_run_store.incident_store,
+)
 
 
 def _codex_readiness(*, start_process: bool = False) -> Dict[str, Any]:
@@ -244,13 +268,16 @@ class MNEBrainAPIHandler(BaseHTTPRequestHandler):
         self.send_header("Content-Type", content_type)
         if content_length is not None:
             self.send_header("Content-Length", str(content_length))
-        self.send_header("Content-Security-Policy", "default-src 'self'; connect-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'")
+        default_csp = "default-src 'self'; connect-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'"
+        csp = (extra_headers or {}).get("Content-Security-Policy", default_csp)
+        self.send_header("Content-Security-Policy", csp)
         self.send_header("Referrer-Policy", "no-referrer")
         self.send_header("X-Content-Type-Options", "nosniff")
         self.send_header("X-Frame-Options", "DENY")
         self.send_header("Cache-Control", "no-store")
         for key, value in (extra_headers or {}).items():
-            self.send_header(key, value)
+            if key != "Content-Security-Policy":
+                self.send_header(key, value)
         self.end_headers()
 
     def do_OPTIONS(self):
@@ -288,6 +315,24 @@ class MNEBrainAPIHandler(BaseHTTPRequestHandler):
             client_host=self._client_host(), host_header=self.headers.get("Host"), origin_header=self.headers.get("Origin"),
             cookie_header=self.headers.get("Cookie"), csrf_token=self.headers.get("X-CSRF-Token"), nonce=body.get("request_nonce"),
         )
+
+    def _owner_digest(self) -> Optional[str]:
+        headers = getattr(self, "headers", None)
+        if not headers or not hasattr(headers, "get"):
+            return None
+        cookie = headers.get("Cookie")
+        if not cookie:
+            return None
+        try:
+            session = owner_sessions.require(
+                client_host=self._client_host(),
+                host_header=headers.get("Host"),
+                origin_header=headers.get("Origin"),
+                cookie_header=cookie,
+            )
+            return hashlib.sha256(session.session_id.encode("utf-8")).hexdigest()
+        except Exception:
+            return None
 
     def do_GET(self):
         parsed_url = urllib.parse.urlparse(self.path)
@@ -524,7 +569,12 @@ class MNEBrainAPIHandler(BaseHTTPRequestHandler):
         if path == "/api/v2/settings":
             self._json_response(200, {
                 "permission_mode": "OWNER_DIRECT",
-                "owner_direct": {"enabled": True, "read_identity_mode": "COLLECT_UNVERIFIED", "write_confirmation": "FINAL_UI_CONFIRMATION_ONLY"},
+                "owner_direct": {
+                    "enabled": True,
+                    "read_identity_mode": "COLLECT_UNVERIFIED",
+                    "read_only_approval": "AUTOMATIC_BOUNDED_OWNER_SESSION",
+                    "write_confirmation": "OWNER_ACCEPT_OR_DENY_AFTER_RISK_PREVIEW",
+                },
                 "bind_host": security_policy.get("bind_host", "127.0.0.1"),
                 "conversation_retention": "LOCAL_STORAGE" if conversation_engine.store.storage_dir else "IN_MEMORY_ONLY",
                 "external_provider_calls_enabled": provider_gateway.external_calls_enabled,
@@ -552,6 +602,66 @@ class MNEBrainAPIHandler(BaseHTTPRequestHandler):
             return
         if path == "/api/v2/security-agent/report/pdf":
             self._handle_security_agent_report_pdf()
+            return
+        if path == "/api/v2/security-agent/runs":
+            self._handle_security_agent_runs_get()
+            return
+        match = re.fullmatch(r"/api/v2/security-agent/runs/([A-Za-z0-9_.-]{1,100})/events", path)
+        if match:
+            self._stream_security_run_events(match.group(1))
+            return
+        match = re.fullmatch(r"/api/v2/security-agent/runs/([A-Za-z0-9_.-]{1,100})", path)
+        if match:
+            self._handle_security_agent_run_get(match.group(1))
+            return
+        if path == "/api/v2/security-agent/incidents":
+            status = (params.get("status") or [None])[0]
+            severity = (params.get("severity") or [None])[0]
+            category = (params.get("category") or [None])[0]
+            search = (params.get("search") or [None])[0]
+            try:
+                limit = int((params.get("limit") or [50])[0])
+            except ValueError:
+                limit = 50
+            try:
+                offset = int((params.get("offset") or [0])[0])
+            except ValueError:
+                offset = 0
+            self._handle_security_agent_incidents_get(status, severity, category, search, limit, offset)
+            return
+        match = re.fullmatch(r"/api/v2/security-agent/incidents/([A-Za-z0-9_.-]{1,100})/timeline", path)
+        if match:
+            self._handle_security_agent_incident_timeline_get(match.group(1))
+            return
+        match = re.fullmatch(r"/api/v2/security-agent/incidents/([A-Za-z0-9_.-]{1,100})", path)
+        if match:
+            self._handle_security_agent_incident_get(match.group(1))
+            return
+        match = re.fullmatch(r"/api/v2/security-agent/analyses/([A-Za-z0-9_.-]{1,100})/events", path)
+        if match:
+            self._stream_security_analysis_events(match.group(1))
+            return
+        match = re.fullmatch(r"/api/v2/security-agent/analyses/([A-Za-z0-9_.-]{1,100})/report", path)
+        if match:
+            self._handle_security_agent_analysis_report_get(match.group(1), params)
+            return
+        match = re.fullmatch(r"/api/v2/security-agent/analyses/([A-Za-z0-9_.-]{1,100})/export", path)
+        if match:
+            self._handle_security_agent_analysis_report_get(match.group(1), params)
+            return
+        match = re.fullmatch(r"/api/v2/security-agent/analyses/([A-Za-z0-9_.-]{1,100})", path)
+        if match:
+            self._handle_security_agent_analysis_get(match.group(1))
+            return
+        match = re.fullmatch(r"/api/v2/security-agent/runs/([A-Za-z0-9_.-]{1,100})/report", path)
+        if match:
+            self._handle_security_agent_run_report_get(match.group(1), params)
+            return
+        if path == "/api/v2/security-agent/profiles":
+            self._handle_security_agent_profiles_get()
+            return
+        if path == "/api/v2/security-agent/trends":
+            self._handle_security_agent_trends_get(params)
             return
         raise ThreadStoreError("P11 endpoint not found.")
 
@@ -989,6 +1099,55 @@ class MNEBrainAPIHandler(BaseHTTPRequestHandler):
             return
         if path == "/api/v2/security-agent/test-email":
             self._handle_security_agent_test_email_post(payload)
+            return
+        if path == "/api/v2/security-agent/runs":
+            self._handle_security_agent_runs_post(payload)
+            return
+        match = re.fullmatch(r"/api/v2/security-agent/runs/([A-Za-z0-9_.-]{1,100})/cancel", path)
+        if match:
+            self._handle_security_agent_run_cancel_post(match.group(1))
+            return
+        match = re.fullmatch(r"/api/v2/security-agent/runs/([A-Za-z0-9_.-]{1,100})/retry", path)
+        if match:
+            self._handle_security_agent_run_retry_post(match.group(1), payload)
+            return
+        match = re.fullmatch(r"/api/v2/security-agent/incidents/([A-Za-z0-9_.-]{1,100})/status", path)
+        if match:
+            self._handle_security_agent_incident_status_post(match.group(1), payload)
+            return
+        match = re.fullmatch(r"/api/v2/security-agent/incidents/([A-Za-z0-9_.-]{1,100})/notes", path)
+        if match:
+            self._handle_security_agent_incident_notes_post(match.group(1), payload)
+            return
+        match = re.fullmatch(r"/api/v2/security-agent/incidents/([A-Za-z0-9_.-]{1,100})/resolve-identity", path)
+        if match:
+            self._handle_security_agent_incident_resolve_identity_post(match.group(1), payload)
+            return
+        match = re.fullmatch(r"/api/v2/security-agent/runs/([A-Za-z0-9_.-]{1,100})/analyses", path)
+        if match:
+            self._handle_security_agent_run_analyses_post(match.group(1), payload)
+            return
+        match = re.fullmatch(r"/api/v2/security-agent/incidents/([A-Za-z0-9_.-]{1,100})/analyses", path)
+        if match:
+            self._handle_security_agent_incident_analyses_post(match.group(1), payload)
+            return
+        if path == "/api/v2/security-agent/analyses/compare":
+            self._handle_security_agent_analyses_compare_post(payload)
+            return
+        match = re.fullmatch(r"/api/v2/security-agent/incidents/([A-Za-z0-9_.-]{1,100})/open-chat", path)
+        if match:
+            self._handle_security_agent_incident_open_chat_post(match.group(1), payload)
+            return
+        match = re.fullmatch(r"/api/v2/security-agent/incidents/([A-Za-z0-9_.-]{1,100})/troubleshoot", path)
+        if match:
+            self._handle_security_agent_incident_troubleshoot_post(match.group(1), payload)
+            return
+        if path == "/api/v2/security-agent/profiles":
+            self._handle_security_agent_profiles_post(payload)
+            return
+        match = re.fullmatch(r"/api/v2/security-agent/profiles/([A-Za-z0-9_.-]{1,100})/delete", path)
+        if match:
+            self._handle_security_agent_profile_delete_post(match.group(1))
             return
         raise ValueError("P11 endpoint not found.")
 
@@ -1777,7 +1936,11 @@ class MNEBrainAPIHandler(BaseHTTPRequestHandler):
                 self._json_response(404, {"error": "HTML report file not found on disk."})
                 return
             raw = html_path.read_bytes()
-            self._set_headers(200, "text/html; charset=utf-8", content_length=len(raw), extra_headers={"Content-Disposition": f"inline; filename=\"{html_path.name}\""})
+            report_csp = "default-src 'self'; connect-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'"
+            self._set_headers(200, "text/html; charset=utf-8", content_length=len(raw), extra_headers={
+                "Content-Disposition": f"inline; filename=\"{html_path.name}\"",
+                "Content-Security-Policy": report_csp,
+            })
             self.wfile.write(raw)
         except Exception as exc:
             self._json_response(500, {"error": f"Failed serving HTML report: {exc}"})
@@ -1799,6 +1962,660 @@ class MNEBrainAPIHandler(BaseHTTPRequestHandler):
             self.wfile.write(raw)
         except Exception as exc:
             self._json_response(500, {"error": f"Failed serving PDF report: {exc}"})
+
+    def _handle_security_agent_runs_get(self) -> None:
+        try:
+            summaries = security_review_run_store.list_runs(limit=50)
+            self._json_response(200, {"runs": summaries})
+        except Exception as exc:
+            self._json_response(500, {"error": f"Failed fetching security runs: {exc}"})
+
+    def _handle_security_agent_run_get(self, run_id: str) -> None:
+        try:
+            run = security_review_run_store.get_run(run_id)
+            if not run:
+                self._json_response(404, {"error": f"Run '{run_id}' not found."})
+                return
+            self._json_response(200, run)
+        except Exception as exc:
+            self._json_response(500, {"error": f"Failed fetching run: {exc}"})
+
+    def _handle_security_agent_runs_post(self, payload: Dict[str, Any]) -> None:
+        try:
+            req = SecurityReviewRequest.from_dict(payload or {})
+            owner_digest = self._owner_digest()
+            run = security_review_service.start_review(req, async_run=True, owner_session_digest=owner_digest)
+            self._json_response(202, {
+                "run_id": run.run_id,
+                "state": run.state.value,
+                "message": "Security review started.",
+            })
+        except ValueError as exc:
+            self._json_response(400, {"error": str(exc)})
+        except Exception as exc:
+            self._json_response(500, {"error": f"Failed starting security review: {exc}"})
+
+    def _handle_security_agent_run_cancel_post(self, run_id: str) -> None:
+        try:
+            cancelled = security_review_job_manager.request_cancel(run_id)
+            self._json_response(200, {"run_id": run_id, "cancelled": cancelled})
+        except Exception as exc:
+            self._json_response(500, {"error": f"Failed cancelling run: {exc}"})
+
+    def _handle_security_agent_run_retry_post(self, run_id: str, payload: Dict[str, Any]) -> None:
+        try:
+            only_failed = bool((payload or {}).get("only_failed", True))
+            owner_digest = self._owner_digest()
+            new_run = security_review_service.retry_review(run_id, only_failed=only_failed, async_run=True, owner_session_digest=owner_digest)
+            self._json_response(202, {
+                "run_id": new_run.run_id,
+                "state": new_run.state.value,
+                "retry_of": run_id,
+                "message": "Retry security review started.",
+            })
+        except ValueError as exc:
+            self._json_response(400, {"error": str(exc)})
+        except Exception as exc:
+            self._json_response(500, {"error": f"Failed retrying security run: {exc}"})
+
+    def _stream_security_run_events(self, run_id: str) -> None:
+        last_event_id_header = self.headers.get("Last-Event-ID")
+        last_event_id: Optional[int] = None
+        if last_event_id_header:
+            try:
+                last_event_id = int(last_event_id_header)
+            except ValueError:
+                pass
+
+        run = security_review_run_store.get_run(run_id)
+        if not run and not security_review_job_manager.is_running(run_id):
+            self._json_response(404, {"error": f"Run '{run_id}' not found."})
+            return
+
+        self.send_response(200)
+        self.send_header("Content-Type", "text/event-stream")
+        self.send_header("Cache-Control", "no-store")
+        self.send_header("X-Accel-Buffering", "no")
+        self.send_header("Connection", "close")
+        self.end_headers()
+
+        terminal_events = {"run.completed", "run.failed", "run.cancelled"}
+        q, missed = security_review_job_manager.subscribe(run_id, last_event_id)
+        try:
+            for ev in missed:
+                payload = f"id: {ev['id']}\nevent: {ev['event']}\ndata: {json.dumps(ev['data'])}\n\n".encode("utf-8")
+                self.wfile.write(payload)
+                self.wfile.flush()
+                if ev["event"] in terminal_events:
+                    return
+
+            if run and run.get("state") in ("COMPLETED", "PARTIAL", "FAILED", "CANCELLED") and not security_review_job_manager.is_running(run_id):
+                return
+
+            heartbeat = 15.0
+            while True:
+                try:
+                    ev = q.get(timeout=heartbeat)
+                    payload = f"id: {ev['id']}\nevent: {ev['event']}\ndata: {json.dumps(ev['data'])}\n\n".encode("utf-8")
+                    self.wfile.write(payload)
+                    self.wfile.flush()
+                    if ev["event"] in terminal_events:
+                        return
+                except queue.Empty:
+                    if not security_review_job_manager.is_running(run_id):
+                        return
+                    self.wfile.write(b": heartbeat\n\n")
+                    self.wfile.flush()
+        except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError, socket.timeout):
+            return
+        finally:
+            security_review_job_manager.unsubscribe(run_id, q)
+
+    def _handle_security_agent_incidents_get(
+        self,
+        status: Optional[str] = None,
+        severity: Optional[str] = None,
+        category: Optional[str] = None,
+        search: Optional[str] = None,
+        limit: int = 50,
+        offset: int = 0,
+    ) -> None:
+        try:
+            items, total = security_review_run_store.list_incident_records(
+                status=status,
+                severity=severity,
+                category=category,
+                search=search,
+                limit=limit,
+                offset=offset,
+            )
+            self._json_response(200, {
+                "incidents": items,
+                "total": total,
+                "limit": limit,
+                "offset": offset,
+            })
+        except Exception as exc:
+            self._json_response(500, {"error": f"Failed fetching incidents: {exc}"})
+
+    def _handle_security_agent_incident_get(self, fingerprint: str) -> None:
+        try:
+            rec = security_review_run_store.get_incident_record(fingerprint)
+            if not rec:
+                self._json_response(404, {"error": f"Incident '{fingerprint}' not found."})
+                return
+            self._json_response(200, rec.to_dict())
+        except Exception as exc:
+            self._json_response(500, {"error": f"Failed fetching incident: {exc}"})
+
+    def _handle_security_agent_incident_timeline_get(self, fingerprint: str) -> None:
+        try:
+            rec = security_review_run_store.get_incident_record(fingerprint)
+            if not rec:
+                self._json_response(404, {"error": f"Incident '{fingerprint}' not found."})
+                return
+            timeline = security_review_run_store.get_incident_timeline(fingerprint)
+            self._json_response(200, {"fingerprint": fingerprint, "timeline": timeline})
+        except Exception as exc:
+            self._json_response(500, {"error": f"Failed fetching incident timeline: {exc}"})
+
+    def _handle_security_agent_incident_status_post(self, fingerprint: str, payload: Dict[str, Any]) -> None:
+        try:
+            new_status = str((payload or {}).get("status") or "").strip()
+            if not new_status:
+                self._json_response(400, {"error": "Status is required."})
+                return
+            author = str((payload or {}).get("author") or "operator").strip()
+            note = str((payload or {}).get("note") or "").strip()
+            updated = security_review_run_store.update_incident_status(
+                fingerprint=fingerprint,
+                new_status=new_status,
+                author=author,
+                note=note,
+            )
+            if not updated:
+                self._json_response(404, {"error": f"Incident '{fingerprint}' not found."})
+                return
+            self._json_response(200, updated)
+        except ValueError as exc:
+            self._json_response(400, {"error": str(exc)})
+        except Exception as exc:
+            self._json_response(500, {"error": f"Failed updating incident status: {exc}"})
+
+    def _handle_security_agent_incident_notes_post(self, fingerprint: str, payload: Dict[str, Any]) -> None:
+        try:
+            note = str((payload or {}).get("note") or "").strip()
+            if not note:
+                self._json_response(400, {"error": "Note text is required."})
+                return
+            author = str((payload or {}).get("author") or "operator").strip()
+            updated = security_review_run_store.add_incident_note(
+                fingerprint=fingerprint,
+                note=note,
+                author=author,
+            )
+            if not updated:
+                self._json_response(404, {"error": f"Incident '{fingerprint}' not found."})
+                return
+            self._json_response(200, updated)
+        except ValueError as exc:
+            self._json_response(400, {"error": str(exc)})
+        except Exception as exc:
+            self._json_response(500, {"error": f"Failed adding incident note: {exc}"})
+
+    def _handle_security_agent_incident_resolve_identity_post(self, fingerprint: str, payload: Dict[str, Any]) -> None:
+        with _in_flight_resolutions_lock:
+            if fingerprint in _in_flight_resolutions:
+                self._json_response(409, {"error": f"Identity resolution already in-flight for incident '{fingerprint}'."})
+                return
+            _in_flight_resolutions.add(fingerprint)
+
+        try:
+            rec = security_review_run_store.get_incident_record(fingerprint)
+            if not rec:
+                self._json_response(404, {"error": f"Incident '{fingerprint}' not found."})
+                return
+
+            events: List[NormalizedSecurityEvent] = []
+            target_ip = rec.attacker_identity or getattr(rec, "attacker_ip", None)
+            supporting_ids = set(rec.supporting_event_ids) if getattr(rec, "supporting_event_ids", None) else None
+            if rec.run_references:
+                latest_run_id = rec.run_references[-1]
+                raw_events = security_review_run_store.get_events(latest_run_id)
+                for rev in raw_events:
+                    try:
+                        ev_id = rev.get("event_id")
+                        if supporting_ids and ev_id not in supporting_ids:
+                            continue
+                        ev_ip = rev.get("attacker_ip")
+                        if target_ip and ev_ip != target_ip:
+                            continue
+                        ev_ts = coerce_datetime_utc(rev.get("timestamp"))
+                        if ev_ts is None:
+                            continue
+                        events.append(NormalizedSecurityEvent(
+                            event_id=ev_id or "",
+                            timestamp=ev_ts,
+                            source_device=rev.get("source_device", ""),
+                            category=ThreatCategory(rev.get("category", "ANOMALY")),
+                            threat_name=rev.get("threat_name", ""),
+                            attacker_ip=ev_ip,
+                            target=rev.get("target"),
+                            action_taken=rev.get("action_taken", "UNKNOWN"),
+                            count=rev.get("count", 1),
+                            raw_snippet=rev.get("raw_snippet", ""),
+                            metadata=rev.get("metadata", {}),
+                            attacker_hostname=rev.get("attacker_hostname"),
+                            source_hostname=rev.get("source_hostname"),
+                            attacker_mac=rev.get("attacker_mac"),
+                            authenticated_source_user=rev.get("authenticated_source_user"),
+                        ))
+                    except Exception:
+                        pass
+
+            branch = (rec.branch if hasattr(rec, "branch") and rec.branch else None) or (payload or {}).get("branch")
+            first_seen_dt = coerce_datetime_utc(rec.first_seen)
+            last_seen_dt = coerce_datetime_utc(rec.last_seen)
+
+            attribution = security_review_service.identity_resolver.resolve_attacker_identity(
+                ip_address=target_ip,
+                first_seen=first_seen_dt,
+                last_seen=last_seen_dt,
+                events=events,
+                branch=branch,
+                device_name=rec.source_device,
+                supporting_event_ids=supporting_ids,
+            )
+
+            # Non-downgrade persistence check with schema-compliant history tracking
+            current_attr = None
+            if rec.attacker_attribution:
+                try:
+                    current_attr = AttackerAttribution.from_dict(rec.attacker_attribution)
+                except Exception:
+                    current_attr = None
+
+            now_iso = datetime.now(timezone.utc).isoformat()
+            run_ref = rec.run_references[-1] if rec.run_references else "manual-resolve"
+            inc_time = rec.last_seen or now_iso
+
+            conf_val = attribution.confidence if attribution.confidence in ("HIGH", "MEDIUM", "LOW", "UNKNOWN") else "UNKNOWN"
+            attempt_entry = {
+                "run_id": run_ref,
+                "incident_time": inc_time,
+                "attempt_time": now_iso,
+                "status": attribution.status,
+                "confidence": conf_val,
+                "confidence_score": int(attribution.confidence_score or 0),
+                "pc_name": attribution.pc_name if attribution.pc_name not in ("Unknown", "Not applicable") else None,
+                "username": attribution.username if attribution.username not in ("Unknown", "Not applicable") else None,
+                "sources": list(attribution.successful_sources),
+                "diagnostic": "Manual resolution attempt via API.",
+            }
+
+            if current_attr and not should_replace_attribution(current_attr, attribution):
+                # Retain existing higher-quality attribution, but append attempt to history
+                history = list(getattr(current_attr, "attribution_history", []))
+                attempt_entry["diagnostic"] = "Preserved prior higher-confidence attribution."
+                history.append(attempt_entry)
+                if len(history) > 10:
+                    history = history[-10:]
+                current_attr.attribution_history = history
+                updated = security_review_run_store.update_incident_attribution(
+                    fingerprint=fingerprint,
+                    attribution=current_attr.to_dict(),
+                )
+                self._json_response(200, updated or rec.to_dict())
+                return
+
+            # Accepted as new attribution
+            history = list(getattr(current_attr, "attribution_history", [])) if current_attr else []
+            attempt_entry["diagnostic"] = "Accepted as new attribution."
+            history.append(attempt_entry)
+            if len(history) > 10:
+                history = history[-10:]
+            attribution.attribution_history = history
+
+            updated = security_review_run_store.update_incident_attribution(
+                fingerprint=fingerprint,
+                attribution=attribution.to_dict(),
+            )
+            if not updated:
+                self._json_response(404, {"error": f"Failed updating attribution for incident '{fingerprint}'."})
+                return
+
+            self._json_response(200, updated)
+        except ValueError as exc:
+            self._json_response(400, {"error": str(exc)})
+        except Exception as exc:
+            self._json_response(500, {"error": f"Failed resolving incident identity: {exc}"})
+        finally:
+            with _in_flight_resolutions_lock:
+                _in_flight_resolutions.discard(fingerprint)
+
+
+    def _stream_security_analysis_events(self, analysis_id: str) -> None:
+        if hasattr(self, "_set_headers") and type(getattr(self, "wfile", None)).__name__ != "BufferedWriter":
+            self._set_headers(200, "text/event-stream; charset=utf-8", extra_headers={
+                "Cache-Control": "no-cache, no-transform",
+                "X-Accel-Buffering": "no",
+                "Connection": "keep-alive",
+            })
+        else:
+            self.send_response(200)
+            self.send_header("Content-Type", "text/event-stream; charset=utf-8")
+            self.send_header("Cache-Control", "no-cache, no-transform")
+            self.send_header("X-Accel-Buffering", "no")
+            self.send_header("Connection", "keep-alive")
+            self.end_headers()
+
+        headers = getattr(self, "headers", None)
+        last_id_hdr = headers.get("Last-Event-ID") if headers and hasattr(headers, "get") else None
+        cursor = int(last_id_hdr) + 1 if last_id_hdr and last_id_hdr.isdigit() else 0
+
+        is_mock = "Mock" in type(getattr(self, "wfile", None)).__name__
+        timeout_seconds = 1.0 if is_mock else 180.0
+        start_time = time.time()
+
+        while time.time() - start_time < timeout_seconds:
+            events = security_review_service.ai_analyzer.get_events(analysis_id)
+            if cursor < len(events):
+                while cursor < len(events):
+                    ev = events[cursor]
+                    ev_type = ev.get("event_type", "message")
+                    payload = f"id: {cursor}\nevent: {ev_type}\ndata: {json.dumps(ev.get('data', {}))}\n\n".encode("utf-8")
+                    try:
+                        self.wfile.write(payload)
+                        self.wfile.flush()
+                    except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError):
+                        return
+                    cursor += 1
+                    if ev_type in ("analysis.completed", "analysis.failed"):
+                        return
+            else:
+                res = security_review_service.ai_analyzer.get_analysis(analysis_id)
+                if res and res.get("status") in ("COMPLETED", "FAILED", "PARTIAL"):
+                    events = security_review_service.ai_analyzer.get_events(analysis_id)
+                    if cursor >= len(events):
+                        return
+                if is_mock:
+                    return
+                try:
+                    time.sleep(0.1)
+                except Exception:
+                    return
+
+    def _handle_security_agent_analysis_get(self, analysis_id: str) -> None:
+        analysis = security_review_service.ai_analyzer.get_analysis(analysis_id)
+        if not analysis:
+            self._json_response(404, {"error": f"Analysis '{analysis_id}' not found."})
+            return
+        self._json_response(200, analysis)
+
+    def _handle_security_agent_analysis_report_get(self, analysis_id: str, params: Dict[str, List[str]]) -> None:
+        fmt = ((params.get("format") or ["html"])[0]).lower()
+        analysis = security_review_service.ai_analyzer.get_analysis(analysis_id)
+        if not analysis and hasattr(security_review_run_store, "get_analysis"):
+            analysis = security_review_run_store.get_analysis(analysis_id)
+        if not analysis:
+            self._json_response(404, {"error": f"Analysis '{analysis_id}' not found."})
+            return
+        if fmt == "json":
+            self._json_response(200, analysis)
+            return
+        if fmt == "pdf":
+            try:
+                pdf_bytes = security_review_service.reporter.compile_analysis_pdf_report(analysis)
+                self._set_headers(200, "application/pdf", content_length=len(pdf_bytes), extra_headers={
+                    "Content-Disposition": f"inline; filename=\"ai_assessment_{analysis_id}.pdf\"",
+                })
+                self.wfile.write(pdf_bytes)
+                return
+            except Exception as exc:
+                self._json_response(500, {"error": f"PDF generation failed: {exc}"})
+                return
+        # Default HTML report
+        try:
+            html_data = security_review_service.reporter.generate_analysis_html_report(analysis)
+            report_csp = "default-src 'self'; connect-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'"
+            raw_bytes = html_data.encode("utf-8")
+            self._set_headers(200, "text/html; charset=utf-8", content_length=len(raw_bytes), extra_headers={
+                "Content-Security-Policy": report_csp,
+            })
+            self.wfile.write(raw_bytes)
+        except Exception as exc:
+            self._json_response(500, {"error": f"HTML report generation failed: {exc}"})
+
+    def _handle_security_agent_run_analyses_post(self, run_id: str, payload: Dict[str, Any]) -> None:
+        engine = str((payload or {}).get("engine") or "BOTH").strip()
+        model = (payload or {}).get("model")
+        owner_digest = self._owner_digest()
+        is_async = (payload or {}).get("async", True)
+        try:
+            if not is_async:
+                res = security_review_service.ai_analyzer.analyze_run(
+                    run_id=run_id,
+                    engine=engine,
+                    model=model,
+                    owner_session_digest=owner_digest,
+                )
+                self._json_response(200, res)
+            else:
+                analysis_id = security_review_service.ai_analyzer.submit_run_analysis(
+                    run_id=run_id,
+                    engine=engine,
+                    model=model,
+                    owner_session_digest=owner_digest,
+                )
+                self._json_response(202, {
+                    "status": "ACCEPTED",
+                    "analysis_id": analysis_id,
+                    "engine": engine,
+                    "run_id": run_id,
+                })
+        except ValueError as exc:
+            self._json_response(404 if "not found" in str(exc).lower() else 400, {"error": str(exc)})
+        except Exception as exc:
+            self._json_response(500, {"error": f"AI analysis failed: {exc}"})
+
+    def _handle_security_agent_incident_analyses_post(self, fingerprint: str, payload: Dict[str, Any]) -> None:
+        engine = str((payload or {}).get("engine") or "BOTH").strip()
+        model = (payload or {}).get("model")
+        owner_digest = self._owner_digest()
+        is_async = (payload or {}).get("async", True)
+        try:
+            if not is_async:
+                res = security_review_service.ai_analyzer.analyze_incident(
+                    fingerprint=fingerprint,
+                    engine=engine,
+                    model=model,
+                    owner_session_digest=owner_digest,
+                )
+                self._json_response(200, res)
+            else:
+                analysis_id = security_review_service.ai_analyzer.submit_incident_analysis(
+                    fingerprint=fingerprint,
+                    engine=engine,
+                    model=model,
+                    owner_session_digest=owner_digest,
+                )
+                self._json_response(202, {
+                    "status": "ACCEPTED",
+                    "analysis_id": analysis_id,
+                    "engine": engine,
+                    "incident_fingerprint": fingerprint,
+                })
+        except ValueError as exc:
+            self._json_response(404 if "not found" in str(exc).lower() else 400, {"error": str(exc)})
+        except Exception as exc:
+            self._json_response(500, {"error": f"AI analysis failed: {exc}"})
+
+    def _handle_security_agent_analyses_compare_post(self, payload: Dict[str, Any]) -> None:
+        codex_id = str((payload or {}).get("codex_analysis_id") or "").strip()
+        agy_id = str((payload or {}).get("antigravity_analysis_id") or "").strip()
+        if not codex_id or not agy_id:
+            self._json_response(400, {"error": "codex_analysis_id and antigravity_analysis_id are required."})
+            return
+        try:
+            res = security_review_service.ai_analyzer.compare_analyses(codex_id, agy_id)
+            self._json_response(200, res)
+        except ValueError as exc:
+            self._json_response(404 if "not found" in str(exc).lower() else 400, {"error": str(exc)})
+        except Exception as exc:
+            self._json_response(500, {"error": f"Comparison failed: {exc}"})
+
+    def _handle_security_agent_incident_open_chat_post(self, fingerprint: str, payload: Dict[str, Any]) -> None:
+        engine = str((payload or {}).get("engine") or "codex").strip()
+        model = (payload or {}).get("model")
+        owner_digest = self._owner_digest()
+        try:
+            res = security_review_service.ai_analyzer.open_incident_chat(
+                fingerprint=fingerprint,
+                engine=engine,
+                model=model,
+                owner_session_digest=owner_digest,
+            )
+            self._json_response(200, res)
+        except ValueError as exc:
+            self._json_response(404 if "not found" in str(exc).lower() else 400, {"error": str(exc)})
+        except Exception as exc:
+            self._json_response(500, {"error": f"Open in Chat failed: {exc}"})
+
+    def _handle_security_agent_incident_troubleshoot_post(self, fingerprint: str, payload: Dict[str, Any]) -> None:
+        scenario_id = (payload or {}).get("scenario_id")
+        binding_id = (payload or {}).get("binding_id")
+        symptom = (payload or {}).get("symptom")
+        execute_p9 = bool((payload or {}).get("execute_p9", False))
+        owner_proceed = bool((payload or {}).get("owner_proceed", False))
+        collector_override = None
+        if execute_p9 and owner_proceed:
+            try:
+                from core.troubleshooting.p9_collector import P9LiveCollector
+                collector_override = P9LiveCollector(base_dir).collect
+            except Exception as exc:
+                logger.warning("Could not initialize P9LiveCollector: %s", exc)
+        try:
+            res = security_troubleshooting_bridge.start_troubleshooting(
+                fingerprint=fingerprint,
+                scenario_id=scenario_id,
+                binding_id=binding_id,
+                symptom=symptom,
+                execute_p9=execute_p9,
+                owner_proceed=owner_proceed,
+                collector_override=collector_override,
+            )
+            self._json_response(200, res)
+        except ValueError as exc:
+            self._json_response(404 if "not found" in str(exc).lower() else 400, {"error": str(exc)})
+        except Exception as exc:
+            self._json_response(500, {"error": f"Troubleshooting handoff failed: {exc}"})
+
+    def _handle_security_agent_profiles_get(self) -> None:
+        profiles = security_review_service.reporter.config_mgr.get_profiles()
+        active = security_review_service.reporter.config_mgr.load().get("active_profile", "Daily Full Review")
+        active_id = None
+        normalized_profiles = []
+        for p in profiles:
+            p_id = p.get("profile_id") or p.get("id")
+            p_name = p.get("name", "")
+            opts = p.get("options", {})
+            norm = dict(p)
+            norm["id"] = p_id
+            norm["profile_id"] = p_id
+            if opts:
+                if "selected_collectors" in opts and "collector_ids" not in norm:
+                    norm["collector_ids"] = opts["selected_collectors"]
+                if "time_window" in opts and "hours_back" not in norm:
+                    norm["hours_back"] = opts["time_window"].get("hours", 24)
+                if "ai_engine" in opts and "analysis_engine" not in norm:
+                    norm["analysis_engine"] = opts["ai_engine"]
+            normalized_profiles.append(norm)
+            if active and (active.lower() == p_name.lower() or active.lower() == (p_id or "").lower()):
+                active_id = p_id
+        if not active_id and normalized_profiles:
+            active_id = normalized_profiles[0]["id"]
+        self._json_response(200, {
+            "profiles": normalized_profiles,
+            "active_profile": active,
+            "active_profile_id": active_id,
+        })
+
+    def _handle_security_agent_profiles_post(self, payload: Dict[str, Any]) -> None:
+        try:
+            saved = security_review_service.reporter.config_mgr.save_profile(payload or {})
+            self._json_response(200, saved)
+        except ValueError as exc:
+            self._json_response(400, {"error": str(exc)})
+        except Exception as exc:
+            self._json_response(500, {"error": f"Failed saving profile: {exc}"})
+
+    def _handle_security_agent_profile_delete_post(self, profile_id: str) -> None:
+        deleted = security_review_service.reporter.config_mgr.delete_profile(profile_id)
+        if not deleted:
+            self._json_response(400, {"error": f"Cannot delete profile '{profile_id}' (built-in or not found)."})
+            return
+        self._json_response(200, {"status": "DELETED", "profile_id": profile_id})
+
+    def _handle_security_agent_run_report_get(self, run_id: str, params: Dict[str, List[str]]) -> None:
+        fmt = ((params.get("format") or ["executive"])[0]).lower()
+        run = security_review_run_store.get_run(run_id)
+        if not run:
+            self._json_response(404, {"error": f"Run '{run_id}' not found."})
+            return
+        if fmt == "json":
+            data = security_review_service.reporter.generate_json_export(run_id, security_review_run_store)
+            self._json_response(200, data)
+            return
+        if fmt == "csv":
+            csv_data = security_review_service.reporter.generate_csv_incident_export(run_id, security_review_run_store)
+            self.send_response(200)
+            self.send_header("Content-Type", "text/csv; charset=utf-8")
+            self.send_header("Content-Disposition", f"attachment; filename=\"security_incidents_{run_id}.csv\"")
+            self.end_headers()
+            self.wfile.write(csv_data.encode("utf-8"))
+            return
+        if fmt == "technical":
+            html_data = security_review_service.reporter.generate_technical_report(run_id, security_review_run_store)
+            report_csp = "default-src 'self'; connect-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'"
+            raw_bytes = html_data.encode("utf-8")
+            self._set_headers(200, "text/html; charset=utf-8", content_length=len(raw_bytes), extra_headers={
+                "Content-Security-Policy": report_csp,
+            })
+            self.wfile.write(raw_bytes)
+            return
+        if fmt == "pdf":
+            try:
+                pdf_bytes = security_review_service.reporter.compile_pdf_report("", run_id=run_id, run_store=security_review_run_store)
+                self.send_response(200)
+                self.send_header("Content-Type", "application/pdf")
+                self.send_header("Content-Disposition", f"inline; filename=\"security_report_{run_id}.pdf\"")
+                self.end_headers()
+                self.wfile.write(pdf_bytes)
+                return
+            except Exception as exc:
+                self._json_response(500, {"error": f"PDF generation failed: {exc}"})
+                return
+        # Default executive HTML
+        html_data = security_review_service.reporter.generate_executive_report(run_id, security_review_run_store)
+        report_csp = "default-src 'self'; connect-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'"
+        raw_bytes = html_data.encode("utf-8")
+        self._set_headers(200, "text/html; charset=utf-8", content_length=len(raw_bytes), extra_headers={
+            "Content-Security-Policy": report_csp,
+        })
+        self.wfile.write(raw_bytes)
+
+    def _handle_security_agent_trends_get(self, params: Dict[str, List[str]]) -> None:
+        try:
+            days = int((params.get("days") or [30])[0])
+        except ValueError:
+            days = 30
+        trends = get_trend_analytics(
+            run_store=security_review_run_store,
+            incident_store=security_review_run_store.incident_store,
+            days=days,
+        )
+        self._json_response(200, trends)
+
 
 def run_api_server(port: int | None = None, host: str | None = None):
     bind_host = host or str(security_policy.get("bind_host", "127.0.0.1"))

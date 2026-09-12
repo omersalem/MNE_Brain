@@ -1,0 +1,34 @@
+profile:
+  name: fortiedr
+  platform: fortinet_fortiedr
+  trust_level: 5
+  description: "Declarative read-only discovery contract for FortiEDR Cloud Central Manager"
+
+connection:
+  protocol: rest
+  adapter_id: fortiedr_rest_readonly
+  entity_ref: edr-fortiedr-cloud-01
+  port_env: MNE_FORTIEDR_HTTPS_PORT
+  credential_ref_env: FORTIEDR_CREDENTIAL_REF
+  auth_method: secret_reference
+  timeout_seconds: 10
+  max_output_bytes: 65536
+
+read_commands:
+  - id: console_status
+    command: "GET /api"
+    target: "in_memory_evidence"
+    trust: 5
+  - id: collectors_summary
+    command: "GET /api/v1/collectors"
+    target: "in_memory_evidence"
+    trust: 5
+  - id: security_events_summary
+    command: "GET /api/v1/events"
+    target: "in_memory_evidence"
+    trust: 5
+
+normalization:
+  target_file: "docs/company_docs/fortiedr-62/fortiedr-canonical.md"
+  promote_policy: "two_stage_verification"
+  freshness_ttl_seconds: 900

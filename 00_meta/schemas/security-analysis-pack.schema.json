@@ -1,0 +1,82 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "http://mne-brain.org/schemas/security-analysis-pack.schema.json",
+  "title": "Security Analysis Pack Schema",
+  "description": "Compact, standardized context pack for AI analysis of security runs or incidents by Codex or Antigravity.",
+  "type": "object",
+  "required": [
+    "pack_id",
+    "target_type",
+    "run_summary",
+    "incidents",
+    "collector_diagnostics",
+    "unknowns",
+    "sources"
+  ],
+  "properties": {
+    "pack_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "target_type": {
+      "type": "string",
+      "enum": ["RUN", "INCIDENT", "INCIDENTS"]
+    },
+    "run_id": {
+      "type": "string"
+    },
+    "incident_fingerprints": {
+      "type": "array",
+      "items": { "type": "string" },
+      "default": []
+    },
+    "run_summary": {
+      "type": "object"
+    },
+    "incidents": {
+      "type": "array",
+      "items": { "type": "object" }
+    },
+    "supporting_events": {
+      "type": "array",
+      "items": { "type": "object" },
+      "default": []
+    },
+    "collector_diagnostics": {
+      "type": "array",
+      "items": { "type": "object" }
+    },
+    "matching_canonical_entities": {
+      "type": "array",
+      "items": { "type": "object" },
+      "default": []
+    },
+    "related_adjacencies": {
+      "type": "array",
+      "items": { "type": "object" },
+      "default": []
+    },
+    "matching_runbooks": {
+      "type": "array",
+      "items": { "type": "object" },
+      "default": []
+    },
+    "earlier_occurrences_trend": {
+      "type": "object",
+      "default": {}
+    },
+    "unknowns": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "sources": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "character_count": {
+      "type": "integer",
+      "maximum": 24000
+    }
+  },
+  "additionalProperties": false
+}

@@ -193,3 +193,89 @@ def test_conversation_engine_antigravity_thread_pinning():
             engine_id="antigravity",
             model_id="gemini-3.8-flash-low",
         )
+
+
+def test_antigravity_dynamic_version_in_progress():
+    """Verify that progress event displays the dynamic version without hard-coded text."""
+    events_captured = []
+
+    def event_sink(thread_id, turn_id, event_type, payload):
+        events_captured.append((event_type, payload))
+
+    harness = AntigravityHarness(
+        BASE,
+        event_sink=event_sink,
+        binary_path=Path("mock_agy.exe"),
+    )
+
+    ndjson_output = "\n".join([
+        json.dumps({"event": "init", "conversation_id": "conv_dyn_ver"}),
+        json.dumps({"event": "result", "result": {"status": "SUCCESS", "response": "Done"}}),
+    ]) + "\n"
+
+    mock_proc = MagicMock()
+    mock_proc.stdout = io.StringIO(ndjson_output)
+    mock_proc.stderr = io.StringIO("")
+    mock_proc.poll.return_value = 0
+    mock_proc.wait.return_value = 0
+    mock_proc.returncode = 0
+
+    with patch("subprocess.Popen", return_value=mock_proc):
+        with patch.object(harness, "binary", return_value=Path("mock_agy.exe")):
+            with patch.object(harness, "get_version", return_value="2.0.4-preview"):
+                harness.start_turn(
+                    gui_thread_id="thr_dyn_1",
+                    gui_turn_id="trn_dyn_1",
+                    content="check version",
+                    owner_session_digest="b" * 64,
+                )
+                time.sleep(0.3)
+
+    progress_events = [p for etype, p in events_captured if etype == "agent.progress"]
+    assert len(progress_events) == 1
+    assert "2.0.4-preview" in progress_events[0]["text"]
+    assert "1.1.26" not in progress_events[0]["text"]
+
+
+def test_antigravity_structured_pack_support():
+    """Verify that Antigravity harness incorporates structured pack when provided."""
+    captured_cmds = []
+
+    harness = AntigravityHarness(
+        BASE,
+        binary_path=Path("mock_agy.exe"),
+    )
+
+    ndjson_output = "\n".join([
+        json.dumps({"event": "init", "conversation_id": "conv_pack_1"}),
+        json.dumps({"event": "result", "result": {"status": "SUCCESS", "response": "Pack analyzed"}}),
+    ]) + "\n"
+
+    mock_proc = MagicMock()
+    mock_proc.stdout = io.StringIO(ndjson_output)
+    mock_proc.stderr = io.StringIO("")
+    mock_proc.poll.return_value = 0
+    mock_proc.wait.return_value = 0
+    mock_proc.returncode = 0
+
+    def mock_popen(cmd, **kwargs):
+        captured_cmds.append(cmd)
+        return mock_proc
+
+    with patch("subprocess.Popen", side_effect=mock_popen):
+        with patch.object(harness, "binary", return_value=Path("mock_agy.exe")):
+            pack = {"pack_id": "pack-999", "target_type": "INCIDENT", "threat": "XSS"}
+            harness.start_turn(
+                gui_thread_id="thr_pack_1",
+                gui_turn_id="trn_pack_1",
+                content="Analyze this incident:",
+                owner_session_digest="c" * 64,
+                structured_pack=pack,
+            )
+            time.sleep(0.3)
+
+    turn_cmds = [c for c in captured_cmds if "--model" in c]
+    assert len(turn_cmds) == 1
+    full_cmd_str = " ".join(turn_cmds[0])
+    assert "pack-999" in full_cmd_str
+    assert "INCIDENT" in full_cmd_str

@@ -40,7 +40,7 @@ def test_milestone_12() -> bool:
     scripts = "\n".join(path.read_text(encoding="utf-8") for path in sorted((gui_dir / "scripts").glob("*.js")))
     forbidden_gui_capabilities = {"innerHTML": "unsafe dynamic HTML insertion", "command_hash": "command hash calculation", "expected_approval_phrase": "approval phrase calculation", "sha256": "approval digest calculation"}
     found_capabilities = [label for marker, label in forbidden_gui_capabilities.items() if marker in scripts]
-    required_modules = {"api.js", "auth.js", "threads.js", "composer.js", "streaming.js", "activity.js", "evidence.js", "tool_calls.js", "approvals.js", "providers.js", "p10.js"}
+    required_modules = {"api.js", "auth.js", "threads.js", "composer.js", "streaming.js", "activity.js", "evidence.js", "tool_calls.js", "approvals.js", "providers.js", "p10.js", "security_agent.js"}
     if (
         not found_capabilities
         and {path.name for path in (gui_dir / "scripts").glob("*.js")} == required_modules

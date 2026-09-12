@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import os
 import re
 import shutil
@@ -16,6 +17,8 @@ from pathlib import Path
 from typing import Any, Callable
 
 from core.tools.broker import ToolBroker
+
+logger = logging.getLogger(__name__)
 
 ANTIGRAVITY_PROVIDER_ID = "prv_antigravity_cli"
 DEFAULT_ANTIGRAVITY_MODEL = "gemini-3.8-flash-high"
@@ -127,6 +130,18 @@ class AntigravityHarness:
             return None
         return discover_agy_executable()
 
+    def get_version(self) -> str:
+        bin_path = self.binary()
+        if not bin_path:
+            return "not-installed"
+        try:
+            res = subprocess.run([str(bin_path), "--version"], capture_output=True, text=True, timeout=5, check=False)
+            if res.returncode == 0 and res.stdout.strip():
+                return res.stdout.strip()
+        except Exception:
+            pass
+        return "unknown"
+
     def readiness(self, *, start_process: bool = False) -> dict[str, Any]:
         """Return a secret-free Antigravity CLI readiness summary."""
         bin_path = self.binary()
@@ -141,13 +156,7 @@ class AntigravityHarness:
                 "unrestricted_read": True,
                 "write_governance": "RISK_AND_ROLLBACK_REVIEW_REQUIRED",
             }
-        version = "1.1.26"
-        try:
-            res = subprocess.run([str(bin_path), "--version"], capture_output=True, text=True, timeout=5, check=False)
-            if res.returncode == 0 and res.stdout.strip():
-                version = res.stdout.strip()
-        except Exception:
-            pass
+        version = self.get_version()
         return {
             "status": "READY",
             "version": version,
@@ -175,11 +184,16 @@ class AntigravityHarness:
         model_id: str = DEFAULT_ANTIGRAVITY_MODEL,
         permission_mode: str = "OWNER_FULL_CONTROL",
         timeout_seconds: int = 600,
+        structured_pack: dict[str, Any] | None = None,
     ) -> None:
         """Execute a turn using Antigravity CLI in a managed background thread."""
+        actual_content = content
+        if structured_pack is not None:
+            pack_str = json.dumps(structured_pack, indent=2, ensure_ascii=False)
+            actual_content = f"{content}\n\n```json\n{pack_str}\n```"
         worker = threading.Thread(
             target=self._run_turn,
-            args=(gui_thread_id, gui_turn_id, content, owner_session_digest, model_id, permission_mode, timeout_seconds),
+            args=(gui_thread_id, gui_turn_id, actual_content, owner_session_digest, model_id, permission_mode, timeout_seconds),
             name="antigravity-" + gui_turn_id,
             daemon=True,
         )
@@ -273,11 +287,13 @@ class AntigravityHarness:
                 return
             conversation_id = self._conversations.get(gui_thread_id)
 
+        ver_text = self.get_version()
+        ver_display = f" ({ver_text})" if ver_text and ver_text != "unknown" else ""
         self.event_sink(
             gui_thread_id,
             gui_turn_id,
             "agent.progress",
-            {"text": f"Antigravity CLI (1.1.26) starting turn with {model_id} (Unrestricted Read & Governed Write)..."},
+            {"text": f"Antigravity CLI{ver_display} starting turn with {model_id} (Unrestricted Read & Governed Write)..."},
         )
 
         cmd = [
@@ -292,7 +308,14 @@ class AntigravityHarness:
         ]
         if conversation_id:
             cmd.extend(["--conversation", conversation_id])
-        cmd.extend(["--print", content])
+
+        # Safeguard Windows command-line buffer limit (32,767 characters)
+        # Windows CreateProcess fails with WinError 206 if the serialized command line exceeds 32,767 characters.
+        safe_content = content
+        while len(safe_content) > 1000 and len(subprocess.list2cmdline(cmd + ["--print", safe_content])) > 30000:
+            logger.warning("Antigravity turn %s command line exceeds safe buffer; trimming content", gui_turn_id)
+            safe_content = safe_content[:int(len(safe_content) * 0.85)]
+        cmd.extend(["--print", safe_content])
 
         accumulated_text = ""
         last_error = ""
@@ -404,6 +427,7 @@ class AntigravityHarness:
                 self._notify_failure(gui_turn_id, self._map_error_code(err_msg), accumulated_text)
 
         except Exception as exc:
+            logger.error("Antigravity CLI process execution error for turn %s: %s", gui_turn_id, exc, exc_info=True)
             self._notify_failure(gui_turn_id, "ANTIGRAVITY_TURN_FAILED", accumulated_text)
         finally:
             with self._lock:
