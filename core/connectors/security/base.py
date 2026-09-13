@@ -30,6 +30,7 @@ DEVICE_TO_CANONICAL = {
     "Sophos Email": "sophos_email",
     "Active Directory": "active_directory",
     "Exchange": "exchange_2019",
+    "FortiEDR": "fortiedr",
 }
 
 

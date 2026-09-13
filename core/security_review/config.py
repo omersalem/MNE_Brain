@@ -25,7 +25,7 @@ DEFAULT_PROFILES: List[Dict[str, Any]] = [
         "description": "Comprehensive 24-hour review across all perimeter, appliance, identity, and branch security sources.",
         "is_builtin": True,
         "options": {
-            "selected_collectors": ["fortigate", "f5", "fmc", "sophos", "ad", "exchange", "fortianalyzer"],
+            "selected_collectors": ["fortigate", "f5", "fmc", "sophos", "ad", "exchange", "fortianalyzer", "fortiedr"],
             "time_window": {"mode": "HOURS", "hours": 24},
             "min_severity": "INFO",
             "report_types": ["EXECUTIVE", "TECHNICAL", "JSON", "CSV"],
@@ -259,6 +259,18 @@ class SecurityAgentConfig:
             config["last_run"] = datetime.now(timezone.utc).isoformat()
             config["last_status"] = {
                 "success": result_summary.get("success", True),
+                "run_id": result_summary.get("run_id"),
+                "run_state": result_summary.get("run_state", "UNKNOWN"),
+                "run_stage": result_summary.get("run_stage", "UNKNOWN"),
+                "assessment_status": result_summary.get("assessment_status", "UNAVAILABLE"),
+                "assessment_message": result_summary.get(
+                    "assessment_message",
+                    "No completed incident assessment is available.",
+                ),
+                "incident_counts_available": bool(result_summary.get("incident_counts_available", False)),
+                "evidence_warnings": list(result_summary.get("evidence_warnings", [])),
+                "observation_window": dict(result_summary.get("observation_window", {})),
+                "event_count": int(result_summary.get("event_count", 0)),
                 "critical_count": result_summary.get("critical_count", 0),
                 "high_count": result_summary.get("high_count", 0),
                 "medium_count": result_summary.get("medium_count", 0),
@@ -470,7 +482,7 @@ $info = Get-ScheduledTaskInfo -TaskName '{TASK_NAME}' -ErrorAction SilentlyConti
         }
 
     def get_device_catalog(self) -> List[Dict[str, Any]]:
-        """Returns the canonical catalog of the 7 monitored security appliances."""
+        """Returns the canonical catalog of the 8 monitored security appliances."""
         return [
             {
                 "id": "fortigate_core",
@@ -527,5 +539,13 @@ $info = Get-ScheduledTaskInfo -TaskName '{TASK_NAME}' -ErrorAction SilentlyConti
                 "role": "Messaging System & SMTP Connector",
                 "protocol": "WinRM Security & Application Log",
                 "default_port": 5985,
+            },
+            {
+                "id": "fortiedr",
+                "name": "FortiEDR Cloud Central Manager",
+                "ip": "fortiedrconnectil.console.ensilo.com",
+                "role": "Endpoint Detection, Behavioral Prevention & Threat Forensics",
+                "protocol": "HTTPS Console API / DWR",
+                "default_port": 443,
             },
         ]

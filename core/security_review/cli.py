@@ -87,8 +87,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--max-records",
         type=int,
-        default=500,
-        help="Maximum log records to collect per collector (default: 500).",
+        default=None,
+        help="Maximum records per collector (default: adaptive production limit).",
     )
     parser.add_argument(
         "--format",
@@ -110,7 +110,7 @@ def run_security_pipeline(
     model: Optional[str] = None,
     collectors: Optional[str | List[str]] = None,
     hours: float = 24.0,
-    max_records: int = 500,
+    max_records: Optional[int] = None,
     formats: Optional[str | List[ReportFormat | str]] = None,
 ) -> Dict[str, Any]:
     """Executes the security log review and reporting pipeline via SecurityReviewService."""
@@ -148,6 +148,7 @@ def run_security_pipeline(
         "sophos_email",
         "active_directory",
         "exchange_2019",
+        "fortiedr",
     ]
     if isinstance(collectors, str) and collectors.strip():
         target_collector_ids = [c.strip() for c in collectors.split(",") if c.strip()]
@@ -163,7 +164,7 @@ def run_security_pipeline(
         mode=ReviewMode.FULL,
         collector_ids=target_collector_ids,
         hours_back=float(hours) if hours is not None else 24.0,
-        max_records_per_collector=int(max_records) if max_records is not None else 500,
+        max_records_per_collector=int(max_records) if max_records is not None else None,
         analysis_engine=analysis_engine,
         analysis_model=model,
         send_email=should_send_email,

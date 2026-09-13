@@ -53,6 +53,25 @@ def test_fortigate_ips_log_parsing():
     assert event.metadata.get("dst_interface") == "internal"
 
 
+def test_fortigate_prefers_eventtime_and_classifies_utm_subtypes():
+    epoch_seconds = 1788680000
+    epoch_nanoseconds = epoch_seconds * 1_000_000_000
+    virus = FortiGateSecurityCollector().parse_log_line(
+        f'eventtime={epoch_nanoseconds} logid="1" type="utm" subtype="virus" '
+        'virus="Trojan.Sample" action="quarantine" srcuser="alice" msg="virus detected"'
+    )
+    assert virus is not None
+    assert virus.timestamp == datetime.fromtimestamp(epoch_seconds, tz=timezone.utc)
+    assert virus.category == ThreatCategory.MALWARE
+
+    web = FortiGateSecurityCollector().parse_log_line(
+        'date=2026-09-06 time=05:10:20 logid="2" type="utm" subtype="webfilter" '
+        'url="https://example.invalid" action="blocked" msg="category blocked"'
+    )
+    assert web is not None
+    assert web.category == ThreatCategory.ANOMALY
+
+
 def test_fortigate_rest_query_time_range_and_pagination(monkeypatch):
     monkeypatch.setenv("MNE_FORTIGATE_CREDENTIAL_REF", "fixture-auth-token")
     auth_credential = os.environ["MNE_FORTIGATE_CREDENTIAL_REF"]
@@ -126,6 +145,31 @@ def test_f5_cert_warning_parsing():
     assert event.timestamp.day == 6
 
 
+def test_f5_tls_handshake_failure_is_anomaly_not_confirmed_intrusion():
+    sample_log_line = (
+        "Sep  6 02:00:10 f5-core warning tmm[1234]: "
+        "SSL Handshake failed for TCP 203.0.113.8:41234 -> 172.23.10.10:443"
+    )
+    event = F5SecurityCollector().parse_syslog_line(sample_log_line)
+    assert event is not None
+    assert event.category == ThreatCategory.ANOMALY
+    assert event.action_taken == "DROPPED"
+    assert event.metadata["confirmed_intrusion"] is False
+
+
+def test_f5_policy_builder_record_does_not_claim_enforcement():
+    line = (
+        "Sep 12 11:27:42 waf info perl[1]: ASMConfig change: Incident 123 [add]: "
+        "IncidentType was set to Server Side Code Injection. Sample Support IDs were set to 456. "
+        "{ audit: component = Policy Builder }"
+    )
+    event = F5SecurityCollector().parse_asm_log_line(line)
+    assert event is not None
+    assert event.action_taken == "ALERT"
+    assert event.metadata["enforcement_observed"] is False
+    assert event.metadata["support_ids"] == ["456"]
+
+
 def test_f5_interval_filtering_and_pagination(monkeypatch):
     monkeypatch.setenv("MNE_F5_CREDENTIAL_REF", "fixture-auth-token")
     auth_credential = os.environ["MNE_F5_CREDENTIAL_REF"]
@@ -147,11 +191,42 @@ def test_f5_interval_filtering_and_pagination(monkeypatch):
 
     with patch("paramiko.SSHClient", return_value=mock_client):
         result = collector.collect_logs(request=req)
-        assert result.status == CollectorStatus.SUCCESS
+        assert result.status == CollectorStatus.WARNING
         # Only 1 record retrieved due to max_records=1 limit
         assert len(result.events) == 1
         assert result.diagnostic.pagination["has_more"] is True
-        assert result.diagnostic.diagnostic_code == "OK"
+        assert result.diagnostic.diagnostic_code == "TRUNCATED_AT_LIMIT"
+
+
+def test_f5_cap_is_applied_after_asm_and_ltm_sources(monkeypatch):
+    monkeypatch.setenv("MNE_F5_CREDENTIAL_REF", "fixture-auth-token")
+    collector = F5SecurityCollector(host="172.23.70.89", password=os.environ["MNE_F5_CREDENTIAL_REF"])
+    req = CollectorRequest(
+        start_time=f"{datetime.now(timezone.utc).year}-09-06T00:00:00Z",
+        end_time=f"{datetime.now(timezone.utc).year}-09-06T12:00:00Z",
+        max_records=2,
+        mode="QUICK",
+    )
+    asm_output = (
+        b"Sep  6 03:15:22 f5 ASM: Attack detected: Support ID: 101, Client IP: 1.1.1.1, Violations: SQLi, Action: Blocked, URL: /a\n"
+        b"Sep  6 04:15:22 f5 ASM: Attack detected: Support ID: 102, Client IP: 1.1.1.2, Violations: XSS, Action: Blocked, URL: /b\n"
+    )
+    ltm_output = b"Sep  6 02:15:22 f5 SSL Handshake failed for TCP 1.1.1.3:1234 -> 2.2.2.2:443\n"
+    mock_client = MagicMock()
+
+    def exec_side_effect(cmd, timeout=None):
+        stdout = MagicMock()
+        stdout.read.return_value = asm_output if "/var/log/asm" in cmd else ltm_output
+        return MagicMock(), stdout, MagicMock()
+
+    mock_client.exec_command.side_effect = exec_side_effect
+    with patch("paramiko.SSHClient", return_value=mock_client):
+        result = collector.collect_logs(request=req)
+
+    assert result.status == CollectorStatus.WARNING
+    assert result.diagnostic.diagnostic_code == "TRUNCATED_AT_LIMIT"
+    assert result.diagnostic.pagination["candidate_events"] == 3
+    assert any(event.event_id.startswith("f5-ssl-") for event in result.events)
 
 
 def test_f5_rotated_logs_and_category_filtering(monkeypatch):

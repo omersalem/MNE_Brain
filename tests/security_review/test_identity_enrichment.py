@@ -23,6 +23,7 @@ from core.connectors.security.models import (
     UsernameRelation,
 )
 from core.security_review.contracts import validate_contract, SecurityReviewRequest, ReportFormat, ReviewMode, AnalysisEngine
+from core.security_review.config import SecurityAgentConfig
 from core.security_review.identity_enrichment import (
     AttackerAttribution,
     classify_ip,
@@ -47,6 +48,31 @@ from core.security_review.incidents import (
 from core.security_review.reporter import SecurityReporter
 from core.security_review.service import SecurityReviewService
 from core.security_review.run_store import SecurityReviewRunStore
+
+
+def test_legacy_attribution_freshness_is_normalized_before_schema_validation():
+    attr = AttackerAttribution.from_dict({
+        "ip_address": "172.23.71.146",
+        "network_scope": "LOCAL",
+        "status": "PARTIAL",
+        "confidence": "MEDIUM",
+        "confidence_score": 55,
+        "evidence_sources": [{
+            "source_type": "DNS/AD",
+            "source_entity_or_binding_id": "p7-ad-primary",
+            "matched_fields": ["PTR"],
+            "observation_time": "2026-09-11T15:47:00+00:00",
+            "event_time_distance_seconds": None,
+            "freshness": "HISTORICAL_CURRENT",
+            "evidence_reference": "dns-ptr-172.23.71.146",
+            "result_status": "PARTIAL",
+        }],
+    })
+
+    normalized = attr.to_dict()
+    assert normalized["evidence_sources"][0]["freshness"] == "HISTORICAL"
+    assert normalized["evidence_sources"][0]["result_status"] == "SUCCESS"
+    validate_contract(normalized, "attacker-attribution.schema.json")
 
 
 # 1. External IP returns NOT_APPLICABLE
@@ -489,7 +515,7 @@ def test_csv_report_contains_attribution_columns(tmp_path):
         def collect_logs(self, **kwargs):
             ev = NormalizedSecurityEvent(
                 event_id="e-csv-1",
-                timestamp=datetime.now(timezone.utc),
+                timestamp=datetime.now(timezone.utc) - timedelta(seconds=1),
                 source_device="FortiGate",
                 category=ThreatCategory.BRUTE_FORCE,
                 threat_name="Failed Login",
@@ -505,6 +531,7 @@ def test_csv_report_contains_attribution_columns(tmp_path):
         run_store=store,
         reporter=reporter,
         collector_registry={"fortigate_core": FakeIncidentCollector()},
+        config_mgr=SecurityAgentConfig(str(tmp_path / "config" / "security_agent_config.json")),
     )
 
     req = SecurityReviewRequest(

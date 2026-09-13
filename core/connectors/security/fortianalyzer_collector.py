@@ -4,6 +4,7 @@ import logging
 import os
 import re
 import time
+from urllib.parse import unquote
 from datetime import datetime, timezone
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 
@@ -126,7 +127,11 @@ class FortiAnalyzerSecurityCollector(BaseSecurityCollector):
         elif subtype == "webfilter" or log_type == "webfilter" or url:
             category = ThreatCategory.INTRUSION if "malicious" in msg.lower() or "botnet" in msg.lower() else ThreatCategory.ANOMALY
             target_url = url or fields.get("hostname") or msg
-            base_threat = f"Web Filter Security Block: {target_url}"
+            target_host = fields.get("hostname") or target_url or target
+            decoded_url = unquote(target_url)
+            display_target = f"{target_host}{decoded_url}" if fields.get("hostname") and decoded_url.startswith("/") else target_host
+            base_threat = f"Web Filter Security Block: {display_target}"
+            target = target_host
         elif subtype in ("ips", "signature") or log_type in ("ips", "utm") or attack:
             category = ThreatCategory.INTRUSION
             base_threat = f"IPS Attack: {attack or msg}"

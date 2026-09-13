@@ -244,6 +244,8 @@ class SecurityReviewRunStore:
                     "started_at": data.get("started_at"),
                     "completed_at": data.get("completed_at"),
                     "incident_counts": data.get("incident_counts", {}),
+                    "incident_counts_available": data.get("incident_counts_available", False),
+                    "assessment_status": data.get("assessment_status", "UNAVAILABLE"),
                     "collector_count": len(data.get("collector_diagnostics", {})),
                     "email_sent": (data.get("email_result") or {}).get("sent", False),
                     "reports": data.get("report_artifacts", {}),

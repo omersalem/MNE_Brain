@@ -54,6 +54,39 @@
       },
       "additionalProperties": false
     },
+    "incident_counts_available": {
+      "type": "boolean",
+      "default": false
+    },
+    "assessment_status": {
+      "type": "string",
+      "enum": ["PENDING", "COMPLETE", "PARTIAL", "UNAVAILABLE"],
+      "default": "PENDING"
+    },
+    "assessment_message": {
+      "type": "string"
+    },
+    "evidence_warnings": {
+      "type": "array",
+      "items": { "type": "string" },
+      "default": []
+    },
+    "observation_window": {
+      "type": "object",
+      "properties": {
+        "start": { "type": "string", "format": "date-time" },
+        "end": { "type": "string", "format": "date-time" },
+        "excluded_before_window": { "type": "integer", "minimum": 0 },
+        "excluded_after_window": { "type": "integer", "minimum": 0 },
+        "excluded_invalid_timestamp": { "type": "integer", "minimum": 0 }
+      },
+      "additionalProperties": false
+    },
+    "event_count": {
+      "type": "integer",
+      "minimum": 0,
+      "default": 0
+    },
     "report_artifacts": {
       "type": "object",
       "properties": {

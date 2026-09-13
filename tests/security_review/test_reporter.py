@@ -69,6 +69,52 @@ def test_pdf_compilation():
     assert pdf_bytes.startswith(b"%PDF")
 
 
+def test_unavailable_assessment_never_renders_zero_as_safe():
+    reporter = SecurityReporter()
+    context = {
+        "assessment_status": "UNAVAILABLE",
+        "assessment_message": "Correlation failed; severity totals are unavailable.",
+        "incident_counts_available": False,
+        "evidence_warnings": ["Collector coverage was incomplete."],
+        "observation_window": {
+            "start": "2026-09-11T12:00:00+00:00",
+            "end": "2026-09-12T12:00:00+00:00",
+        },
+        "event_count": 17,
+    }
+
+    html = reporter.render_html_report(
+        incidents=[],
+        collectors=[],
+        run_id="sec-run-unavailable",
+        report_context=context,
+    )
+    pdf_bytes = reporter.compile_pdf_report(
+        incidents=[],
+        collectors=[],
+        run_id="sec-run-unavailable",
+        report_context=context,
+    )
+
+    assert "ASSESSMENT UNAVAILABLE" in html
+    assert "N/A" in html
+    assert "Zero Critical" not in html
+    assert "NORMAL / SECURE" not in html
+    assert pdf_bytes.startswith(b"%PDF")
+
+
+def test_partial_email_subject_is_explicit():
+    reporter = SecurityReporter()
+    msg = reporter.build_email_message(
+        html_content="<h1>Partial report</h1>",
+        pdf_bytes=b"%PDF-1.4 Mock PDF Content",
+        recipients=["security@example.com"],
+        subject_date_str="2026-09-12",
+        assessment_status="PARTIAL",
+    )
+    assert msg["Subject"].startswith("[PARTIAL]")
+
+
 def test_analysis_html_report_rendering():
     reporter = SecurityReporter()
     sample_analysis = {
@@ -146,4 +192,3 @@ def test_analysis_pdf_compilation():
     assert isinstance(pdf_bytes, bytes)
     assert len(pdf_bytes) > 0
     assert pdf_bytes.startswith(b"%PDF")
-

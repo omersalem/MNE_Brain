@@ -38,7 +38,7 @@ def test_api_security_agent_status():
     assert "schedule_time" in data["config"]
     assert "recipients" in data["config"]
     assert "devices" in data
-    assert len(data["devices"]) == 7
+    assert len(data["devices"]) == 8
     assert "reports" in data
 
 
@@ -105,6 +105,7 @@ def test_api_security_agent_reports_404_when_missing(monkeypatch):
 
 
 def test_api_security_agent_runs_endpoints(monkeypatch, tmp_path):
+    from core.security_review.config import SecurityAgentConfig
     from core.security_review.run_store import SecurityReviewRunStore
     from core.security_review.service import SecurityReviewService
     from core.security_review.jobs import SecurityReviewJobManager
@@ -123,6 +124,7 @@ def test_api_security_agent_runs_endpoints(monkeypatch, tmp_path):
         run_store=test_store,
         job_manager=test_jm,
         collector_registry=mock_registry,
+        config_mgr=SecurityAgentConfig(str(tmp_path / "config" / "security_agent_config.json")),
     )
 
     import core.api.server as srv
@@ -438,4 +440,3 @@ def test_api_security_agent_analysis_report(monkeypatch):
     assert "application/json" in handler_json.sent_headers["Content-Type"]
     data = json.loads(handler_json.response_body.decode("utf-8"))
     assert data["analysis_id"] == "an-api-test-01"
-

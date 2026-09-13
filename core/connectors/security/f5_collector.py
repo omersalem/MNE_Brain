@@ -114,6 +114,8 @@ class F5SecurityCollector(BaseSecurityCollector):
             inc_type = inc_type_match.group(1).strip() if inc_type_match else "Security Incident"
             inc_id_match = re.search(r'Incident\s+(\d+)', line)
             inc_id = inc_id_match.group(1) if inc_id_match else "0"
+            support_ids_match = re.search(r'Sample Support IDs were set to\s+([0-9,\s]+)', line)
+            support_ids = re.findall(r'\d+', support_ids_match.group(1)) if support_ids_match else []
 
             return NormalizedSecurityEvent(
                 event_id=f"f5-inc-{inc_id}",
@@ -123,9 +125,15 @@ class F5SecurityCollector(BaseSecurityCollector):
                 threat_name=f"F5 ASM Incident: {inc_type}",
                 attacker_ip=None,
                 target="Web Application VIP",
-                action_taken="BLOCKED",
+                action_taken="ALERT",
                 count=1,
                 raw_snippet=line.strip()[:300],
+                metadata={
+                    "signal_type": "F5_POLICY_BUILDER_CLASSIFICATION",
+                    "incident_type": inc_type,
+                    "support_ids": support_ids,
+                    "enforcement_observed": False,
+                },
             )
 
         # Pattern 3: Subsystem error / Partition issue
@@ -164,13 +172,14 @@ class F5SecurityCollector(BaseSecurityCollector):
                 event_id=f"f5-ssl-{raw_hash}",
                 timestamp=event_time,
                 source_device="F5 BIG-IP",
-                category=ThreatCategory.INTRUSION,
-                threat_name=f"SSL Handshake Failure from {src_ip}",
+                category=ThreatCategory.ANOMALY,
+                threat_name=f"TLS Handshake Failure from {src_ip}",
                 attacker_ip=src_ip,
                 target=dst_ip or "HTTPS VIP",
                 action_taken="DROPPED",
                 count=1,
                 raw_snippet=line.strip()[:300],
+                metadata={"signal_type": "TLS_NEGOTIATION_FAILURE", "confirmed_intrusion": False},
             )
 
         if "certificate" in line_lower and "expire" in line_lower:
@@ -231,6 +240,7 @@ class F5SecurityCollector(BaseSecurityCollector):
         }
 
         events: List[NormalizedSecurityEvent] = []
+        candidates: List[NormalizedSecurityEvent] = []
         records_fetched = 0
         records_parsed = 0
         records_ignored = 0
@@ -252,7 +262,15 @@ class F5SecurityCollector(BaseSecurityCollector):
             )
 
             # Query ASM logs with requested interval / bound and rotated log handling (/var/log/asm*)
-            line_limit = min(max(request.max_records * 5, int((request.hours_back or 24) * 500)), 20000)
+            # Scan enough raw lines to cover a busy 24-hour period.  The event
+            # return cap is applied only after every source has been inspected,
+            # so a noisy ASM log cannot starve LTM/certificate evidence.
+            configured_line_limit = request.filters.get("f5_max_source_lines")
+            line_limit = int(configured_line_limit) if configured_line_limit else max(
+                request.max_records * 2,
+                24000,
+            )
+            line_limit = min(max(line_limit, 1000), 100000)
             pages_retrieved += 1
             cmd_asm = (
                 f"if ls /var/log/asm* >/dev/null 2>&1; then "
@@ -267,7 +285,7 @@ class F5SecurityCollector(BaseSecurityCollector):
             records_fetched += len(asm_lines)
 
             for line in asm_lines:
-                if len(events) >= request.max_records or request.is_cancelled():
+                if request.is_cancelled():
                     has_more = True
                     break
                 parsed = self.parse_asm_log_line(line)
@@ -276,15 +294,18 @@ class F5SecurityCollector(BaseSecurityCollector):
                         records_ignored += 1
                         continue
                     if start_dt <= parsed.timestamp <= end_dt:
-                        events.append(parsed)
+                        parsed.metadata["f5_log_source"] = "ASM"
+                        candidates.append(parsed)
                         records_parsed += 1
                     else:
                         records_ignored += 1
                 elif line.strip():
-                    records_malformed += 1
+                    # Most ASM lines are operational chatter, not malformed
+                    # security events.  Count unsupported lines as ignored.
+                    records_ignored += 1
 
             # Query LTM logs (certs, pool member health, SSL handshake) with rotated log handling
-            if len(events) < request.max_records and not request.is_cancelled():
+            if not request.is_cancelled():
                 pages_retrieved += 1
                 cmd_ltm = (
                     f"if ls /var/log/ltm* >/dev/null 2>&1; then "
@@ -299,7 +320,7 @@ class F5SecurityCollector(BaseSecurityCollector):
                 records_fetched += len(ltm_lines)
 
                 for line in ltm_lines:
-                    if len(events) >= request.max_records or request.is_cancelled():
+                    if request.is_cancelled():
                         has_more = True
                         break
                     parsed = self.parse_syslog_line(line)
@@ -308,13 +329,16 @@ class F5SecurityCollector(BaseSecurityCollector):
                             records_ignored += 1
                             continue
                         if start_dt <= parsed.timestamp <= end_dt:
-                            events.append(parsed)
+                            parsed.metadata["f5_log_source"] = "LTM"
+                            candidates.append(parsed)
                             records_parsed += 1
                         else:
                             records_ignored += 1
+                    elif line.strip():
+                        records_ignored += 1
 
             # Check certificate inventory via tmsh if deep check requested
-            if request.mode in ("FULL", "DEEP") and len(events) < request.max_records and not request.is_cancelled():
+            if request.mode in ("FULL", "DEEP") and not request.is_cancelled():
                 pages_retrieved += 1
                 cmd_cert = "tmsh -q list sys crypto cert expiration 2>/dev/null || true"
                 stdin, stdout, stderr = client.exec_command(cmd_cert, timeout=30)
@@ -341,15 +365,47 @@ class F5SecurityCollector(BaseSecurityCollector):
                                         action_taken="ALERT",
                                         count=1,
                                         raw_snippet=f"Certificate {cert_name} expires {exp_str} ({days_left} days remaining)",
-                                        metadata={"cert_name": cert_name, "days_left": days_left},
+                                        metadata={"cert_name": cert_name, "days_left": days_left, "f5_log_source": "CERT_INVENTORY"},
                                     )
-                                    events.append(cert_event)
+                                    candidates.append(cert_event)
                                     records_parsed += 1
                             except Exception:
                                 pass
 
         finally:
             client.close()
+
+        # Deduplicate before applying the cap, then retain the newest evidence
+        # across all sources.  This provides fair ASM/LTM coverage.
+        unique_candidates: Dict[str, NormalizedSecurityEvent] = {}
+        for event in candidates:
+            unique_candidates[event.event_id] = event
+        ordered_candidates = sorted(
+            unique_candidates.values(),
+            key=lambda event: event.timestamp,
+            reverse=True,
+        )
+        has_more = has_more or len(ordered_candidates) > request.max_records
+        source_heads: List[NormalizedSecurityEvent] = []
+        for source_name in ("ASM", "LTM", "CERT_INVENTORY"):
+            source_events = [
+                event
+                for event in ordered_candidates
+                if event.metadata.get("f5_log_source") == source_name
+            ]
+            if source_events:
+                source_heads.append(source_events[0])
+        if request.max_records >= len(source_heads):
+            selected_ids = {event.event_id for event in source_heads}
+            selected = list(source_heads)
+            selected.extend(
+                event
+                for event in ordered_candidates
+                if event.event_id not in selected_ids
+            )
+            events = sorted(selected[: request.max_records], key=lambda event: event.timestamp, reverse=True)
+        else:
+            events = ordered_candidates[: request.max_records]
 
         # Observed time range
         observed_time_range = None
@@ -362,18 +418,25 @@ class F5SecurityCollector(BaseSecurityCollector):
                 }
 
         # Status and message evaluation
-        if len(events) > 0:
+        if has_more:
+            status = CollectorStatus.WARNING
+            diag_code = "TRUNCATED_AT_LIMIT"
+            msg = (
+                f"F5 BIG-IP produced {len(ordered_candidates)} matching events; "
+                f"the newest {len(events)} were retained at the configured limit."
+            )
+        elif len(events) > 0:
             status = CollectorStatus.SUCCESS
             diag_code = "OK"
-            msg = f"Retrieved {len(events)} security events from F5 BIG-IP."
+            msg = f"Retrieved {len(events)} security events from F5 BIG-IP without truncation."
         elif records_fetched == 0:
             status = CollectorStatus.SUCCESS
             diag_code = "QUERY_EMPTY_ZERO_SOURCE"
             msg = f"F5 BIG-IP returned zero logs for requested time window ({start_dt.isoformat()} to {end_dt.isoformat()})."
         elif records_ignored > 0 and records_parsed == 0:
-            status = CollectorStatus.SUCCESS
+            status = CollectorStatus.WARNING
             diag_code = "QUERY_EMPTY_FILTERED"
-            msg = f"F5 BIG-IP returned {records_fetched} lines but all were outside requested time range."
+            msg = f"F5 BIG-IP returned {records_fetched} lines but none were usable in the requested time range."
         elif records_malformed > 0 and records_parsed == 0:
             status = CollectorStatus.FAILED
             diag_code = "PARSE_ERROR"
@@ -388,7 +451,13 @@ class F5SecurityCollector(BaseSecurityCollector):
             device_name=self.device_name,
             canonical_entity="f5_bigip",
             stage=DiagnosticStage.COMPLETE,
-            status=DiagnosticStatus.SUCCESS if status == CollectorStatus.SUCCESS else DiagnosticStatus.FAILED,
+            status=(
+                DiagnosticStatus.SUCCESS
+                if status == CollectorStatus.SUCCESS
+                else DiagnosticStatus.PARTIAL
+                if status == CollectorStatus.WARNING
+                else DiagnosticStatus.FAILED
+            ),
             diagnostic_code=diag_code,
             message=msg,
             requested_time_range=requested_time_range,
@@ -399,7 +468,13 @@ class F5SecurityCollector(BaseSecurityCollector):
             records_parsed=records_parsed,
             records_ignored=records_ignored,
             records_malformed=records_malformed,
-            pagination={"pages_retrieved": pages_retrieved, "has_more": has_more},
+            pagination={
+                "pages_retrieved": pages_retrieved,
+                "has_more": has_more,
+                "source_line_limit": line_limit,
+                "candidate_events": len(ordered_candidates),
+                "returned_events": len(events),
+            },
         )
 
         return CollectorResult(

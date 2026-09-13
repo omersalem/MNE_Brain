@@ -364,18 +364,21 @@ class IncidentStore:
     def save_incident(self, record: IncidentRecord | Dict[str, Any]) -> IncidentRecord:
         """Atomically saves an incident record and updates the compact index."""
         rec_obj = record if isinstance(record, IncidentRecord) else IncidentRecord.from_dict(record)
-        rec_obj.validate()
-
-        rec_dict = rec_obj.to_dict()
-        file_path = self.base_dir / f"{rec_obj.fingerprint}.json"
-        self._atomic_write_json(file_path, rec_dict)
+        self._save_record_file(rec_obj)
 
         # Update index
         index = self._load_index()
-        index[rec_obj.fingerprint] = self._make_summary(rec_dict)
+        index[rec_obj.fingerprint] = self._make_summary(rec_obj.to_dict())
         self._atomic_write_json(self.index_file, index)
 
         return rec_obj
+
+    def _save_record_file(self, record: IncidentRecord) -> IncidentRecord:
+        """Persist one incident blob without rewriting the global index."""
+        record.validate()
+        file_path = self.base_dir / f"{record.fingerprint}.json"
+        self._atomic_write_json(file_path, record.to_dict())
+        return record
 
     def get_incident(self, fingerprint: str) -> Optional[IncidentRecord]:
         """Loads full incident record by fingerprint."""
@@ -454,6 +457,10 @@ class IncidentStore:
         """
         records: List[IncidentRecord] = []
         now_iso = datetime.now(timezone.utc).isoformat()
+        # Rewriting the complete index for every incident made high-volume
+        # daily runs effectively quadratic.  Keep one in-memory index and
+        # commit it once after all incident blobs are safely written.
+        index = self._load_index()
 
         for inc in incidents:
             fp = inc.fingerprint
@@ -608,7 +615,8 @@ class IncidentStore:
                 inc.lifecycle_state = existing.lifecycle_state
                 inc.occurrence_count = existing.occurrence_count
 
-                saved = self.save_incident(existing)
+                saved = self._save_record_file(existing)
+                index[existing.fingerprint] = self._make_summary(existing.to_dict())
                 records.append(saved)
             else:
                 new_record = IncidentRecord(
@@ -655,9 +663,11 @@ class IncidentStore:
                 )
                 inc.lifecycle_state = new_record.lifecycle_state
                 inc.occurrence_count = new_record.occurrence_count
-                saved = self.save_incident(new_record)
+                saved = self._save_record_file(new_record)
+                index[new_record.fingerprint] = self._make_summary(new_record.to_dict())
                 records.append(saved)
 
+        self._atomic_write_json(self.index_file, index)
         return records
 
     def get_timeline(self, fingerprint: str) -> List[Dict[str, Any]]:

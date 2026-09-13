@@ -54,7 +54,73 @@ CANONICAL_COLLECTOR_MAP = {
     "sophos_email": "Sophos Email",
     "active_directory": "Active Directory",
     "exchange_2019": "Exchange",
+    "fortiedr": "FortiEDR",
 }
+
+DAILY_RECORD_LIMITS = {
+    # These are adaptive safety ceilings, not report-count targets.  The
+    # previous 5,000-event defaults truncated normal 24-hour windows on the
+    # FortiGate and F5 even when both sources had finished returning data.
+    # Keep an explicit bounded ceiling while leaving callers free to request a
+    # smaller cap for quick reviews.
+    "fortigate_core": 250000,
+    "fortianalyzer": 10000,
+    "f5_bigip": 12000,
+    "cisco_fmc": 10000,
+    "sophos_email": 10000,
+    "active_directory": 10000,
+    "exchange_2019": 10000,
+    "fortiedr": 10000,
+}
+
+
+def _record_limit_for_collector(request: SecurityReviewRequest, collector_id: str) -> int:
+    """Choose a production-safe default while honoring an explicit caller cap."""
+    if request.max_records_per_collector is not None:
+        return int(request.max_records_per_collector)
+    mode = request.mode.value if hasattr(request.mode, "value") else str(request.mode)
+    if mode == ReviewMode.QUICK.value:
+        return min(1000, DAILY_RECORD_LIMITS.get(collector_id, 2500))
+    return DAILY_RECORD_LIMITS.get(collector_id, 2500)
+
+
+def _utc_datetime(value: Any) -> Optional[datetime]:
+    """Returns a timezone-aware UTC datetime, or None for unusable input."""
+    if isinstance(value, datetime):
+        parsed = value
+    elif isinstance(value, str):
+        try:
+            parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+        except ValueError:
+            return None
+    else:
+        return None
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=timezone.utc)
+    return parsed.astimezone(timezone.utc)
+
+
+def _collector_integrity_issues(diagnostic: CollectorDiagnostic) -> List[str]:
+    """Returns limitations that make an otherwise successful feed incomplete."""
+    issues: List[str] = []
+    code = str(diagnostic.diagnostic_code or "").upper()
+    message = str(diagnostic.message or "")
+    pagination = diagnostic.pagination or {}
+
+    if code == "QUERY_EMPTY_FILTERED":
+        issues.append("no usable events remained after time/category filtering")
+    if diagnostic.records_malformed > 0:
+        issues.append(f"{diagnostic.records_malformed} malformed records were excluded")
+    if bool(pagination.get("has_more")):
+        issues.append("additional source pages remained unread")
+    if "omitted" in message.lower() or "unavailable" in message.lower():
+        issues.append("one or more requested telemetry streams were unavailable or omitted")
+    return issues
+
+
+def _concise_error(exc: Exception) -> str:
+    first_line = str(exc).splitlines()[0].strip()
+    return f"{type(exc).__name__}: {first_line[:240]}"
 
 
 def _default_collector_factory(collector_id: str) -> Any:
@@ -80,6 +146,9 @@ def _default_collector_factory(collector_id: str) -> Any:
     elif collector_id == "exchange_2019":
         from core.connectors.security.ad_exchange_collector import ExchangeCollector
         return ExchangeCollector()
+    elif collector_id == "fortiedr":
+        from core.connectors.security.fortiedr_collector import FortiEDRSecurityCollector
+        return FortiEDRSecurityCollector()
     raise ValueError(f"Unknown collector ID: '{collector_id}'")
 
 
@@ -287,6 +356,28 @@ class SecurityReviewService:
         successful_collectors = 0
         partial_collectors = 0
         failed_collectors = 0
+        coverage_degraded = False
+        evidence_warnings: List[str] = []
+        excluded_before_window = 0
+        excluded_after_window = 0
+        excluded_invalid_timestamp = 0
+
+        started_dt = _utc_datetime(started_at) or self.clock().astimezone(timezone.utc)
+        window_request = CollectorRequest(
+            start_time=req.start_time,
+            end_time=req.end_time,
+            hours_back=req.hours_back,
+        )
+        window_start, window_end = window_request.get_time_window(now=started_dt)
+        window_start = window_start.astimezone(timezone.utc)
+        window_end = window_end.astimezone(timezone.utc)
+        run.observation_window = {
+            "start": window_start.isoformat(),
+            "end": window_end.isoformat(),
+            "excluded_before_window": 0,
+            "excluded_after_window": 0,
+            "excluded_invalid_timestamp": 0,
+        }
 
         # Stage: COLLECTION
         run.stage = "COLLECTION"
@@ -312,10 +403,10 @@ class SecurityReviewService:
             )
 
             collector_req = CollectorRequest(
-                start_time=req.start_time,
-                end_time=req.end_time,
-                hours_back=req.hours_back,
-                max_records=req.max_records_per_collector or 500,
+                start_time=window_start,
+                end_time=window_end,
+                hours_back=None,
+                max_records=_record_limit_for_collector(req, col_id),
                 mode=req.mode.value if hasattr(req.mode, "value") else str(req.mode),
                 categories=req.categories,
                 branches=req.branches,
@@ -341,35 +432,47 @@ class SecurityReviewService:
                     collection_duration_seconds=0.0,
                 )
 
-            collector_results.append(res)
-            all_events.extend(res.events)
+            accepted_events: List[NormalizedSecurityEvent] = []
+            collector_before = 0
+            collector_after = 0
+            collector_invalid = 0
+            for event in res.events:
+                event_time = _utc_datetime(getattr(event, "timestamp", None))
+                if event_time is None:
+                    collector_invalid += 1
+                elif event_time < window_start:
+                    collector_before += 1
+                elif event_time > window_end:
+                    collector_after += 1
+                else:
+                    event.timestamp = event_time
+                    accepted_events.append(event)
+
+            excluded_count = collector_before + collector_after + collector_invalid
+            if excluded_count:
+                res.events = accepted_events
+                res.records_parsed = len(accepted_events)
+                res.records_ignored = int(res.records_ignored or 0) + excluded_count
+                excluded_before_window += collector_before
+                excluded_after_window += collector_after
+                excluded_invalid_timestamp += collector_invalid
 
             # Map diagnostic and status counts
             if res.diagnostic is not None:
                 diag = res.diagnostic
-                diag_status_val = diag.status.value if hasattr(diag.status, "value") else str(diag.status)
-                if diag_status_val == DiagnosticStatus.SUCCESS.value:
-                    successful_collectors += 1
-                elif diag_status_val == DiagnosticStatus.PARTIAL.value:
-                    partial_collectors += 1
-                elif diag_status_val != DiagnosticStatus.NOT_RUN.value:
-                    failed_collectors += 1
             else:
                 if res.status == CollectorStatus.SUCCESS:
                     diag_status = DiagnosticStatus.SUCCESS
                     diag_code = "OK"
                     diag_msg = f"Collected {len(res.events)} events in {res.collection_duration_seconds}s"
-                    successful_collectors += 1
                 elif res.status in (CollectorStatus.WARNING, CollectorStatus.PARTIAL):
                     diag_status = DiagnosticStatus.PARTIAL
                     diag_code = "WARNING"
                     diag_msg = res.error_message or "Partial collection completed"
-                    partial_collectors += 1
                 else:
                     diag_status = DiagnosticStatus.FAILED
                     diag_code = "COLLECTION_ERROR"
                     diag_msg = res.error_message or "Log collection failed"
-                    failed_collectors += 1
 
                 diag = CollectorDiagnostic(
                     collector_id=col_id,
@@ -385,6 +488,58 @@ class SecurityReviewService:
                     duration_seconds=res.collection_duration_seconds,
                 )
 
+            diag.requested_time_range = {
+                "hours_back": req.hours_back,
+                "start": window_start.isoformat(),
+                "end": window_end.isoformat(),
+            }
+            diag.duration_seconds = float(res.collection_duration_seconds or diag.duration_seconds or 0.0)
+            diag.records_parsed = len(res.events)
+            diag.records_ignored = max(int(diag.records_ignored or 0), int(res.records_ignored or 0))
+            if res.events:
+                accepted_times = [_utc_datetime(e.timestamp) for e in res.events]
+                accepted_times = [t for t in accepted_times if t is not None]
+                if accepted_times:
+                    diag.observed_time_range = {
+                        "oldest": min(accepted_times).isoformat(),
+                        "newest": max(accepted_times).isoformat(),
+                    }
+            elif excluded_count:
+                diag.observed_time_range = None
+
+            integrity_issues = _collector_integrity_issues(diag)
+            if excluded_count:
+                integrity_issues.append(
+                    f"{excluded_count} events were excluded outside the fixed observation window"
+                )
+            if integrity_issues:
+                coverage_degraded = True
+                if diag.status == DiagnosticStatus.SUCCESS:
+                    diag.status = DiagnosticStatus.PARTIAL
+                if res.status == CollectorStatus.SUCCESS:
+                    res.status = CollectorStatus.PARTIAL
+                detail = "; ".join(integrity_issues)
+                evidence_warnings.append(f"{res.device_name}: {detail}.")
+                diag.message = f"{diag.message} Coverage limitation: {detail}."
+            if diag.records_duplicate > 0:
+                evidence_warnings.append(
+                    f"{res.device_name}: {diag.records_duplicate} duplicate records were removed."
+                )
+
+            diag_status_val = diag.status.value if hasattr(diag.status, "value") else str(diag.status)
+            if diag_status_val == DiagnosticStatus.SUCCESS.value:
+                successful_collectors += 1
+            elif diag_status_val == DiagnosticStatus.PARTIAL.value:
+                partial_collectors += 1
+                coverage_degraded = True
+            elif diag_status_val != DiagnosticStatus.NOT_RUN.value:
+                failed_collectors += 1
+                coverage_degraded = True
+
+            res.diagnostic = diag
+            collector_results.append(res)
+            all_events.extend(res.events)
+
             collector_diagnostics[col_id] = diag.to_dict()
             run.collector_diagnostics = collector_diagnostics
 
@@ -393,6 +548,12 @@ class SecurityReviewService:
                 event_type="collector.completed",
                 data=diag.to_dict(),
             )
+
+        run.observation_window.update({
+            "excluded_before_window": excluded_before_window,
+            "excluded_after_window": excluded_after_window,
+            "excluded_invalid_timestamp": excluded_invalid_timestamp,
+        })
 
         # Checkpoint: cancellation
         if self.job_manager.is_cancelled(run_id):
@@ -430,10 +591,22 @@ class SecurityReviewService:
         )
 
         correlation_error: Optional[str] = None
+        reconciliation_error: Optional[str] = None
+        incidents: List[Incident] = []
         try:
-            incidents: List[Incident] = self.risk_engine.process_events(all_events)
+            incidents = self.risk_engine.process_events(all_events)
+        except Exception as exc:
+            logger.error("Incident correlation failed for run %s: %s", run_id, exc, exc_info=True)
+            correlation_error = _concise_error(exc)
+            run.warnings.append("Incident correlation failed; severity counts are unavailable.")
+
+        if correlation_error is None:
             for inc in incidents:
-                attach_remediation_playbooks(inc)
+                try:
+                    attach_remediation_playbooks(inc)
+                except Exception as playbook_err:
+                    logger.warning("Playbook attachment failed for incident %s: %s", getattr(inc, "incident_id", "unknown"), playbook_err)
+                    run.warnings.append(f"Playbook attachment failed for incident {getattr(inc, 'incident_id', 'unknown')}.")
 
             # Local attacker identity enrichment
             enrichment_cfg = self.config_mgr.get_identity_enrichment_config() if hasattr(self.config_mgr, "get_identity_enrichment_config") else {}
@@ -443,14 +616,18 @@ class SecurityReviewService:
                         self.identity_resolver.resolve_incident_identity(inc, events=all_events)
                     except Exception as res_err:
                         logger.warning("Identity resolution failed for incident %s (%s): %s", getattr(inc, "incident_id", "unknown"), getattr(inc, "attacker_ip", "none"), res_err)
+                        run.warnings.append(f"Identity enrichment failed for incident {getattr(inc, 'incident_id', 'unknown')}.")
 
-            # Reconcile with persistent cross-run IncidentStore
-            self.run_store.record_run_incidents(run_id, incidents)
-        except Exception as exc:
-            logger.error("Incident correlation or reconciliation failed for run %s: %s", run_id, exc, exc_info=True)
-            incidents = []
-            correlation_error = str(exc)
-            run.warnings.append(f"Correlation error: {exc}")
+            # Lifecycle reconciliation is non-destructive to current-run correlation.
+            try:
+                self.run_store.record_run_incidents(run_id, incidents)
+            except Exception as exc:
+                logger.error("Incident persistence/reconciliation failed for run %s: %s", run_id, exc, exc_info=True)
+                reconciliation_error = _concise_error(exc)
+                coverage_degraded = True
+                run.warnings.append(
+                    "Incident lifecycle persistence failed; current-run counts are preserved but cross-run history is incomplete."
+                )
 
         # Incident counts
         counts = {
@@ -462,6 +639,25 @@ class SecurityReviewService:
             "info": sum(1 for i in incidents if i.severity == SeverityLevel.INFO),
         }
         run.incident_counts = counts
+        run.incident_counts_available = correlation_error is None
+        run.event_count = len(all_events)
+        if correlation_error is not None:
+            run.assessment_status = "UNAVAILABLE"
+            run.assessment_message = (
+                "Incident correlation failed. Severity totals are unavailable and must not be interpreted as zero."
+            )
+            evidence_warnings.append(run.assessment_message)
+        elif coverage_degraded or reconciliation_error is not None:
+            run.assessment_status = "PARTIAL"
+            run.assessment_message = (
+                "Incident counts were computed from accepted events, but telemetry coverage or lifecycle persistence was incomplete."
+            )
+        else:
+            run.assessment_status = "COMPLETE"
+            run.assessment_message = (
+                "Incident counts were computed from the accepted events inside the fixed observation window."
+            )
+        run.evidence_warnings = list(dict.fromkeys(evidence_warnings + run.warnings))
 
         # Checkpoint: cancellation
         if self.job_manager.is_cancelled(run_id):
@@ -587,7 +783,14 @@ class SecurityReviewService:
                 self.run_store.save_run(run)
             except Exception as exc:
                 logger.error("AI analysis stage failed for run %s: %s", run_id, exc, exc_info=True)
-                run.warnings.append(f"AI analysis failed: {exc}")
+                coverage_degraded = True
+                run.warnings.append(f"AI analysis failed: {_concise_error(exc)}")
+                if run.incident_counts_available:
+                    run.assessment_status = "PARTIAL"
+                    run.assessment_message = (
+                        "Deterministic incident counts are available, but the requested AI analysis did not complete."
+                    )
+                run.evidence_warnings = list(dict.fromkeys(run.evidence_warnings + run.warnings))
 
         # Stage: REPORTING
         run.stage = "REPORTING"
@@ -601,18 +804,36 @@ class SecurityReviewService:
         html_content = ""
         pdf_bytes = b""
         report_artifacts: Dict[str, Optional[str]] = {"html": None, "pdf": None, "json": None, "csv": None}
+        report_context = {
+            "run_id": run_id,
+            "assessment_status": run.assessment_status,
+            "assessment_message": run.assessment_message,
+            "incident_counts_available": run.incident_counts_available,
+            "evidence_warnings": run.evidence_warnings,
+            "observation_window": run.observation_window,
+            "event_count": run.event_count,
+        }
 
         try:
             # HTML
             if ReportFormat.HTML in req.report_formats or ReportFormat.PDF in req.report_formats:
-                html_content = self.reporter.render_html_report(incidents=incidents, collectors=collector_results)
+                html_content = self.reporter.render_html_report(
+                    incidents=incidents,
+                    collectors=collector_results,
+                    run_id=run_id,
+                    report_context=report_context,
+                )
                 html_path = self.run_store.save_report(run_id, "report.html", html_content)
                 report_artifacts["html"] = str(html_path)
 
             # PDF
             if ReportFormat.PDF in req.report_formats:
                 pdf_bytes = self.reporter.compile_pdf_report(
-                    html_content=html_content, incidents=incidents, collectors=collector_results
+                    html_content=html_content,
+                    incidents=incidents,
+                    collectors=collector_results,
+                    run_id=run_id,
+                    report_context=report_context,
                 )
                 pdf_path = self.run_store.save_report(run_id, "report.pdf", pdf_bytes)
                 report_artifacts["pdf"] = str(pdf_path)
@@ -622,6 +843,12 @@ class SecurityReviewService:
                 json_data = {
                     "run_id": run_id,
                     "counts": counts,
+                    "incident_counts_available": run.incident_counts_available,
+                    "assessment_status": run.assessment_status,
+                    "assessment_message": run.assessment_message,
+                    "evidence_warnings": run.evidence_warnings,
+                    "observation_window": run.observation_window,
+                    "event_count": run.event_count,
                     "incidents": serialized_incidents,
                     "collectors": collector_diagnostics,
                 }
@@ -698,6 +925,7 @@ class SecurityReviewService:
                     html_content=html_content,
                     pdf_bytes=pdf_bytes,
                     recipients=recipients,
+                    assessment_status=run.assessment_status,
                 )
                 if not email_sent:
                     email_err = "SMTP dispatch returned False."
@@ -726,7 +954,7 @@ class SecurityReviewService:
 
         # Calculate final state
         if correlation_error:
-            if successful_collectors > 0:
+            if (successful_collectors + partial_collectors) > 0:
                 run.state = RunState.PARTIAL
                 run.stage = "COMPLETED_PARTIAL"
                 if not run.failure_summary:
@@ -735,6 +963,16 @@ class SecurityReviewService:
                 run.state = RunState.FAILED
                 run.stage = "FAILED"
                 run.failure_summary = f"Failed with correlation error: {correlation_error}"
+        elif reconciliation_error or coverage_degraded:
+            if (successful_collectors + partial_collectors) > 0:
+                run.state = RunState.PARTIAL
+                run.stage = "COMPLETED_PARTIAL"
+                if reconciliation_error and not run.failure_summary:
+                    run.failure_summary = f"Completed with incident persistence/reconciliation error: {reconciliation_error}"
+            else:
+                run.state = RunState.FAILED
+                run.stage = "FAILED"
+                run.failure_summary = "No requested collector produced usable data."
         elif successful_collectors == len(req.collector_ids) and (report_artifacts.get("html") or report_artifacts.get("pdf") or report_artifacts.get("json")):
             run.state = RunState.COMPLETED
             run.stage = "COMPLETED"
@@ -751,6 +989,15 @@ class SecurityReviewService:
         # Record compatibility run result into SecurityAgentConfig
         legacy_summary = {
             "success": run.state in (RunState.COMPLETED, RunState.PARTIAL),
+            "run_id": run_id,
+            "run_state": run.state.value,
+            "run_stage": run.stage,
+            "assessment_status": run.assessment_status,
+            "assessment_message": run.assessment_message,
+            "incident_counts_available": run.incident_counts_available,
+            "evidence_warnings": run.evidence_warnings,
+            "observation_window": run.observation_window,
+            "event_count": run.event_count,
             "critical_count": counts["critical"],
             "high_count": counts["high"],
             "medium_count": counts["medium"],
@@ -761,9 +1008,14 @@ class SecurityReviewService:
             "collectors": [
                 {
                     "device_name": c.device_name,
-                    "status": c.status.value,
+                    "status": (
+                        c.diagnostic.status.value
+                        if c.diagnostic is not None and hasattr(c.diagnostic.status, "value")
+                        else c.status.value
+                    ),
                     "events_count": len(c.events),
                     "duration": c.collection_duration_seconds,
+                    "diagnostic": c.diagnostic.message if c.diagnostic is not None else (c.error_message or ""),
                 }
                 for c in collector_results
             ],

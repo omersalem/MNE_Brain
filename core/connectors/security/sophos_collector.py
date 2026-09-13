@@ -87,7 +87,7 @@ class SophosEmailCollector(BaseSecurityCollector):
         elif "spf" in reason_lower or "dkim" in reason_lower or "dmarc" in reason_lower:
             category = ThreatCategory.PHISHING
         elif "rbl" in reason_lower or "relay" in reason_lower:
-            category = ThreatCategory.INTRUSION
+            category = ThreatCategory.PHISHING
 
         if "QUARANTINE" in action_raw:
             action = "QUARANTINED"
@@ -156,7 +156,7 @@ class SophosEmailCollector(BaseSecurityCollector):
         reason_lower = reason.lower()
         category = ThreatCategory.PHISHING
         if "rbl" in reason_lower:
-            category = ThreatCategory.INTRUSION
+            category = ThreatCategory.PHISHING
         elif "malware" in reason_lower or "virus" in reason_lower:
             category = ThreatCategory.MALWARE
         elif "spf" in reason_lower or "dkim" in reason_lower or "dmarc" in reason_lower:

@@ -62,16 +62,111 @@ class SecurityReporter:
     def default_recipients(self) -> List[str]:
         return self.config_mgr.get_recipients()
 
+    @staticmethod
+    def _normalize_collector_for_report(col: Any) -> Dict[str, Any]:
+        """Builds a truthful collector row from the governed diagnostic."""
+        if isinstance(col, dict):
+            nested_diag = col.get("diagnostic")
+            diag = nested_diag if isinstance(nested_diag, dict) else col
+            dev_name = str(
+                diag.get("device_name")
+                or col.get("device_name")
+                or col.get("collector")
+                or col.get("device_id")
+                or "Collector"
+            )
+            st_raw = str(diag.get("status") or col.get("status") or "UNKNOWN").upper()
+            evs = col.get("events") or []
+            ev_count = len(evs) if isinstance(evs, list) and evs else int(
+                diag.get("records_parsed") or col.get("events_collected") or 0
+            )
+            dur = float(
+                col.get("collection_duration_seconds")
+                or diag.get("duration_seconds")
+                or 0.0
+            )
+            message = str(
+                diag.get("message")
+                or col.get("error_message")
+                or diag.get("diagnostic_code")
+                or "No diagnostic message was supplied."
+            )
+            diagnostic_code = str(diag.get("diagnostic_code") or "UNKNOWN")
+            malformed = int(diag.get("records_malformed") or 0)
+            duplicates = int(diag.get("records_duplicate") or 0)
+            pagination = diag.get("pagination") or {}
+        else:
+            diag_obj = getattr(col, "diagnostic", None)
+            dev_name = str(getattr(col, "device_name", "Collector"))
+            if diag_obj is not None:
+                st_val = getattr(diag_obj, "status", "UNKNOWN")
+                st_raw = st_val.value if hasattr(st_val, "value") else str(st_val).upper()
+                message = str(getattr(diag_obj, "message", "") or getattr(col, "error_message", "") or "No diagnostic message was supplied.")
+                diagnostic_code = str(getattr(diag_obj, "diagnostic_code", "UNKNOWN"))
+                malformed = int(getattr(diag_obj, "records_malformed", 0) or 0)
+                duplicates = int(getattr(diag_obj, "records_duplicate", 0) or 0)
+                pagination = getattr(diag_obj, "pagination", None) or {}
+            else:
+                st_val = getattr(col, "status", "UNKNOWN")
+                st_raw = st_val.value if hasattr(st_val, "value") else str(st_val).upper()
+                message = str(getattr(col, "error_message", "") or "Collector completed without a governed diagnostic.")
+                diagnostic_code = "UNKNOWN"
+                malformed = int(getattr(col, "records_malformed", 0) or 0)
+                duplicates = int(getattr(col, "records_duplicate", 0) or 0)
+                pagination = {}
+            evs = getattr(col, "events", []) or []
+            ev_count = len(evs)
+            dur = float(getattr(col, "collection_duration_seconds", 0.0) or 0.0)
+
+        limitations = []
+        if diagnostic_code.upper() == "QUERY_EMPTY_FILTERED":
+            limitations.append("no usable events remained after filtering")
+        if malformed:
+            limitations.append(f"{malformed} malformed records excluded")
+        if bool(pagination.get("has_more")):
+            limitations.append("additional source pages remained unread")
+        if "omitted" in message.lower() or "unavailable" in message.lower():
+            limitations.append("requested telemetry was omitted or unavailable")
+        if limitations and st_raw == "SUCCESS":
+            st_raw = "PARTIAL"
+        if duplicates and "duplicate" not in message.lower():
+            message = f"{message} {duplicates} duplicate records were removed."
+        if limitations and "coverage limitation" not in message.lower():
+            message = f"{message} Coverage limitation: {'; '.join(limitations)}."
+
+        return {
+            "device_name": dev_name,
+            "status": StatusWrapper(st_raw),
+            "events_count": ev_count,
+            "events": list(range(ev_count)),
+            "collection_duration_seconds": f"{dur:.2f}",
+            "error_message": message,
+            "diagnostic_code": diagnostic_code,
+            "_raw": col,
+        }
+
     def render_html_report(
         self,
         incidents: List[Any],
         collectors: List[Any],
         run_id: Optional[str] = None,
         generated_at: Optional[str] = None,
+        report_context: Optional[Dict[str, Any]] = None,
     ) -> str:
         """Renders the responsive executive HTML report using Jinja2."""
         template = self.jinja_env.get_template("report.html.j2")
         now_str = generated_at or datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+        context = dict(report_context or {})
+        incident_counts_available = bool(context.get("incident_counts_available", True))
+        assessment_status = str(context.get("assessment_status", "COMPLETE")).upper()
+        assessment_message = str(context.get("assessment_message") or "Incident assessment completed.")
+        evidence_warnings = list(context.get("evidence_warnings") or [])
+        observation_window = dict(context.get("observation_window") or {})
+        window_start = observation_window.get("start")
+        window_end = observation_window.get("end")
+        observation_window_label = (
+            f"{window_start} to {window_end}" if window_start and window_end else "Configured review window"
+        )
 
         norm_incidents = []
         for inc in (incidents or []):
@@ -178,61 +273,44 @@ class SecurityReporter:
         norm_collectors = []
         total_events_collected = 0
         for col in (collectors or []):
-            if isinstance(col, dict):
-                dev_name = str(col.get("device_name") or col.get("collector") or col.get("device_id") or "Device")
-                st_raw = str(col.get("status", "UNKNOWN")).upper()
-                evs = col.get("events") or []
-                if isinstance(evs, list) and len(evs) > 0:
-                    ev_count = len(evs)
-                else:
-                    ev_count = int(col.get("records_parsed") or col.get("events_collected") or col.get("records_fetched") or 0)
-                dur = float(col.get("collection_duration_seconds") or col.get("duration_seconds") or 0.0)
-                err = col.get("error_message") or col.get("diagnostic_code") or ""
-            else:
-                dev_name = str(col.device_name)
-                st_raw = col.status.value if hasattr(col.status, "value") else str(col.status).upper()
-                evs = getattr(col, "events", []) or []
-                if isinstance(evs, list) and len(evs) > 0:
-                    ev_count = len(evs)
-                else:
-                    ev_count = int(getattr(col, "records_parsed", 0) or getattr(col, "events_collected", 0) or 0)
-                dur = float(col.collection_duration_seconds or 0.0)
-                err = col.error_message or getattr(col, "diagnostic_code", "") or ""
+            normalized = self._normalize_collector_for_report(col)
+            total_events_collected += normalized["events_count"]
+            norm_collectors.append(normalized)
 
-            total_events_collected += ev_count
-            norm_collectors.append({
-                "device_name": dev_name,
-                "status": StatusWrapper(st_raw),
-                "events_count": ev_count,
-                "events": list(range(ev_count)),
-                "collection_duration_seconds": f"{dur:.2f}",
-                "error_message": err or "Healthy read-only log synchronization",
-                "_raw": col,
-            })
+        if "event_count" in context:
+            total_events_collected = max(0, int(context["event_count"]))
 
         total_incident_events = sum(i["event_count"] for i in norm_incidents)
         if total_events_collected == 0 and total_incident_events > 0:
             total_events_collected = total_incident_events
 
-        online_collectors_count = sum(1 for c in norm_collectors if c["status"] in ("SUCCESS", "WARNING"))
+        online_collectors_count = sum(1 for c in norm_collectors if c["status"] in ("SUCCESS", "WARNING", "PARTIAL"))
         total_collectors_count = len(norm_collectors)
 
-        if critical_count > 0:
-            threat_posture = "CRITICAL ALERT"
+        if not incident_counts_available:
+            threat_posture = "ASSESSMENT UNAVAILABLE"
             threat_posture_class = "crit"
-            posture_summary = f"{critical_count} critical severity exploit(s) detected requiring immediate containment."
+            posture_summary = assessment_message
+        elif critical_count > 0:
+            threat_posture = "CRITICAL FINDINGS" if assessment_status == "COMPLETE" else "CRITICAL FINDINGS — PARTIAL EVIDENCE"
+            threat_posture_class = "crit"
+            posture_summary = f"{critical_count} critical evidence-backed finding(s) require validation and response within the stated coverage limits."
         elif high_count > 0:
-            threat_posture = "ELEVATED RISK"
+            threat_posture = "ELEVATED FINDINGS" if assessment_status == "COMPLETE" else "ELEVATED FINDINGS — PARTIAL EVIDENCE"
             threat_posture_class = "high"
-            posture_summary = f"{high_count} high severity threat(s) actively detected across perimeter and identity infrastructure."
+            posture_summary = f"{high_count} high-priority observed finding(s) require analyst review; this does not by itself prove active compromise."
         elif medium_count > 0:
             threat_posture = "MODERATE POSTURE"
             threat_posture_class = "med"
             posture_summary = f"{medium_count} medium severity anomalous event(s) observed under baseline telemetry."
+        elif assessment_status == "PARTIAL":
+            threat_posture = "PARTIAL EVIDENCE"
+            threat_posture_class = "med"
+            posture_summary = assessment_message
         else:
-            threat_posture = "NORMAL / SECURE"
+            threat_posture = "NO QUALIFYING INCIDENTS"
             threat_posture_class = "ok"
-            posture_summary = "Zero critical or high severity security anomalies identified during this 24-hour review window."
+            posture_summary = "The completed assessment produced no qualifying incidents from the accepted telemetry. This is not proof of absence outside the stated evidence window."
 
         # Attacker Aggregation
         attacker_agg: Dict[str, Dict[str, Any]] = {}
@@ -326,6 +404,11 @@ class SecurityReporter:
             top_attackers=top_attackers,
             category_breakdown=category_breakdown,
             threat_clusters=threat_clusters,
+            incident_counts_available=incident_counts_available,
+            assessment_status=assessment_status,
+            assessment_message=assessment_message,
+            evidence_warnings=evidence_warnings,
+            observation_window_label=observation_window_label,
         )
 
     def compile_pdf_report(
@@ -335,12 +418,13 @@ class SecurityReporter:
         collectors: Optional[List[Any]] = None,
         run_id: Optional[str] = None,
         run_store: Optional[Any] = None,
+        report_context: Optional[Dict[str, Any]] = None,
     ) -> bytes:
         """Compiles a professional executive PDF report using ReportLab."""
         from reportlab.lib import colors
         from reportlab.lib.pagesizes import letter
         from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
-        from reportlab.platypus import HRFlowable, Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
+        from reportlab.platypus import HRFlowable, KeepTogether, Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 
         buffer = io.BytesIO()
         doc = SimpleDocTemplate(
@@ -401,12 +485,56 @@ class SecurityReporter:
             spaceAfter=8,
         )
 
+        context = dict(report_context or {})
+        if run_id and run_store and not report_context:
+            run_data = run_store.get_run(run_id) or {}
+            context = {
+                "assessment_status": run_data.get("assessment_status", "UNAVAILABLE"),
+                "assessment_message": run_data.get(
+                    "assessment_message",
+                    "This legacy run has no explicit assessment-completeness marker; severity totals are not trusted.",
+                ),
+                "incident_counts_available": run_data.get("incident_counts_available", False),
+                "evidence_warnings": run_data.get("evidence_warnings") or run_data.get("warnings") or [],
+                "observation_window": run_data.get("observation_window") or {},
+                "event_count": run_data.get("event_count"),
+            }
+        incident_counts_available = bool(context.get("incident_counts_available", True))
+        assessment_status = str(context.get("assessment_status", "COMPLETE")).upper()
+        assessment_message = str(context.get("assessment_message") or "Incident assessment completed.")
+        evidence_warnings = list(context.get("evidence_warnings") or [])
+        observation_window = dict(context.get("observation_window") or {})
+        window_label = "Configured review window"
+        if observation_window.get("start") and observation_window.get("end"):
+            window_label = f"{observation_window['start']} to {observation_window['end']}"
+
         elements = []
         # Header
         elements.append(Paragraph("Ministry of National Economy (MNE)", title_style))
         today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
-        elements.append(Paragraph(f"Daily Cyber Threat & Risk Intelligence Briefing | Generated: {today_str} | Window: Past 24h", subtitle_style))
+        elements.append(Paragraph(
+            f"Daily Cyber Threat &amp; Risk Intelligence Briefing | Generated: {today_str} | Window: {html.escape(window_label)}",
+            subtitle_style,
+        ))
         elements.append(HRFlowable(width="100%", thickness=1.5, color=colors.HexColor("#0284c7"), spaceAfter=12))
+        status_color = "#166534" if assessment_status == "COMPLETE" else "#991b1b"
+        status_bg = "#dcfce7" if assessment_status == "COMPLETE" else "#fee2e2"
+        status_style = ParagraphStyle(
+            "AssessmentStatus",
+            parent=styles["Normal"],
+            fontSize=9,
+            leading=12,
+            textColor=colors.HexColor(status_color),
+            backColor=colors.HexColor(status_bg),
+            borderPadding=7,
+            spaceAfter=8,
+        )
+        elements.append(Paragraph(
+            f"<b>Evidence status: {html.escape(assessment_status)}</b><br/>{html.escape(assessment_message)}",
+            status_style,
+        ))
+        for warning in evidence_warnings[:8]:
+            elements.append(Paragraph(f"- {html.escape(str(warning))}", subtitle_style))
 
         # Risk Metrics Grid
         inc_list = incidents
@@ -422,6 +550,9 @@ class SecurityReporter:
         crit_n = sum(1 for i in inc_list if _get_sev(i) == "CRITICAL")
         high_n = sum(1 for i in inc_list if _get_sev(i) == "HIGH")
         med_n = sum(1 for i in inc_list if _get_sev(i) == "MEDIUM")
+        low_n = sum(1 for i in inc_list if _get_sev(i) == "LOW")
+        info_n = sum(1 for i in inc_list if _get_sev(i) == "INFO")
+        total_n = len(inc_list)
 
         col_list = collectors
         if isinstance(col_list, dict):
@@ -431,22 +562,22 @@ class SecurityReporter:
             col_list = diags if isinstance(diags, list) else list(diags.values()) if isinstance(diags, dict) else []
         col_list = col_list or []
 
-        def _is_col_success(col):
-            if isinstance(col, dict):
-                return str(col.get("status", "")).upper() == "SUCCESS"
-            if hasattr(col, "status"):
-                status_val = col.status.value if hasattr(col.status, "value") else str(col.status)
-                return str(status_val).upper() == "SUCCESS"
-            return False
-
-        success_cols = sum(1 for c in col_list if _is_col_success(c))
+        normalized_collectors = [self._normalize_collector_for_report(c) for c in col_list]
+        success_cols = sum(1 for c in normalized_collectors if c["status"] in ("SUCCESS", "PARTIAL"))
         total_cols = len(col_list) if col_list else 6
 
         summary_data = [
-            ["Critical Risks", "High Risks", "Medium Risks", "Devices Online"],
-            [str(crit_n), str(high_n), str(med_n), f"{success_cols}/{total_cols}"],
+            ["Critical", "High", "Medium", "Low", "Info", "Total Findings"],
+            [
+                str(crit_n) if incident_counts_available else "N/A",
+                str(high_n) if incident_counts_available else "N/A",
+                str(med_n) if incident_counts_available else "N/A",
+                str(low_n) if incident_counts_available else "N/A",
+                str(info_n) if incident_counts_available else "N/A",
+                str(total_n) if incident_counts_available else "N/A",
+            ],
         ]
-        summary_table = Table(summary_data, colWidths=[130, 130, 130, 130])
+        summary_table = Table(summary_data, colWidths=[86, 86, 86, 86, 86, 86])
         summary_table.setStyle(TableStyle([
             ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#0f172a")),
             ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
@@ -461,6 +592,13 @@ class SecurityReporter:
             ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#cbd5e1")),
         ]))
         elements.append(summary_table)
+        accepted_records = context.get("event_count")
+        records_label = str(accepted_records) if accepted_records is not None else "not recorded"
+        elements.append(Paragraph(
+            f"Accepted security records: <b>{html.escape(records_label)}</b> | Collectors responded: <b>{success_cols}/{total_cols}</b>. "
+            "A transport response does not establish complete telemetry coverage.",
+            subtitle_style,
+        ))
         elements.append(Spacer(1, 12))
 
         # Ingestion Health Table
@@ -468,24 +606,17 @@ class SecurityReporter:
             elements.append(Paragraph("Perimeter & Identity Log Ingestion Health", h2_style))
             health_rows = [["System", "Status", "Events", "Time", "Diagnostics"]]
             failed_count = 0
-            for col in col_list:
-                if isinstance(col, dict):
-                    status_str = str(col.get("status", "UNKNOWN"))
-                    diag = str(col.get("error_message") or col.get("diagnostic_code") or "Healthy log synchronization")[:45]
-                    dev_name = str(col.get("collector") or col.get("device_id") or "Device")
-                    ev_count = str(col.get("events_collected", 0))
-                    dur = f"{col.get('duration_seconds', 0)}s"
-                else:
-                    status_str = col.status.value
-                    diag = (col.error_message or "Healthy log synchronization")[:45]
-                    dev_name = col.device_name
-                    ev_count = str(len(col.events))
-                    dur = f"{col.collection_duration_seconds}s"
-                if status_str != "SUCCESS":
+            for col in normalized_collectors:
+                status_str = str(col["status"])
+                diag = Paragraph(html.escape(str(col["error_message"])), styles["Normal"])
+                dev_name = str(col["device_name"])
+                ev_count = str(col["events_count"])
+                dur = f"{col['collection_duration_seconds']}s"
+                if status_str not in ("SUCCESS",):
                     failed_count += 1
                 health_rows.append([dev_name, status_str, ev_count, dur, diag])
 
-            health_table = Table(health_rows, colWidths=[100, 60, 50, 50, 260])
+            health_table = Table(health_rows, colWidths=[100, 60, 50, 50, 260], repeatRows=1)
             health_table.setStyle(TableStyle([
                 ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#334155")),
                 ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
@@ -499,17 +630,20 @@ class SecurityReporter:
             elements.append(Spacer(1, 10))
 
             if failed_count > 0:
-                elements.append(Paragraph(f"⚠️ <b>OPERATIONAL ALERT:</b> {failed_count} device(s) encountered log collection errors. Review connectivity or credentials.", alert_style))
+                elements.append(Paragraph(f"<b>COLLECTION LIMITATION:</b> {failed_count} collector(s) were partial or failed. Review the diagnostics above.", alert_style))
 
         # Incidents Section
-        elements.append(Paragraph("Identified Security Risks & Threat Incidents", h2_style))
+        elements.append(Paragraph("Prioritized Evidence Findings", h2_style))
         if inc_list:
-            for inc in inc_list:
+            detail_limit = max(1, int(context.get("incident_detail_limit", 40)))
+            detailed_incidents = inc_list[:detail_limit]
+            for inc in detailed_incidents:
+                incident_elements = []
                 if isinstance(inc, dict):
                     sev_val = str(inc.get("current_severity") or inc.get("severity", "MEDIUM")).upper()
                     inc_id = str(inc.get("display_id") or inc.get("incident_id") or inc.get("fingerprint", "INC"))
                     inc_title = f"[{sev_val}] {inc_id} — {inc.get('title', '')}"
-                    elements.append(Paragraph(f"<b>{inc_title}</b>", styles["Heading3"]))
+                    incident_elements.append(Paragraph(f"<b>{inc_title}</b>", styles["Heading3"]))
                     atk = str(inc.get("attacker_identity") or inc.get("attacker_ip", "N/A"))
                     tgt = str(inc.get("target_identity") or inc.get("target", "N/A"))
                     dev = str(inc.get("source_device", "N/A"))
@@ -525,7 +659,7 @@ class SecurityReporter:
                     id_conf = inc.get("attacker_identity_confidence")
                 else:
                     inc_title = f"[{inc.severity.value}] {inc.incident_id} — {inc.title}"
-                    elements.append(Paragraph(f"<b>{inc_title}</b>", styles["Heading3"]))
+                    incident_elements.append(Paragraph(f"<b>{inc_title}</b>", styles["Heading3"]))
                     atk = inc.attacker_ip or "N/A"
                     tgt = inc.target or "N/A"
                     dev = inc.source_device
@@ -541,7 +675,7 @@ class SecurityReporter:
                     id_conf = getattr(inc, "attacker_identity_confidence", None)
 
                 details_p = f"Device: <b>{dev}</b> | Attacker: <b>{atk}</b> | Target: <b>{tgt}</b> | Attempts: <b>{attempts}</b>"
-                elements.append(Paragraph(details_p, styles["Normal"]))
+                incident_elements.append(Paragraph(details_p, styles["Normal"]))
 
                 id_parts = []
                 if pc_name and pc_name not in ("Unknown", "Not applicable"):
@@ -555,20 +689,36 @@ class SecurityReporter:
                 if id_status and id_status not in ("NOT_APPLICABLE", "NOT_CONFIGURED", "NOT_FOUND"):
                     id_parts.append(f"Status: <b>{id_status}</b> ({id_conf or ''})")
                 if id_parts:
-                    elements.append(Paragraph(f"Attacker Identity: {' | '.join(id_parts)}", styles["Normal"]))
+                    incident_elements.append(Paragraph(f"Attacker Identity: {' | '.join(id_parts)}", styles["Normal"]))
 
-                elements.append(Paragraph(f"Description: {desc}", styles["Normal"]))
+                incident_elements.append(Paragraph(f"Description: {desc}", styles["Normal"]))
 
                 if rem_cli:
-                    elements.append(Paragraph("<b>CLI Containment Playbook:</b>", styles["Normal"]))
+                    incident_elements.append(Paragraph("<b>CLI Containment Playbook:</b>", styles["Normal"]))
                     cli_text = "<br/>".join(rem_cli)
-                    elements.append(Paragraph(cli_text, code_style))
+                    incident_elements.append(Paragraph(cli_text, code_style))
 
                 if rem_mode_b:
-                    elements.append(Paragraph(f"<i>Mode B Remediation:</i> {rem_mode_b}", subtitle_style))
-                elements.append(Spacer(1, 8))
+                    incident_elements.append(Paragraph(f"<i>Mode B Remediation:</i> {rem_mode_b}", subtitle_style))
+                incident_elements.append(Spacer(1, 8))
+                elements.append(KeepTogether(incident_elements))
+            omitted_count = len(inc_list) - len(detailed_incidents)
+            if omitted_count > 0:
+                elements.append(Paragraph(
+                    f"{omitted_count} lower-priority finding(s) are included in the summary totals but omitted from the PDF detail section. "
+                    "The complete list remains reproducible from the governed stored telemetry with this corrected pipeline.",
+                    subtitle_style,
+                ))
+        elif not incident_counts_available:
+            elements.append(Paragraph(
+                "Incident assessment unavailable. Zero values must not be interpreted as an absence of threats.",
+                alert_style,
+            ))
         else:
-            elements.append(Paragraph("No active security threats meeting Critical, High, or Medium risk thresholds were observed in the collected telemetry.", styles["Normal"]))
+            elements.append(Paragraph(
+                "No qualifying incidents were produced from the accepted telemetry. This conclusion applies only to the stated observation window and collector coverage.",
+                styles["Normal"],
+            ))
 
         doc.build(elements)
         buffer.seek(0)
@@ -580,13 +730,17 @@ class SecurityReporter:
         pdf_bytes: bytes,
         recipients: Optional[List[str]] = None,
         subject_date_str: Optional[str] = None,
+        assessment_status: Optional[str] = None,
     ) -> MIMEMultipart:
         """Constructs a standard MIME multipart email with HTML body and attached PDF."""
         target_recipients = recipients or self.default_recipients
         date_label = subject_date_str or datetime.now(timezone.utc).strftime("%Y-%m-%d")
 
         msg = MIMEMultipart("mixed")
-        msg["Subject"] = f"MNE Daily Cyber Threat & Risk Intelligence Briefing - {date_label}"
+        status_prefix = ""
+        if assessment_status and str(assessment_status).upper() != "COMPLETE":
+            status_prefix = f"[{str(assessment_status).upper()}] "
+        msg["Subject"] = f"{status_prefix}MNE Daily Cyber Threat & Risk Intelligence Briefing - {date_label}"
         msg["From"] = self.smtp_sender
         msg["To"] = ", ".join(target_recipients)
 
@@ -607,10 +761,16 @@ class SecurityReporter:
         html_content: str,
         pdf_bytes: bytes,
         recipients: Optional[List[str]] = None,
+        assessment_status: Optional[str] = None,
     ) -> bool:
         """Sends the compiled report via SMTP."""
         target_recipients = recipients or self.default_recipients
-        msg = self.build_email_message(html_content, pdf_bytes, target_recipients)
+        msg = self.build_email_message(
+            html_content,
+            pdf_bytes,
+            target_recipients,
+            assessment_status=assessment_status,
+        )
 
         try:
             logger.info("Connecting to SMTP server at %s:%s...", self.smtp_host, self.smtp_port)
@@ -777,13 +937,24 @@ td {{ padding: 6px 0; }}
         crit_count = sum(1 for i in incidents if str(i.get("current_severity", i.get("severity"))).upper() == "CRITICAL")
         high_count = sum(1 for i in incidents if str(i.get("current_severity", i.get("severity"))).upper() == "HIGH")
         med_count = sum(1 for i in incidents if str(i.get("current_severity", i.get("severity"))).upper() == "MEDIUM")
+        counts_available = bool(run_data.get("incident_counts_available", False))
+        assessment_status = str(run_data.get("assessment_status", "UNAVAILABLE")).upper()
+        assessment_message = str(run_data.get(
+            "assessment_message",
+            "This run has no explicit assessment-completeness marker; incident totals are not trusted.",
+        ))
+        evidence_warnings = list(run_data.get("evidence_warnings") or run_data.get("warnings") or [])
 
-        healthy_cols = sum(1 for d in diag_list if isinstance(d, dict) and d.get("status") == "SUCCESS")
+        normalized_diags = [self._normalize_collector_for_report(d) for d in diag_list]
+        healthy_cols = sum(1 for d in normalized_diags if d["status"] in ("SUCCESS", "PARTIAL"))
         total_cols = len(diag_list) if diag_list else 6
 
         req = run_data.get("request", {})
-        win = req.get("time_window", {})
-        win_str = f"Last {win.get('hours', 24)} Hours" if win.get("mode") == "HOURS" else "Custom Window"
+        observation_window = run_data.get("observation_window") or {}
+        if observation_window.get("start") and observation_window.get("end"):
+            win_str = f"{observation_window['start']} to {observation_window['end']}"
+        else:
+            win_str = f"Configured {req.get('hours_back', 24)}-hour window (exact bounds unavailable)"
         gen_time = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
 
         # HTML generation
@@ -828,15 +999,13 @@ td {{ padding: 6px 0; }}
 
         # Collector status rows
         diag_rows = ""
-        for d in diag_list:
-            if not isinstance(d, dict):
-                continue
-            st = d.get("status", "UNKNOWN")
+        for d in normalized_diags:
+            st = str(d["status"])
             st_class = "ok" if st == "SUCCESS" else "err"
-            name = d.get("collector") or d.get("device_id") or "Collector"
-            ev = d.get("events_collected", 0)
-            dur = f"{d.get('duration_seconds', 0)}s"
-            msg = (d.get("error_message") or d.get("diagnostic_code") or "Healthy")[:50]
+            name = d["device_name"]
+            ev = d["events_count"]
+            dur = f"{d['collection_duration_seconds']}s"
+            msg = d["error_message"]
             diag_rows += f"""
             <tr>
               <td><b>{html.escape(name)}</b></td>
@@ -873,7 +1042,27 @@ td {{ padding: 6px 0; }}
             </div>
             """
         if not high_pri_cards:
-            high_pri_cards = "<p class='dim'>No Critical or High severity incidents detected in this window.</p>"
+            high_pri_cards = (
+                "<p class='dim'>No Critical or High severity incidents were produced by the completed assessment.</p>"
+                if counts_available
+                else "<p class='dim'>High-priority incident assessment is unavailable for this run.</p>"
+            )
+
+        count_display = lambda value: str(value) if counts_available else "N/A"
+        evidence_items = "".join(f"<li>{html.escape(str(w))}</li>" for w in evidence_warnings)
+        evidence_card = f"""
+        <div class="card" style="border-color:{'#22c55e' if assessment_status == 'COMPLETE' else '#ef4444'};">
+          <div class="card-title">Evidence Status: {html.escape(assessment_status)}</div>
+          <p>{html.escape(assessment_message)}</p>
+          {f'<ul>{evidence_items}</ul>' if evidence_items else ''}
+        </div>
+        """
+        delta_summary = (
+            f"During this review period, <b>{len(incidents)}</b> incidents were evaluated. "
+            f"A total of <b>{len(new_incs)}</b> were new, <b>{len(rec_incs)}</b> recurred, and <b>{len(res_incs)}</b> were no longer observed."
+            if counts_available
+            else "Incident and delta totals are unavailable because the run did not complete a trusted assessment."
+        )
 
         return f"""<!DOCTYPE html>
 <html lang="en">
@@ -928,20 +1117,20 @@ td {{ padding: 6px 0; }}
   </div>
 
   <div class="kpi-grid">
-    <div class="kpi-cell"><div class="kpi-val crit">{crit_count}</div><div class="kpi-lbl">Critical Risks</div></div>
-    <div class="kpi-cell"><div class="kpi-val high">{high_count}</div><div class="kpi-lbl">High Risks</div></div>
-    <div class="kpi-cell"><div class="kpi-val med">{med_count}</div><div class="kpi-lbl">Medium Risks</div></div>
-    <div class="kpi-cell"><div class="kpi-val ok">{healthy_cols}/{total_cols}</div><div class="kpi-lbl">Sensors Active</div></div>
-    <div class="kpi-cell"><div class="kpi-val">{len(incidents)}</div><div class="kpi-lbl">Total Incidents</div></div>
-    <div class="kpi-cell"><div class="kpi-val">{len(new_incs)}</div><div class="kpi-lbl">New Threats</div></div>
+    <div class="kpi-cell"><div class="kpi-val crit">{count_display(crit_count)}</div><div class="kpi-lbl">Critical Risks</div></div>
+    <div class="kpi-cell"><div class="kpi-val high">{count_display(high_count)}</div><div class="kpi-lbl">High Risks</div></div>
+    <div class="kpi-cell"><div class="kpi-val med">{count_display(med_count)}</div><div class="kpi-lbl">Medium Risks</div></div>
+    <div class="kpi-cell"><div class="kpi-val ok">{healthy_cols}/{total_cols}</div><div class="kpi-lbl">Collectors Responded</div></div>
+    <div class="kpi-cell"><div class="kpi-val">{count_display(len(incidents))}</div><div class="kpi-lbl">Total Incidents</div></div>
+    <div class="kpi-cell"><div class="kpi-val">{count_display(len(new_incs))}</div><div class="kpi-lbl">New Threats</div></div>
   </div>
 
   <div class="content">
+    {evidence_card}
     <div class="section-title">Executive Threat Posture & Delta</div>
     <div class="card">
       <p style="margin-top:0;">
-        During this review period (<b>{html.escape(win_str)}</b>), <b>{len(incidents)}</b> active threat incidents were evaluated across perimeter and identity sensors.
-        A total of <b>{len(new_incs)}</b> new threats emerged, <b>{len(rec_incs)}</b> persisted from prior cycles, and <b>{len(res_incs)}</b> prior threats were no longer observed.
+        {delta_summary}
       </p>
     </div>
 
@@ -987,26 +1176,34 @@ td {{ padding: 6px 0; }}
         analyses = run_store.list_analyses(run_id=run_id) if hasattr(run_store, "list_analyses") else []
         diags = run_store.get_collector_diagnostics(run_id) or {}
         diag_list = diags if isinstance(diags, list) else list(diags.values()) if isinstance(diags, dict) else []
+        counts_available = bool(run_data.get("incident_counts_available", False))
+        assessment_status = str(run_data.get("assessment_status", "UNAVAILABLE")).upper()
+        assessment_message = str(run_data.get(
+            "assessment_message",
+            "This run has no explicit assessment-completeness marker; incident totals are not trusted.",
+        ))
+        evidence_warnings = list(run_data.get("evidence_warnings") or run_data.get("warnings") or [])
 
         req = run_data.get("request", {})
-        win = req.get("time_window", {})
-        win_str = f"Last {win.get('hours', 24)} Hours" if win.get("mode") == "HOURS" else "Custom Window"
+        observation_window = run_data.get("observation_window") or {}
+        if observation_window.get("start") and observation_window.get("end"):
+            win_str = f"{observation_window['start']} to {observation_window['end']}"
+        else:
+            win_str = f"Configured {req.get('hours_back', 24)}-hour window (exact bounds unavailable)"
         gen_time = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
 
         # Collector diagnostics rows
         diag_rows = ""
-        for d in diag_list:
-            if not isinstance(d, dict):
-                continue
-            st = d.get("status", "UNKNOWN")
+        for raw_diag in diag_list:
+            d = self._normalize_collector_for_report(raw_diag)
+            st = str(d["status"])
             st_badge = f"<span class='badge ok'>{st}</span>" if st == "SUCCESS" else f"<span class='badge err'>{st}</span>"
-            name = d.get("collector") or d.get("device_id") or "Collector"
-            ev = d.get("events_collected", 0)
-            dur = f"{d.get('duration_seconds', 0)}s"
-            code = d.get("diagnostic_code") or "OK"
-            timings = d.get("timing") or {}
-            timing_str = f"Q:{timings.get('query_duration_ms', 0)}ms | P:{timings.get('parse_duration_ms', 0)}ms" if timings else "N/A"
-            err = d.get("error_message") or "-"
+            name = d["device_name"]
+            ev = d["events_count"]
+            dur = f"{d['collection_duration_seconds']}s"
+            code = d["diagnostic_code"]
+            timing_str = "N/A"
+            err = d["error_message"]
             diag_rows += f"""
             <tr>
               <td><b>{html.escape(name)}</b></td>
@@ -1082,6 +1279,22 @@ td {{ padding: 6px 0; }}
             </div>
             """
 
+        evidence_items = "".join(f"<li>{html.escape(str(w))}</li>" for w in evidence_warnings)
+        evidence_card = f"""
+        <div class="card" style="border-color:{'#22c55e' if assessment_status == 'COMPLETE' else '#ef4444'};margin-bottom:16px;">
+          <div class="card-title">Evidence Status: {html.escape(assessment_status)}</div>
+          <p>{html.escape(assessment_message)}</p>
+          {f'<ul>{evidence_items}</ul>' if evidence_items else ''}
+        </div>
+        """
+        incident_total_display = str(len(incidents)) if counts_available else "N/A"
+        if incident_blocks:
+            incident_section = incident_blocks
+        elif counts_available:
+            incident_section = "<p class='dim'>No qualifying incidents were produced from the accepted telemetry.</p>"
+        else:
+            incident_section = "<p class='dim'>Incident assessment unavailable. Zero must not be inferred.</p>"
+
         return f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1122,12 +1335,13 @@ td {{ padding: 6px 0; }}
     <div class="meta">
       <span>Run ID: <b>{html.escape(run_id)}</b></span>
       <span>Window: <b>{html.escape(win_str)}</b></span>
-      <span>Total Incidents: <b>{len(incidents)}</b></span>
+      <span>Total Incidents: <b>{incident_total_display}</b></span>
       <span>Generated: <b>{html.escape(gen_time)}</b></span>
     </div>
   </div>
 
   <div class="content">
+    {evidence_card}
     <div class="section-title">Perimeter & Identity Log Diagnostics</div>
     <table>
       <thead>
@@ -1138,8 +1352,8 @@ td {{ padding: 6px 0; }}
 
     {ai_tech_html}
 
-    <div class="section-title">Incident Dossiers & Remediation CLI ({len(incidents)})</div>
-    {incident_blocks or "<p class='dim'>No security incidents detected.</p>"}
+    <div class="section-title">Incident Dossiers & Remediation CLI ({incident_total_display})</div>
+    {incident_section}
   </div>
 
   <div class="footer">

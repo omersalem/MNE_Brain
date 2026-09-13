@@ -1,6 +1,6 @@
 {
-  "last_updated": "2026-09-12T07:20:58.087190+00:00",
-  "total_entities": 48,
+  "last_updated": "2026-09-12T08:37:17.481363+00:00",
+  "total_entities": 49,
   "entities": [
     {
       "entity_id": "app-apdct-web-01",
@@ -270,6 +270,49 @@
       "verification_check_id": "",
       "verification_outcome": "",
       "canonical_file": "knowledge/identity/ad-secondary-canonical.md"
+    },
+    {
+      "entity_id": "edr-fortiedr-cloud-01",
+      "name": "MNE FortiEDR Cloud Central Manager & Endpoint Protection",
+      "category": "network",
+      "aliases": [
+        "edr-fortiedr-cloud-01",
+        "ensilo",
+        "fortiedr",
+        "fortiedr-cloud",
+        "fortiedrconnectil",
+        "fortiedrconnectil.console.ensilo.com",
+        "mne-edr"
+      ],
+      "hostname": "fortiedrconnectil.console.ensilo.com",
+      "fqdn": "fortiedrconnectil.console.ensilo.com",
+      "ip": "fortiedrconnectil.console.ensilo.com",
+      "ip_addresses": [
+        "fortiedrconnectil.console.ensilo.com"
+      ],
+      "vlan": "cloud",
+      "services": [
+        "collector-registration",
+        "communication-control",
+        "edr-management",
+        "endpoint-prevention",
+        "threat-hunting"
+      ],
+      "owner": "Cybersecurity & Endpoint Infrastructure Team",
+      "related_entities": [
+        "dc-windows-ad-01",
+        "faz-fortianalyzer-hq-01",
+        "fw-fortigate-hq-01"
+      ],
+      "knowledge_status": "documented",
+      "source": "https://docs.fortinet.com/document/fortiedr/6.2.0/administration-guide/354083/introducing-fortiedr",
+      "last_verified": null,
+      "freshness_ttl_hours": 720,
+      "evidence_refs": [],
+      "verification_target": "",
+      "verification_check_id": "",
+      "verification_outcome": "",
+      "canonical_file": "knowledge/topology/fortiedr-canonical.md"
     },
     {
       "entity_id": "esxi-node-hq-01",

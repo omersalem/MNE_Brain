@@ -85,17 +85,17 @@ class FortiGateSecurityCollector(BaseSecurityCollector):
             category = ThreatCategory.BRUTE_FORCE
             threat_name = f"SSL-VPN Authentication Failure: {fields.get('user', 'unknown user')}"
             target = fields.get("user") or target
-        elif log_type in ("ips", "utm") or subtype in ("ips", "signature") or attack:
-            category = ThreatCategory.INTRUSION
-            threat_name = f"IPS / Security Attack: {attack or msg}"
-            if hostname:
-                threat_name += f" ({hostname})"
         elif log_type == "virus" or subtype == "virus" or virus:
             category = ThreatCategory.MALWARE
             threat_name = f"Malware Detected: {virus or msg}"
         elif log_type == "webfilter" or subtype == "webfilter" or url:
             category = ThreatCategory.INTRUSION if ("malicious" in msg.lower() or "botnet" in msg.lower()) else ThreatCategory.ANOMALY
             threat_name = f"Web Filter Block: {url or msg}"
+        elif log_type == "ips" or subtype in ("ips", "signature") or attack:
+            category = ThreatCategory.INTRUSION
+            threat_name = f"IPS / Security Attack: {attack or msg}"
+            if hostname:
+                threat_name += f" ({hostname})"
         elif subtype in ("system", "admin"):
             if "login" in msg.lower():
                 category = ThreatCategory.PRIVILEGE_CHANGE
@@ -117,7 +117,20 @@ class FortiGateSecurityCollector(BaseSecurityCollector):
         event_id = f"fgt-{raw_hash}"
 
         event_time = datetime.now(timezone.utc)
-        if "date" in fields and "time" in fields:
+        eventtime = fields.get("eventtime")
+        if eventtime:
+            try:
+                epoch = float(eventtime)
+                if epoch >= 1e17:       # nanoseconds
+                    epoch /= 1_000_000_000
+                elif epoch >= 1e14:     # microseconds
+                    epoch /= 1_000_000
+                elif epoch >= 1e11:     # milliseconds
+                    epoch /= 1_000
+                event_time = datetime.fromtimestamp(epoch, tz=timezone.utc)
+            except (TypeError, ValueError, OSError):
+                eventtime = None
+        if not eventtime and "date" in fields and "time" in fields:
             try:
                 dt_str = f"{fields['date']} {fields['time']}"
                 event_time = datetime.strptime(dt_str, "%Y-%m-%d %H:%M:%S").replace(tzinfo=timezone.utc)
@@ -185,7 +198,7 @@ class FortiGateSecurityCollector(BaseSecurityCollector):
         elif fields.get("authuser"):
             auth_user = fields.get("authuser")
             user_relation = "AUTHENTICATED_SOURCE_USER"
-        elif fields.get("srcuser") and "auth" in raw_action.lower():
+        elif fields.get("srcuser") and "auth" in action:
             auth_user = fields.get("srcuser")
             user_relation = "AUTHENTICATED_SOURCE_USER"
         elif raw_user:
@@ -235,6 +248,7 @@ class FortiGateSecurityCollector(BaseSecurityCollector):
         records_malformed = 0
         pages_retrieved = 0
         has_more = False
+        seen_event_ids: set[str] = set()
 
         # Try REST API if api_key is available
         if self.api_key:
@@ -254,37 +268,50 @@ class FortiGateSecurityCollector(BaseSecurityCollector):
                 for ep in endpoints:
                     if len(events) >= request.max_records or request.is_cancelled():
                         break
-                    pages_retrieved += 1
                     url = f"https://{self.host}{ep}"
-                    params = {
-                        "start": start_dt.strftime("%Y-%m-%d %H:%M:%S"),
-                        "end": end_dt.strftime("%Y-%m-%d %H:%M:%S"),
-                        "count": min(request.max_records - len(events), 100),
-                    }
-                    resp = requests.get(url, headers=headers, params=params, verify=False, timeout=self.timeout)
-                    if resp.status_code == 200:
-                        results = resp.json().get("results", [])
-                        records_fetched += len(results)
-                        for entry in results:
-                            line_str = str(entry) if not isinstance(entry, dict) else " ".join(f'{k}="{v}"' for k, v in entry.items())
-                            parsed = self.parse_log_line(line_str)
-                            if parsed:
-                                # Apply time range check
-                                if start_dt <= parsed.timestamp <= end_dt:
-                                    parsed.metadata["transport"] = "REST_API"
-                                    events.append(parsed)
-                                    records_parsed += 1
-                                    if len(events) >= request.max_records:
-                                        has_more = True
-                                        break
+                    offset = 0
+                    page_size = min(max(request.max_records, 100), 1000)
+                    while len(events) < request.max_records and not request.is_cancelled():
+                        pages_retrieved += 1
+                        params = {
+                            "start": start_dt.strftime("%Y-%m-%d %H:%M:%S"),
+                            "end": end_dt.strftime("%Y-%m-%d %H:%M:%S"),
+                            "count": page_size,
+                            "offset": offset,
+                        }
+                        resp = requests.get(url, headers=headers, params=params, verify=False, timeout=self.timeout)
+                        if resp.status_code == 200:
+                            payload = resp.json()
+                            results = payload.get("results", [])
+                            records_fetched += len(results)
+                            new_ids = 0
+                            for entry in results:
+                                line_str = str(entry) if not isinstance(entry, dict) else " ".join(f'{k}="{v}"' for k, v in entry.items())
+                                parsed = self.parse_log_line(line_str)
+                                if parsed:
+                                    if parsed.event_id in seen_event_ids:
+                                        continue
+                                    seen_event_ids.add(parsed.event_id)
+                                    new_ids += 1
+                                    if start_dt <= parsed.timestamp <= end_dt:
+                                        parsed.metadata["transport"] = "REST_API"
+                                        events.append(parsed)
+                                        records_parsed += 1
+                                        if len(events) >= request.max_records:
+                                            has_more = True
+                                            break
+                                    else:
+                                        records_ignored += 1
                                 else:
-                                    records_ignored += 1
-                            else:
-                                records_malformed += 1
-                    elif resp.status_code in (401, 403):
-                        raise PermissionError(f"FortiGate REST authentication failed: HTTP {resp.status_code}")
-                    else:
-                        logger.warning("FortiGate REST endpoint %s returned HTTP %d", ep, resp.status_code)
+                                    records_malformed += 1
+                            offset += len(results)
+                            if len(results) < page_size or not results or new_ids == 0:
+                                break
+                        elif resp.status_code in (401, 403):
+                            raise PermissionError(f"FortiGate REST authentication failed: HTTP {resp.status_code}")
+                        else:
+                            logger.warning("FortiGate REST endpoint %s returned HTTP %d", ep, resp.status_code)
+                            break
 
             except Exception as rest_exc:
                 if self.password:
@@ -320,9 +347,20 @@ class FortiGateSecurityCollector(BaseSecurityCollector):
                     ("WebFilter", "execute log filter category 3\n"),
                 ]
 
-                # Filter lines per view
-                view_lines = min(max(request.max_records // 2, 50), 200)
-                init_cmds = f"execute log filter device disk\nexecute log filter view-lines {view_lines}\n"
+                # FortiOS supports start-line pagination.  Scan a bounded raw
+                # history per category; otherwise the newest CLI page can be
+                # entirely outside the requested window and produce a false
+                # empty result.
+                view_lines = min(max(request.max_records, 100), 1000)
+                # Read enough history to cover the requested window without
+                # turning a high event cap into an unbounded CLI scan.
+                scan_limit = int(request.filters.get("fortigate_max_scan_lines", max(request.max_records * 2, 24000)))
+                scan_limit = min(max(scan_limit, view_lines), 250000)
+                init_cmds = (
+                    "execute log filter device disk\n"
+                    f"execute log filter view-lines {view_lines}\n"
+                    f"execute log filter max-checklines {scan_limit}\n"
+                )
                 shell.send(init_cmds)
                 time.sleep(1)
                 if shell.recv_ready():
@@ -331,37 +369,62 @@ class FortiGateSecurityCollector(BaseSecurityCollector):
                 for cat_name, cmd in categories:
                     if len(events) >= request.max_records or request.is_cancelled():
                         break
-                    pages_retrieved += 1
                     shell.send(cmd)
-                    shell.send("execute log display\n")
-                    time.sleep(2.0)
+                    start_line = 0
+                    category_seen: set[str] = set()
+                    while start_line < scan_limit and len(events) < request.max_records and not request.is_cancelled():
+                        pages_retrieved += 1
+                        shell.send(f"execute log filter start-line {start_line}\n")
+                        shell.send("execute log display\n")
+                        time.sleep(2.0)
 
-                    output = ""
-                    start_wait = time.time()
-                    while time.time() - start_wait < 3.0:
-                        if shell.recv_ready():
-                            chunk = shell.recv(65536).decode("utf-8", errors="ignore")
-                            output += chunk
-                        time.sleep(0.3)
+                        output = ""
+                        start_wait = time.time()
+                        while time.time() - start_wait < 3.0:
+                            if shell.recv_ready():
+                                chunk = shell.recv(65536).decode("utf-8", errors="ignore")
+                                output += chunk
+                            time.sleep(0.3)
 
-                    lines = [ln.strip() for ln in output.splitlines() if ln.strip() and "date=" in ln]
-                    records_fetched += len(lines)
-                    for line in lines:
-                        parsed = self.parse_log_line(line)
-                        if parsed:
-                            if start_dt <= parsed.timestamp <= end_dt:
-                                parsed.metadata["transport"] = "SSH_CLI"
-                                if fallback_occurred:
-                                    parsed.metadata["transport_fallback"] = True
-                                events.append(parsed)
-                                records_parsed += 1
-                                if len(events) >= request.max_records:
-                                    has_more = True
-                                    break
+                        lines = [ln.strip() for ln in output.splitlines() if ln.strip() and ("date=" in ln or "eventtime=" in ln)]
+                        fresh_lines = [line for line in lines if line not in category_seen]
+                        category_seen.update(fresh_lines)
+                        records_fetched += len(fresh_lines)
+                        if not fresh_lines:
+                            break
+
+                        page_timestamps: List[datetime] = []
+                        for line in fresh_lines:
+                            parsed = self.parse_log_line(line)
+                            if parsed:
+                                page_timestamps.append(parsed.timestamp)
+                                if parsed.event_id in seen_event_ids:
+                                    continue
+                                seen_event_ids.add(parsed.event_id)
+                                if start_dt <= parsed.timestamp <= end_dt:
+                                    parsed.metadata["transport"] = "SSH_CLI"
+                                    if fallback_occurred:
+                                        parsed.metadata["transport_fallback"] = True
+                                    events.append(parsed)
+                                    records_parsed += 1
+                                    if len(events) >= request.max_records:
+                                        has_more = True
+                                        break
+                                else:
+                                    records_ignored += 1
                             else:
-                                records_ignored += 1
-                        else:
-                            records_malformed += 1
+                                records_malformed += 1
+
+                        # FortiGate displays newest first.  Once a complete page
+                        # is older than the lower boundary, deeper pages cannot
+                        # contribute to this review.
+                        if page_timestamps and max(page_timestamps) < start_dt:
+                            break
+                        if len(lines) < view_lines:
+                            break
+                        start_line += view_lines
+                    if start_line >= scan_limit:
+                        has_more = True
 
             finally:
                 client.close()
@@ -377,7 +440,14 @@ class FortiGateSecurityCollector(BaseSecurityCollector):
                 }
 
         # Status and diagnostic code
-        if len(events) > 0:
+        if has_more:
+            status = CollectorStatus.WARNING
+            diag_code = "TRUNCATED_AT_LIMIT"
+            msg = (
+                f"FortiGate collection reached a bounded record or scan limit via {transport_used}; "
+                f"{len(events)} events were retained and coverage is partial."
+            )
+        elif len(events) > 0:
             status = CollectorStatus.SUCCESS
             diag_code = "OK"
             msg = f"Retrieved {len(events)} security events from FortiGate via {transport_used}."
@@ -386,9 +456,9 @@ class FortiGateSecurityCollector(BaseSecurityCollector):
             diag_code = "QUERY_EMPTY_ZERO_SOURCE"
             msg = f"FortiGate returned zero records for requested time window ({start_dt.isoformat()} to {end_dt.isoformat()})."
         elif records_ignored > 0 and records_parsed == 0:
-            status = CollectorStatus.SUCCESS
+            status = CollectorStatus.WARNING
             diag_code = "QUERY_EMPTY_FILTERED"
-            msg = f"FortiGate returned {records_fetched} records but all were outside requested time range or filters."
+            msg = f"FortiGate returned {records_fetched} records but none were usable in the requested time range or filters."
         elif records_malformed > 0 and records_parsed == 0:
             status = CollectorStatus.FAILED
             diag_code = "PARSE_ERROR"
@@ -403,7 +473,13 @@ class FortiGateSecurityCollector(BaseSecurityCollector):
             device_name=self.device_name,
             canonical_entity="fortigate_core",
             stage=DiagnosticStage.COMPLETE,
-            status=DiagnosticStatus.SUCCESS if status == CollectorStatus.SUCCESS else DiagnosticStatus.FAILED,
+            status=(
+                DiagnosticStatus.SUCCESS
+                if status == CollectorStatus.SUCCESS
+                else DiagnosticStatus.PARTIAL
+                if status == CollectorStatus.WARNING
+                else DiagnosticStatus.FAILED
+            ),
             diagnostic_code=diag_code,
             message=msg,
             requested_time_range=requested_time_range,

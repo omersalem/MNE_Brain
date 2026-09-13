@@ -3,6 +3,7 @@ Unit tests for SecurityReviewService, SecurityReviewJobManager, SecurityReviewRu
 Uses fake collectors and temporary storage to ensure no live network or infrastructure access.
 """
 
+import json
 import os
 import time
 from datetime import datetime, timezone
@@ -15,6 +16,7 @@ import jsonschema
 from core.connectors.security.models import (
     CollectorResult,
     CollectorStatus,
+    Incident,
     NormalizedSecurityEvent,
     SeverityLevel,
     ThreatCategory,
@@ -34,7 +36,21 @@ from core.security_review.contracts import (
 from core.security_review.incidents import IncidentStore
 from core.security_review.jobs import SecurityReviewJobManager
 from core.security_review.run_store import SecurityReviewRunStore
-from core.security_review.service import SecurityReviewService
+from core.security_review.service import SecurityReviewService, _record_limit_for_collector
+
+
+def test_adaptive_record_limits_prevent_legacy_daily_500_cap():
+    full = SecurityReviewRequest(mode=ReviewMode.FULL, collector_ids=["f5_bigip"])
+    assert _record_limit_for_collector(full, "f5_bigip") == 12000
+    assert _record_limit_for_collector(full, "fortigate_core") == 250000
+    assert _record_limit_for_collector(full, "cisco_fmc") == 10000
+
+    explicit = SecurityReviewRequest(
+        mode=ReviewMode.FULL,
+        collector_ids=["f5_bigip"],
+        max_records_per_collector=321,
+    )
+    assert _record_limit_for_collector(explicit, "f5_bigip") == 321
 
 
 class FakeCollector:
@@ -181,6 +197,7 @@ def test_service_successful_run(tmp_path):
         run_store=store,
         job_manager=jm,
         collector_registry=fake_registry,
+        config_mgr=SecurityAgentConfig(str(tmp_path / "config" / "security_agent_config.json")),
     )
 
     req = SecurityReviewRequest(
@@ -223,6 +240,7 @@ def test_service_partial_run_on_collector_failure(tmp_path):
         run_store=store,
         job_manager=jm,
         collector_registry=fake_registry,
+        config_mgr=SecurityAgentConfig(str(tmp_path / "config" / "security_agent_config.json")),
     )
 
     req = SecurityReviewRequest(
@@ -255,6 +273,7 @@ def test_service_cancellation(tmp_path):
         run_store=store,
         job_manager=jm,
         collector_registry=fake_registry,
+        config_mgr=SecurityAgentConfig(str(tmp_path / "config" / "security_agent_config.json")),
     )
 
     req = SecurityReviewRequest(
@@ -286,6 +305,7 @@ def test_service_targeted_retry(tmp_path):
         run_store=store,
         job_manager=jm,
         collector_registry=fake_registry,
+        config_mgr=SecurityAgentConfig(str(tmp_path / "config" / "security_agent_config.json")),
     )
 
     req = SecurityReviewRequest(
@@ -353,6 +373,7 @@ def test_cancellation_persists_telemetry(tmp_path):
         run_store=store,
         job_manager=jm,
         collector_registry=fake_registry,
+        config_mgr=SecurityAgentConfig(str(tmp_path / "config" / "security_agent_config.json")),
     )
 
     req = SecurityReviewRequest(
@@ -383,6 +404,7 @@ def test_correlation_error_handling(tmp_path, monkeypatch):
     svc = SecurityReviewService(
         run_store=store,
         collector_registry=fake_registry,
+        config_mgr=SecurityAgentConfig(str(tmp_path / "config" / "security_agent_config.json")),
     )
 
     # Monkeypatch risk_engine.process_events to raise an unexpected exception
@@ -400,6 +422,113 @@ def test_correlation_error_handling(tmp_path, monkeypatch):
 
     run = svc.start_review(req, async_run=False)
     assert run.state == RunState.PARTIAL
+    assert run.incident_counts_available is False
+    assert run.assessment_status == "UNAVAILABLE"
+    assert run.incident_counts["total"] == 0
     assert run.failure_summary is not None
     assert "Simulated crash in correlation engine" in run.failure_summary
 
+    report_data = json.loads((store.get_run_dir(run.run_id) / "reports" / "report.json").read_text(encoding="utf-8"))
+    assert report_data["incident_counts_available"] is False
+    assert report_data["assessment_status"] == "UNAVAILABLE"
+
+
+def test_reconciliation_error_preserves_current_run_incidents(tmp_path, monkeypatch):
+    store = SecurityReviewRunStore(tmp_path / "runs")
+    event = _make_fake_event("fg-preserve-1", "FortiGate")
+    incident = Incident(
+        incident_id="MNE-SEC-TEST-01",
+        title="Preserved correlated incident",
+        severity=SeverityLevel.HIGH,
+        source_device="FortiGate",
+        category=ThreatCategory.BRUTE_FORCE,
+        first_seen=event.timestamp,
+        last_seen=event.timestamp,
+        description="Correlation succeeded before lifecycle persistence failed.",
+        action_taken="BLOCKED",
+        event_count=1,
+        attacker_ip=event.attacker_ip,
+        target=event.target,
+        fingerprint="inc-preserve-test",
+    )
+
+    class StaticRiskEngine:
+        def process_events(self, events):
+            return [incident]
+
+    class NoopIdentityResolver:
+        def resolve_incident_identity(self, inc, events=None):
+            return None
+
+    def _fail_reconciliation(*args, **kwargs):
+        raise RuntimeError("simulated incident store schema failure")
+
+    monkeypatch.setattr(store, "record_run_incidents", _fail_reconciliation)
+    svc = SecurityReviewService(
+        run_store=store,
+        collector_registry={"fortigate_core": FakeCollector("FortiGate", [event])},
+        risk_engine=StaticRiskEngine(),
+        identity_resolver=NoopIdentityResolver(),
+        config_mgr=SecurityAgentConfig(str(tmp_path / "config" / "security_agent_config.json")),
+    )
+    req = SecurityReviewRequest(
+        mode=ReviewMode.QUICK,
+        collector_ids=["fortigate_core"],
+        hours_back=1,
+        send_email=False,
+        report_formats=[ReportFormat.JSON],
+    )
+
+    run = svc.start_review(req, async_run=False)
+
+    assert run.state == RunState.PARTIAL
+    assert run.incident_counts_available is True
+    assert run.assessment_status == "PARTIAL"
+    assert run.incident_counts["high"] == 1
+    assert len(store.get_incidents(run.run_id)) == 1
+    assert "current-run counts are preserved" in " ".join(run.warnings)
+
+
+def test_service_enforces_one_fixed_observation_window(tmp_path):
+    fixed_now = datetime(2026, 9, 12, 12, 0, tzinfo=timezone.utc)
+
+    def event_at(event_id, when):
+        return NormalizedSecurityEvent(
+            event_id=event_id,
+            timestamp=when,
+            source_device="FortiGate",
+            category=ThreatCategory.ANOMALY,
+            threat_name="Window test",
+            action_taken="ALERT",
+        )
+
+    events = [
+        event_at("before", datetime(2026, 9, 12, 10, 59, tzinfo=timezone.utc)),
+        event_at("inside", datetime(2026, 9, 12, 11, 30, tzinfo=timezone.utc)),
+        event_at("after", datetime(2026, 9, 12, 12, 1, tzinfo=timezone.utc)),
+    ]
+    store = SecurityReviewRunStore(tmp_path / "runs")
+    svc = SecurityReviewService(
+        run_store=store,
+        collector_registry={"fortigate_core": FakeCollector("FortiGate", events)},
+        clock=lambda: fixed_now,
+        config_mgr=SecurityAgentConfig(str(tmp_path / "config" / "security_agent_config.json")),
+    )
+    req = SecurityReviewRequest(
+        mode=ReviewMode.QUICK,
+        collector_ids=["fortigate_core"],
+        hours_back=1,
+        send_email=False,
+        report_formats=[ReportFormat.JSON],
+    )
+
+    run = svc.start_review(req, async_run=False)
+
+    assert run.state == RunState.PARTIAL
+    assert run.event_count == 1
+    assert run.observation_window["start"] == "2026-09-12T11:00:00+00:00"
+    assert run.observation_window["end"] == "2026-09-12T12:00:00+00:00"
+    assert run.observation_window["excluded_before_window"] == 1
+    assert run.observation_window["excluded_after_window"] == 1
+    assert [item["event_id"] for item in store.get_events(run.run_id)] == ["inside"]
+    assert run.collector_diagnostics["fortigate_core"]["status"] == "PARTIAL"

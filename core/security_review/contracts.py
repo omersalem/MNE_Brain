@@ -128,6 +128,7 @@ class SecurityReviewRequest:
         "sophos_email",
         "active_directory",
         "exchange_2019",
+        "fortiedr",
     ])
     hours_back: Optional[float] = 24.0
     start_time: Optional[str] = None
@@ -209,6 +210,7 @@ class SecurityReviewRequest:
                 "sophos_email",
                 "active_directory",
                 "exchange_2019",
+                "fortiedr",
             ]),
             hours_back=data.get("hours_back", 24.0) if "hours_back" in data else None,
             start_time=data.get("start_time"),
@@ -332,6 +334,12 @@ class SecurityReviewRun:
     incident_counts: Dict[str, int] = field(default_factory=lambda: {
         "total": 0, "critical": 0, "high": 0, "medium": 0, "low": 0, "info": 0
     })
+    incident_counts_available: bool = False
+    assessment_status: str = "PENDING"
+    assessment_message: str = "Security incident assessment has not completed."
+    evidence_warnings: List[str] = field(default_factory=list)
+    observation_window: Dict[str, Any] = field(default_factory=dict)
+    event_count: int = 0
     report_artifacts: Dict[str, Optional[str]] = field(default_factory=lambda: {
         "html": None, "pdf": None, "json": None, "csv": None
     })
@@ -352,6 +360,12 @@ class SecurityReviewRun:
             "completed_at": self.completed_at,
             "collector_diagnostics": dict(self.collector_diagnostics),
             "incident_counts": dict(self.incident_counts),
+            "incident_counts_available": bool(self.incident_counts_available),
+            "assessment_status": self.assessment_status,
+            "assessment_message": self.assessment_message,
+            "evidence_warnings": list(self.evidence_warnings),
+            "observation_window": dict(self.observation_window),
+            "event_count": max(0, int(self.event_count)),
             "report_artifacts": dict(self.report_artifacts),
             "email_result": self.email_result,
             "analysis_refs": list(self.analysis_refs),
@@ -378,6 +392,12 @@ class SecurityReviewRun:
             incident_counts=data.get("incident_counts", {
                 "total": 0, "critical": 0, "high": 0, "medium": 0, "low": 0, "info": 0
             }),
+            incident_counts_available=bool(data.get("incident_counts_available", False)),
+            assessment_status=data.get("assessment_status", "PENDING"),
+            assessment_message=data.get("assessment_message", "Security incident assessment has not completed."),
+            evidence_warnings=list(data.get("evidence_warnings", [])),
+            observation_window=dict(data.get("observation_window", {})),
+            event_count=int(data.get("event_count", 0)),
             report_artifacts=data.get("report_artifacts", {
                 "html": None, "pdf": None, "json": None, "csv": None
             }),

@@ -82,6 +82,7 @@ def test_run_security_pipeline_dry_run_with_fake_collectors(tmp_path):
         "sophos_email": FakeCollector("Sophos Email"),
         "active_directory": FakeCollector("Active Directory"),
         "exchange_2019": FakeCollector("Exchange"),
+        "fortiedr": FakeCollector("FortiEDR"),
     }
 
     svc = SecurityReviewService(
@@ -102,7 +103,7 @@ def test_run_security_pipeline_dry_run_with_fake_collectors(tmp_path):
     assert "html_report" in result
     assert "pdf_report" in result
     assert "incidents" in result
-    assert len(result["collectors"]) == 7
+    assert len(result["collectors"]) == 8
 
 
 def test_daily_job_execution(tmp_path):

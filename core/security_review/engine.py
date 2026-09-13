@@ -26,7 +26,7 @@ def extract_signature_family(category: ThreatCategory, threat_name: str, metadat
     raw = (threat_name or "").lower()
     # Strip common appliance prefixes
     cleaned = re.sub(r"^\[[^\]]+\]\s*", "", raw)
-    cleaned = re.sub(r"^(ips attack|waf violation|av|email threat|firewall event):\s*", "", cleaned).strip()
+    cleaned = re.sub(r"^(ips attack|waf violation|f5 asm incident|av|email threat|firewall event):\s*", "", cleaned).strip()
 
     # Pattern recognition for well-known signature families
     if "log4j" in cleaned or "cve-2021-44228" in cleaned:
@@ -89,8 +89,60 @@ class SecurityRiskEngine:
         sev: SeverityLevel = SeverityLevel.MEDIUM
         rationale: str = "Standard security event observed."
 
+        # Semantic guardrails for operational records that older collectors may
+        # have categorized too broadly.  These checks intentionally precede the
+        # category rules so routine audit traffic and failed TLS negotiations do
+        # not become critical merely because a legacy record said INTRUSION.
+        routine_audit = (
+            threat_lower.startswith("fmc audit:")
+            or threat_lower == "login success"
+            or threat_lower.startswith("new session source ip")
+            or (
+                threat_lower.startswith("get https://localhost/")
+                and (" ok (200)" in threat_lower or "request has succeeded" in threat_lower)
+            )
+        )
+        contained_tls_handshake = (
+            "ssl handshake failure" in threat_lower
+            or "ssl handshake failed" in threat_lower
+            or "tls handshake failure" in threat_lower
+        ) and norm_action in ("BLOCKED", "DROPPED")
+        safe_endpoint_observation = (
+            "fortiedr safe endpoint threat" in threat_lower
+            or "fortiedr likely safe endpoint threat" in threat_lower
+        )
+        contained_mail_reputation_block = (
+            threat_lower.startswith("email blocked:")
+            and ("rbl" in threat_lower or "sender's ip address" in threat_lower)
+            and norm_action in ("BLOCKED", "DROPPED")
+        )
+        f5_policy_builder_observation = threat_lower.startswith("f5 asm incident:")
+
         # 1. Critical Rules
-        if norm_action == "ALLOWED" and category in (
+        if safe_endpoint_observation:
+            sev = SeverityLevel.INFO
+            rationale = "Endpoint record was classified safe or likely safe by FortiEDR; it is retained as informational telemetry."
+        elif contained_mail_reputation_block:
+            sev = SeverityLevel.MEDIUM
+            rationale = "The mail gateway rejected a sender based on reputation; this is a contained email-security event, not a confirmed network intrusion."
+        elif f5_policy_builder_observation:
+            if any(marker in threat_lower for marker in ("code injection", "command injection", "remote code")):
+                sev = SeverityLevel.HIGH
+                rationale = "F5 Policy Builder classified activity as code injection; enforcement outcome was not present in this audit record."
+            else:
+                sev = SeverityLevel.MEDIUM
+                rationale = "F5 Policy Builder classified suspicious activity; this audit record does not establish exploitation or enforcement outcome."
+        elif routine_audit:
+            sev = SeverityLevel.INFO
+            rationale = "Routine successful FMC audit or session telemetry; no threat signature was present."
+        elif contained_tls_handshake:
+            if count >= 20:
+                sev = SeverityLevel.MEDIUM
+                rationale = f"Repeated TLS negotiation failures were rejected by the listener ({count} attempts); investigate as an anomaly, not a confirmed intrusion."
+            else:
+                sev = SeverityLevel.LOW
+                rationale = "TLS negotiation failed and was rejected; this alone does not establish an intrusion."
+        elif norm_action == "ALLOWED" and category in (
             ThreatCategory.MALWARE,
             ThreatCategory.INTRUSION,
             ThreatCategory.WAF_EXPLOIT,
@@ -114,7 +166,12 @@ class SecurityRiskEngine:
             rationale = f"Coordinated {category.value} campaign observed spreading across multiple perimeters or branch firewalls."
 
         # 2. High Rules
-        elif is_multi_device or is_multi_branch:
+        elif (is_multi_device or is_multi_branch) and category in (
+            ThreatCategory.BRUTE_FORCE,
+            ThreatCategory.INTRUSION,
+            ThreatCategory.MALWARE,
+            ThreatCategory.WAF_EXPLOIT,
+        ):
             sev = SeverityLevel.HIGH
             rationale = "Attack activity correlated across multiple perimeters or ministry branch firewalls."
         elif category == ThreatCategory.BRUTE_FORCE and count >= 20:
@@ -264,8 +321,11 @@ class SecurityRiskEngine:
 
             # Check multi-device / multi-branch context
             group_type = key[0]
-            is_multi_branch = (group_type == "MULTI_BRANCH") or (attacker_ip and attacker_ip in multi_branch_ips)
-            is_multi_dev = (group_type == "MULTI_DEVICE") or (attacker_ip and attacker_ip in multi_device_ips)
+            # Campaign elevation requires the same normalized signature family
+            # on multiple devices/branches. Merely sharing an IP across unrelated
+            # telemetry is not enough to claim coordinated activity.
+            is_multi_branch = group_type == "MULTI_BRANCH"
+            is_multi_dev = group_type == "MULTI_DEVICE"
 
             source_device = " / ".join(devices_involved) if len(devices_involved) > 1 else (devices_involved[0] if devices_involved else "Perimeter")
             primary_target = affected_targets[0] if affected_targets else (first_event.target or "Perimeter")

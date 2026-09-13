@@ -2,6 +2,7 @@ import pytest
 from datetime import datetime, timezone
 from core.connectors.security.fortianalyzer_collector import FortiAnalyzerSecurityCollector
 from core.connectors.security.models import CollectorStatus, ThreatCategory
+from core.security_review.config import SecurityAgentConfig
 
 _DUMMY_KEY = "dummy" + "-key"
 _FORBIDDEN_KEY = "invalid-or" + "-forbidden-key"
@@ -71,6 +72,7 @@ def test_faz_webfilter_block_parsing():
     assert event.action_taken == "DROPPED"
     assert "[FW-MNE-Nablus]" in event.threat_name
     assert "malicious-c2-portal.com" in event.threat_name
+    assert event.target == "malicious-c2-portal.com"
 
 
 def test_faz_vpn_fail_parsing():
@@ -717,7 +719,11 @@ def test_service_run_becoming_partial_when_faz_incomplete(tmp_path):
         "fortianalyzer": mock_faz,
     }
 
-    svc = SecurityReviewService(run_store=store, collector_registry=registry)
+    svc = SecurityReviewService(
+        run_store=store,
+        collector_registry=registry,
+        config_mgr=SecurityAgentConfig(str(tmp_path / "config" / "security_agent_config.json")),
+    )
     req = SecurityReviewRequest(
         mode=ReviewMode.QUICK,
         collector_ids=["fortigate_core", "fortianalyzer"],

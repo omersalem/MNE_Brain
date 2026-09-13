@@ -55,6 +55,35 @@ def test_fmc_security_intelligence_parsing():
     assert event.action_taken == "BLOCKED"
 
 
+def test_fmc_fully_qualified_intrusion_event_parsing():
+    sample_fqe_item = {
+        "IntrusionEvent": {
+            "EventID": "fqe-101",
+            "EventSecond": 1788680000,
+            "InitiatorIP": "45.155.205.233",
+            "ResponderIP": "172.23.200.2",
+            "IntrusionRuleMessage": "SERVER-WEBAPP Apache exploit attempt",
+            "Classification": "Attempted Administrator Privilege Gain",
+            "Impact": "Impact 1",
+            "InlineResult": "Dropped",
+            "Device": "FTD-Main",
+        }
+    }
+
+    event = FmcSecurityCollector().parse_fmc_event(sample_fqe_item)
+
+    assert event.event_id == "fmc-fqe-101"
+    assert event.timestamp == datetime.fromtimestamp(1788680000, tz=timezone.utc)
+    assert event.attacker_ip == "45.155.205.233"
+    assert event.target == "172.23.200.2"
+    assert event.threat_name == "SERVER-WEBAPP Apache exploit attempt"
+    assert event.action_taken == "BLOCKED"
+    assert event.metadata["classification"] == "Attempted Administrator Privilege Gain"
+    assert event.metadata["impact"] == "Impact 1"
+    assert event.metadata["managed_device"] == "FTD-Main"
+    assert event.metadata["estreamer_event_type"] == "IntrusionEvent"
+
+
 def test_fmc_domain_discovery_and_pagination(monkeypatch):
     monkeypatch.setenv("MNE_FMC_CREDENTIAL_REF", "fixture-auth-token")
     auth_credential = os.environ["MNE_FMC_CREDENTIAL_REF"]
@@ -81,10 +110,10 @@ def test_fmc_domain_discovery_and_pagination(monkeypatch):
 
     with patch("requests.post", return_value=auth_resp), patch("requests.get", return_value=q_resp):
         result = collector.collect_logs(request=req)
-        assert result.status == CollectorStatus.SUCCESS
+        assert result.status == CollectorStatus.WARNING
         assert len(result.events) == 2
         assert result.diagnostic.pagination["has_more"] is True
-        assert result.diagnostic.diagnostic_code == "OK"
+        assert result.diagnostic.diagnostic_code == "TRUNCATED_AT_LIMIT"
         assert "domain-uuid-xyz" in result.diagnostic.source_queried
 
 
@@ -127,8 +156,10 @@ def test_fmc_partial_diagnostics_on_rejected_endpoint(monkeypatch):
         assert "securityintelligenceevents" in result.diagnostic.message
 
 
-def test_fmc_complete_status_when_optional_stream_unsupported_404(monkeypatch):
+def test_fmc_partial_status_when_threat_stream_unsupported_404(monkeypatch):
     monkeypatch.setenv("MNE_FMC_CREDENTIAL_REF", "fixture-auth-token")
+    monkeypatch.setenv("MNE_FMC_ESTREAMER_JSONL_PATH", "")
+    monkeypatch.setenv("MNE_FMC_ESTREAMER_HEALTH_PATH", "")
     auth_credential = os.environ["MNE_FMC_CREDENTIAL_REF"]
     collector = FmcSecurityCollector(host="172.23.70.77", password=auth_credential, domain_uuid="domain-uuid-xyz")
     req = CollectorRequest(
@@ -159,10 +190,128 @@ def test_fmc_complete_status_when_optional_stream_unsupported_404(monkeypatch):
 
     with patch("requests.post", return_value=auth_resp), patch("requests.get", side_effect=get_side_effect):
         result = collector.collect_logs(request=req)
-        assert result.status == CollectorStatus.SUCCESS
-        assert result.diagnostic.status == DiagnosticStatus.SUCCESS
+        assert result.status == CollectorStatus.WARNING
+        assert result.diagnostic.status == DiagnosticStatus.PARTIAL
         assert len(result.events) >= 1
-        assert result.diagnostic.diagnostic_code == "OK"
+        assert result.diagnostic.diagnostic_code == "THREAT_STREAMS_UNAVAILABLE"
+        assert result.diagnostic.pagination["threat_stream_available"] is False
+
+
+def test_fmc_estreamer_spool_restores_threat_stream_coverage(monkeypatch, tmp_path):
+    monkeypatch.setenv("MNE_FMC_CREDENTIAL_REF", "fixture-auth-token")
+    spool = tmp_path / "fmc-estreamer.jsonl"
+    spool.write_text(
+        '{"id":"stream-1","timestamp":1788680000,"sourceIp":"1.1.1.1",'
+        '"destinationIp":"2.2.2.2","ruleMessage":"Intrusion event","action":"block"}\n',
+        encoding="utf-8",
+    )
+    collector = FmcSecurityCollector(
+        host="172.23.70.77",
+        password=os.environ["MNE_FMC_CREDENTIAL_REF"],
+        domain_uuid="domain-uuid-xyz",
+        estreamer_jsonl_path=str(spool),
+    )
+    req = CollectorRequest(
+        start_time="2026-09-01T00:00:00Z",
+        end_time="2026-09-10T00:00:00Z",
+        max_records=5,
+    )
+    auth_resp = MagicMock(status_code=200, headers={"X-auth-access-token": "test-fmc-tok"})
+    unsupported = MagicMock(status_code=404)
+    audit = MagicMock(status_code=200)
+    audit.json.return_value = {"items": []}
+
+    def get_side_effect(url, **kwargs):
+        return unsupported if "intrusionevents" in url or "securityintelligenceevents" in url else audit
+
+    with patch("requests.post", return_value=auth_resp), patch("requests.get", side_effect=get_side_effect):
+        result = collector.collect_logs(request=req)
+
+    assert result.status == CollectorStatus.SUCCESS
+    assert len(result.events) == 1
+    assert result.events[0].metadata["transport"] == "ESTREAMER_JSONL_SPOOL"
+    assert result.diagnostic.pagination["threat_stream_available"] is True
+
+
+def test_fmc_empty_estreamer_spool_is_not_healthy_threat_stream(monkeypatch, tmp_path):
+    monkeypatch.setenv("MNE_FMC_CREDENTIAL_REF", "fixture-auth-token")
+    spool = tmp_path / "fmc-estreamer.jsonl"
+    spool.write_text("", encoding="utf-8")
+    collector = FmcSecurityCollector(
+        host="172.23.70.77",
+        password=os.environ["MNE_FMC_CREDENTIAL_REF"],
+        domain_uuid="domain-uuid-xyz",
+        estreamer_jsonl_path=str(spool),
+    )
+    req = CollectorRequest(
+        start_time="2026-09-01T00:00:00Z",
+        end_time="2026-09-10T00:00:00Z",
+        max_records=5,
+    )
+    auth_resp = MagicMock(status_code=200, headers={"X-auth-access-token": "test-fmc-tok"})
+    unsupported = MagicMock(status_code=404)
+    audit = MagicMock(status_code=200)
+    audit.json.return_value = {"items": []}
+
+    def get_side_effect(url, **kwargs):
+        return unsupported if "intrusionevents" in url or "securityintelligenceevents" in url else audit
+
+    with patch("requests.post", return_value=auth_resp), patch("requests.get", side_effect=get_side_effect):
+        result = collector.collect_logs(request=req)
+
+    assert result.status == CollectorStatus.WARNING
+    assert result.diagnostic.diagnostic_code == "THREAT_STREAMS_UNAVAILABLE"
+    assert result.diagnostic.pagination["endpoint_diagnostics"]["estreamer"]["status"] == "EMPTY"
+    assert result.diagnostic.pagination["threat_stream_available"] is False
+
+
+def test_fmc_rotated_estreamer_spool_files_are_loaded(monkeypatch, tmp_path):
+    monkeypatch.setenv("MNE_FMC_CREDENTIAL_REF", "fixture-auth-token")
+    active = tmp_path / "events.jsonl"
+    archive = tmp_path / "events-20260912T070000000Z.jsonl"
+    record_template = (
+        '{{"id":"{event_id}","timestamp":1788680000,"sourceIp":"1.1.1.1",'
+        '"destinationIp":"2.2.2.2","ruleMessage":"Intrusion event","action":"block"}}\n'
+    )
+    archive.write_text(record_template.format(event_id="stream-archive"), encoding="utf-8")
+    active.write_text(record_template.format(event_id="stream-active"), encoding="utf-8")
+    collector = FmcSecurityCollector(
+        host="172.23.70.77",
+        password=os.environ["MNE_FMC_CREDENTIAL_REF"],
+        domain_uuid="domain-uuid-xyz",
+        estreamer_jsonl_path=str(active),
+    )
+    req = CollectorRequest(
+        start_time="2026-09-01T00:00:00Z",
+        end_time="2026-09-10T00:00:00Z",
+        max_records=5,
+    )
+    auth_resp = MagicMock(status_code=200, headers={"X-auth-access-token": "test-fmc-tok"})
+    unsupported = MagicMock(status_code=404)
+    audit = MagicMock(status_code=200)
+    audit.json.return_value = {"items": []}
+
+    def get_side_effect(url, **kwargs):
+        return unsupported if "intrusionevents" in url or "securityintelligenceevents" in url else audit
+
+    with patch("requests.post", return_value=auth_resp), patch("requests.get", side_effect=get_side_effect):
+        result = collector.collect_logs(request=req)
+
+    assert result.status == CollectorStatus.SUCCESS
+    assert {event.event_id for event in result.events} == {"fmc-stream-archive", "fmc-stream-active"}
+    assert result.diagnostic.pagination["endpoint_diagnostics"]["estreamer"]["records_fetched"] == 2
+
+
+def test_fmc_successful_api_audit_is_operational_telemetry():
+    event = FmcSecurityCollector().parse_fmc_event({
+        "auditId": "audit-1",
+        "subSystem": "API",
+        "message": "GET https://localhost/api/local/fmc_platform/v1/info/domain OK (200) - The request has succeeded",
+        "timestamp": 1788680000,
+    })
+    assert event.category == ThreatCategory.SYSTEM_HEALTH
+    assert event.action_taken == "ALLOWED"
+    assert event.threat_name.startswith("FMC Audit:")
 
 
 def test_sophos_email_quarantine_parsing():

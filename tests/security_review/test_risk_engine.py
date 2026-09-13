@@ -77,9 +77,8 @@ def test_cross_device_attack_correlation():
     incidents = engine.process_events([ev1, ev2])
     correlated = [inc for inc in incidents if inc.attacker_ip == attacker]
     assert len(correlated) >= 1
-    # Check that multi-vector flag or elevated severity is present
-    multi_device_notes = [inc for inc in correlated if "Multi-Device" in inc.title or inc.event_count >= 2]
-    assert len(multi_device_notes) > 0
+    # Different signature families must not be described as one coordinated campaign.
+    assert all("Multi-Device" not in inc.title for inc in correlated)
 
 
 def test_multi_branch_attack_correlation():
@@ -286,3 +285,83 @@ def test_low_and_info_severity_support():
     sev_map = {inc.title: inc.severity for inc in incidents}
     assert any(sev == SeverityLevel.LOW for sev in sev_map.values())
     assert any(sev == SeverityLevel.INFO for sev in sev_map.values())
+
+
+def test_contained_tls_handshake_failure_is_not_high_risk_intrusion():
+    event = NormalizedSecurityEvent(
+        event_id="f5-legacy-1",
+        timestamp=datetime.now(timezone.utc),
+        source_device="F5 BIG-IP",
+        category=ThreatCategory.INTRUSION,  # legacy stored classification
+        threat_name="SSL Handshake Failure from 203.0.113.8",
+        attacker_ip="203.0.113.8",
+        target="172.23.10.10",
+        action_taken="DROPPED",
+    )
+    incident = SecurityRiskEngine().process_events([event])[0]
+    assert incident.severity == SeverityLevel.LOW
+    assert "does not establish an intrusion" in incident.severity_rationale
+
+
+def test_successful_fmc_audit_is_informational_even_for_legacy_category():
+    event = NormalizedSecurityEvent(
+        event_id="fmc-legacy-1",
+        timestamp=datetime.now(timezone.utc),
+        source_device="Cisco FMC",
+        category=ThreatCategory.INTRUSION,
+        threat_name="GET https://localhost/api/local/fmc_platform/v1/info/domain OK (200) - The request has succeeded",
+        action_taken="ALERT",
+    )
+    incident = SecurityRiskEngine().process_events([event])[0]
+    assert incident.severity == SeverityLevel.INFO
+
+
+def test_legacy_fortiedr_safe_record_is_informational():
+    event = NormalizedSecurityEvent(
+        event_id="edr-legacy-safe",
+        timestamp=datetime.now(timezone.utc),
+        source_device="FortiEDR",
+        category=ThreatCategory.MALWARE,
+        threat_name="FortiEDR Safe Endpoint Threat #123",
+        action_taken="BLOCKED",
+    )
+    incident = SecurityRiskEngine().process_events([event])[0]
+    assert incident.severity == SeverityLevel.INFO
+
+
+def test_legacy_rbl_rejection_is_contained_email_risk():
+    event = NormalizedSecurityEvent(
+        event_id="sophos-legacy-rbl",
+        timestamp=datetime.now(timezone.utc),
+        source_device="Sophos Email",
+        category=ThreatCategory.INTRUSION,
+        threat_name="Email Blocked: An RBL has blocked the sender's IP address. (From: example@example.test)",
+        action_taken="DROPPED",
+    )
+    incident = SecurityRiskEngine().process_events([event])[0]
+    assert incident.severity == SeverityLevel.MEDIUM
+
+
+def test_f5_policy_builder_classifications_use_evidence_bounded_severity():
+    now = datetime.now(timezone.utc)
+    scan = NormalizedSecurityEvent(
+        event_id="f5-pb-scan",
+        timestamp=now,
+        source_device="F5 BIG-IP",
+        category=ThreatCategory.WAF_EXPLOIT,
+        threat_name="F5 ASM Incident: Malicious Scan",
+        action_taken="ALERT",
+    )
+    code = NormalizedSecurityEvent(
+        event_id="f5-pb-code",
+        timestamp=now,
+        source_device="F5 BIG-IP",
+        category=ThreatCategory.WAF_EXPLOIT,
+        threat_name="F5 ASM Incident: Server Side Code Injection",
+        action_taken="ALERT",
+    )
+    incidents = SecurityRiskEngine().process_events([scan, code])
+    by_title = {i.title: i for i in incidents}
+    assert by_title["F5 ASM Incident: Malicious Scan"].severity == SeverityLevel.MEDIUM
+    assert by_title["F5 ASM Incident: Server Side Code Injection"].severity == SeverityLevel.HIGH
+    assert len(incidents) == 2

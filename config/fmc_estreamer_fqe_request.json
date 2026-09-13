@@ -1,0 +1,45 @@
+{
+  "Events": {
+    "ConnectionEvent": {
+      "FieldSetDef": {
+        "OutputFieldSet": [
+          "HeaderFieldSet",
+          "ConnectionKeySet",
+          "DetailFieldSet"
+        ]
+      },
+      "Fields": [
+        "OutputFieldSet"
+      ]
+    },
+    "IntrusionEvent": {
+      "FieldSetDef": {
+        "OutputFieldSet": [
+          "HeaderFieldSet",
+          "ConnectionKeySet",
+          "DetailFieldSet",
+          "Impact"
+        ]
+      },
+      "Fields": [
+        "OutputFieldSet"
+      ]
+    },
+    "FileEvent": {
+      "FieldSetDef": {
+        "OutputFieldSet": [
+          "HeaderFieldSet",
+          "ConnectionKeySet",
+          "DetailFieldSet"
+        ]
+      },
+      "Fields": [
+        "OutputFieldSet"
+      ]
+    }
+  },
+  "OutputFormat": {
+    "Transform": "Text",
+    "TransformConfig": "JSON"
+  }
+}

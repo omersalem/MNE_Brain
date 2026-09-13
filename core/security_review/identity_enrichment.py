@@ -175,6 +175,16 @@ class AttributionEvidenceSource:
     def __post_init__(self) -> None:
         if self.freshness not in ("CURRENT", "HISTORICAL", "STALE", "UNKNOWN"):
             self.freshness = "HISTORICAL" if "HISTORICAL" in str(self.freshness).upper() else "CURRENT"
+        allowed_statuses = {
+            "SUCCESS", "NO_MATCH", "NOT_CONFIGURED", "NOT_AUTHORIZED",
+            "UNREACHABLE", "AUTHENTICATION_FAILED", "QUERY_TIMEOUT",
+            "SKIPPED_DEADLINE", "STALE_RESULT", "AMBIGUOUS",
+            "MALFORMED_RESPONSE", "FAILED",
+        }
+        if self.result_status == "PARTIAL":
+            self.result_status = "SUCCESS" if self.matched_fields else "NO_MATCH"
+        elif self.result_status not in allowed_statuses:
+            self.result_status = "FAILED"
 
     def to_dict(self) -> Dict[str, Any]:
         return asdict(self)
@@ -264,6 +274,21 @@ class AttackerAttribution:
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> AttackerAttribution:
+        normalized_evidence_sources = []
+        for item in data.get("evidence_sources", []):
+            if not isinstance(item, dict):
+                continue
+            normalized_evidence_sources.append(AttributionEvidenceSource(
+                source_type=str(item.get("source_type", "UNKNOWN")),
+                source_entity_or_binding_id=str(item.get("source_entity_or_binding_id", "")),
+                matched_fields=list(item.get("matched_fields", [])),
+                observation_time=item.get("observation_time"),
+                event_time_distance_seconds=item.get("event_time_distance_seconds"),
+                freshness=str(item.get("freshness", "UNKNOWN")),
+                evidence_reference=str(item.get("evidence_reference", "")),
+                result_status=str(item.get("result_status", "FAILED")),
+            ).to_dict())
+
         return cls(
             ip_address=data.get("ip_address", ""),
             network_scope=data.get("network_scope", "UNKNOWN"),
@@ -286,7 +311,7 @@ class AttackerAttribution:
             incident_time_match=data.get("incident_time_match", "UNKNOWN"),
             sources_queried=list(data.get("sources_queried", [])),
             successful_sources=list(data.get("successful_sources", [])),
-            evidence_sources=list(data.get("evidence_sources", [])),
+            evidence_sources=normalized_evidence_sources,
             candidates=list(data.get("candidates", [])),
             attribution_history=list(data.get("attribution_history", [])),
             diagnostics=list(data.get("diagnostics", [])),

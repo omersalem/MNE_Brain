@@ -983,7 +983,7 @@
       </div>
       <div class="meta-item">
         <span class="meta-label">Observation Window:</span>
-        <span class="meta-val">Past 24 Hours</span>
+        <span class="meta-val">{{ observation_window_label }}</span>
       </div>
       <div class="meta-item">
         <span class="meta-label">Run ID:</span>
@@ -1006,8 +1006,9 @@
     <div class="ratio-bar-wrap">
       <div class="ratio-bar-label">
         <span>Risk Distribution</span>
-        <span>{{ total_incidents }} Incidents</span>
+        <span>{% if incident_counts_available %}{{ total_incidents }} Incidents{% else %}Incident totals unavailable{% endif %}</span>
       </div>
+      {% if incident_counts_available %}
       <div class="ratio-bar">
         {% set tot = total_incidents if total_incidents > 0 else 1 %}
         <div class="ratio-seg seg-crit" style="width: {{ (critical_count / tot * 100)|round(1) }}%;" title="Critical: {{ critical_count }}"></div>
@@ -1015,38 +1016,49 @@
         <div class="ratio-seg seg-med" style="width: {{ (medium_count / tot * 100)|round(1) }}%;" title="Medium: {{ medium_count }}"></div>
         <div class="ratio-seg seg-low" style="width: {{ (low_count / tot * 100)|round(1) }}%;" title="Low: {{ low_count }}"></div>
       </div>
+      {% endif %}
     </div>
+  </section>
+
+  <section class="empty-state" style="margin: 14px 0; text-align: left; border-color: {% if assessment_status == 'COMPLETE' %}#86efac{% else %}#fbbf24{% endif %};">
+    <strong>Evidence status: {{ assessment_status }}</strong><br>
+    {{ assessment_message }}
+    {% if evidence_warnings %}
+    <ul style="margin: 8px 0 0 20px;">
+      {% for warning in evidence_warnings %}<li>{{ warning }}</li>{% endfor %}
+    </ul>
+    {% endif %}
   </section>
 
   <!-- KPI Cards Grid -->
   <section class="kpi-container">
     <div class="kpi-card kpi-crit">
       <div class="kpi-card-header">
-        <span class="kpi-title">Critical Threats</span>
+        <span class="kpi-title">Critical Findings</span>
       </div>
-      <div class="kpi-num">{{ critical_count }}</div>
-      <div class="kpi-subtext">Immediate containment required</div>
+      <div class="kpi-num">{% if incident_counts_available %}{{ critical_count }}{% else %}N/A{% endif %}</div>
+      <div class="kpi-subtext">Validate and respond</div>
     </div>
 
     <div class="kpi-card kpi-high">
       <div class="kpi-card-header">
-        <span class="kpi-title">High Severity Risks</span>
+        <span class="kpi-title">High-Priority Findings</span>
       </div>
-      <div class="kpi-num">{{ high_count }}</div>
-      <div class="kpi-subtext">Active perimeter/auth attacks</div>
+      <div class="kpi-num">{% if incident_counts_available %}{{ high_count }}{% else %}N/A{% endif %}</div>
+      <div class="kpi-subtext">Observed evidence requiring review</div>
     </div>
 
     <div class="kpi-card kpi-med">
       <div class="kpi-card-header">
-        <span class="kpi-title">Medium Anomalies</span>
+        <span class="kpi-title">Medium Findings</span>
       </div>
-      <div class="kpi-num">{{ medium_count }}</div>
+      <div class="kpi-num">{% if incident_counts_available %}{{ medium_count }}{% else %}N/A{% endif %}</div>
       <div class="kpi-subtext">Policy &amp; threshold exceptions</div>
     </div>
 
     <div class="kpi-card kpi-info">
       <div class="kpi-card-header">
-        <span class="kpi-title">Total Attack Events</span>
+        <span class="kpi-title">Accepted Security Records</span>
       </div>
       <div class="kpi-num">{{ total_events }}</div>
       <div class="kpi-subtext">Aggregated security signals</div>
@@ -1054,10 +1066,10 @@
 
     <div class="kpi-card kpi-ok">
       <div class="kpi-card-header">
-        <span class="kpi-title">Sensors Monitored</span>
+        <span class="kpi-title">Collectors Responded</span>
       </div>
       <div class="kpi-num">{{ online_collectors_count }}/{{ total_collectors_count }}</div>
-      <div class="kpi-subtext">Log feeds operational</div>
+      <div class="kpi-subtext">Transport response, not complete coverage</div>
     </div>
   </section>
 
@@ -1126,7 +1138,7 @@
           </table>
         </div>
         {% else %}
-        <div class="empty-state" style="padding: 20px;">No external attacking entities detected.</div>
+        <div class="empty-state" style="padding: 20px;">No attributable source IPs were present in the qualifying records.</div>
         {% endif %}
       </div>
 
@@ -1199,7 +1211,7 @@
 
     <!-- Section 4: Detailed Incident Dossiers -->
     <div class="section-header">
-      <div class="section-title">Comprehensive Incident Dossiers &amp; Containment Playbooks</div>
+      <div class="section-title">Evidence Findings &amp; Read-Only Triage Guidance</div>
       <span class="section-badge">{{ total_incidents }} Incidents</span>
     </div>
 
@@ -1220,9 +1232,13 @@
       </div>
     </div>
 
-    {% if not incidents %}
+    {% if not incidents and not incident_counts_available %}
     <div class="empty-state">
-      &#10004; Zero Critical, High, or Medium security incidents identified during the past 24-hour observation window.
+      Incident assessment unavailable. The displayed zero values must not be interpreted as an absence of threats.
+    </div>
+    {% elif not incidents %}
+    <div class="empty-state">
+      No qualifying incidents were produced from the accepted telemetry. This conclusion applies only to the stated observation window and collector coverage.
     </div>
     {% endif %}
 

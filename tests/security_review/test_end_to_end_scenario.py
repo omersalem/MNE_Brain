@@ -26,6 +26,7 @@ from core.connectors.security.models import (
 )
 from core.security_review.analysis_compare import compare_analyses
 from core.security_review.analysis_pack import SecurityAnalysisPackBuilder
+from core.security_review.config import SecurityAgentConfig
 from core.security_review.contracts import (
     AnalysisEngine,
     ReportFormat,
@@ -141,6 +142,7 @@ def test_full_security_review_end_to_end_scenario(tmp_path):
         run_store=run_store,
         job_manager=job_manager,
         collector_registry=registry,
+        config_mgr=SecurityAgentConfig(str(tmp_path / "config" / "security_agent_config.json")),
     )
 
     # 3. Execution of Run 1 (Partial due to Exchange failure)

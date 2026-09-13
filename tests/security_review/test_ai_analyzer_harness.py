@@ -13,6 +13,7 @@ from __future__ import annotations
 import json
 import threading
 import time
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 from unittest.mock import MagicMock
@@ -28,6 +29,7 @@ from core.connectors.security.models import (
     ThreatCategory,
 )
 from core.security_review.ai_analyzer import SecurityAIAnalyzer
+from core.security_review.config import SecurityAgentConfig
 from core.security_review.contracts import (
     AnalysisEngine,
     ReviewMode,
@@ -308,7 +310,7 @@ def test_service_run_review_wires_analysis_engine(tmp_path):
         events=[
             NormalizedSecurityEvent(
                 event_id="evt-01",
-                timestamp="2026-09-09T12:00:00+00:00",
+                timestamp=datetime.now(timezone.utc) - timedelta(minutes=1),
                 source_device="fw-fortigate-edge-01",
                 category=ThreatCategory.BRUTE_FORCE,
                 threat_name="SSH Attack",
@@ -326,7 +328,13 @@ def test_service_run_review_wires_analysis_engine(tmp_path):
         run_store=store,
         codex_invoker=lambda p, k: fake_out,
     )
-    service = SecurityReviewService(run_store=store, collector_registry=registry, ai_analyzer=analyzer)
+    config_mgr = SecurityAgentConfig(config_path=str(tmp_path / "security_agent_config.json"))
+    service = SecurityReviewService(
+        run_store=store,
+        collector_registry=registry,
+        ai_analyzer=analyzer,
+        config_mgr=config_mgr,
+    )
 
     req = SecurityReviewRequest(
         mode=ReviewMode.QUICK,

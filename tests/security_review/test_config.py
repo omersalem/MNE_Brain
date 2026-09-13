@@ -92,7 +92,7 @@ def test_config_device_catalog():
     cfg = SecurityAgentConfig()
     devices = cfg.get_device_catalog()
 
-    assert len(devices) == 7
+    assert len(devices) == 8
     names = [d["name"] for d in devices]
     assert "FortiGate Core Firewall" in names
     assert "FortiAnalyzer Central Log Analyzer" in names
@@ -101,3 +101,4 @@ def test_config_device_catalog():
     assert "Sophos Email Protection" in names
     assert "Active Directory Domain Controller" in names
     assert "Exchange 2019 CAS/Mailbox" in names
+    assert "FortiEDR Cloud Central Manager" in names
