@@ -2,6 +2,8 @@ bind_host: 127.0.0.1
 bind_port: 8080
 owner_session:
   cookie_name: mne_owner_session
+  allowed_loopback_hostnames:
+    - mne-brain.local
   username_ref: MNE_OWNER_USERNAME
   password_hash_ref: MNE_OWNER_PASSWORD_HASH
   inactivity_seconds: 1800
@@ -40,4 +42,3 @@ execution:
 conversation_storage:
   persist_locally: true
   storage_path: "operations/conversations"
-

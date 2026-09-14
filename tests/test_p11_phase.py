@@ -172,6 +172,29 @@ def test_owner_session_rejects_non_loopback_and_cross_origin():
         manager.create(client_host="127.0.0.1", host_header="localhost:8080", origin_header="http://localhost:9999")
 
 
+def test_owner_session_accepts_only_explicit_loopback_alias_with_exact_origin():
+    manager = OwnerSessionManager(allowed_loopback_hostnames=["mne-brain.local"])
+    payload, cookie = manager.create(
+        client_host="127.0.0.1",
+        host_header="mne-brain.local:8080",
+        origin_header="http://mne-brain.local:8080",
+    )
+    assert payload["status"] == "OWNER_SESSION_ACTIVE"
+    assert "HttpOnly" in cookie
+    with pytest.raises(OwnerSessionError, match="loopback same-origin"):
+        manager.create(
+            client_host="127.0.0.1",
+            host_header="untrusted.local:8080",
+            origin_header="http://untrusted.local:8080",
+        )
+    with pytest.raises(OwnerSessionError, match="loopback same-origin"):
+        manager.create(
+            client_host="127.0.0.1",
+            host_header="mne-brain.local:8080",
+            origin_header="http://mne-brain.local:9999",
+        )
+
+
 def test_owner_password_login_is_hashed_limited_and_logout_revokes_session():
     clock = [1000.0]
     owner_candidate = "correct horse battery staple"

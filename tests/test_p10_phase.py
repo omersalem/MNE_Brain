@@ -428,6 +428,27 @@ def test_local_api_csrf_replay_and_remote_owner_boundaries():
         context.authorize_mutation(client_host="127.0.0.1", csrf_token=context.csrf_token, nonce="offline_nonce_0004", host_header="attacker.invalid", origin_header="https://attacker.invalid")
 
 
+def test_local_api_accepts_only_configured_loopback_alias():
+    context = P10LocalAPIContext(
+        P10ExecutionEngine(BASE), allowed_loopback_hostnames=["mne-brain.local"]
+    )
+    context.authorize_mutation(
+        client_host="127.0.0.1",
+        csrf_token=context.csrf_token,
+        nonce="offline_alias_nonce_0001",
+        host_header="mne-brain.local:8080",
+        origin_header="http://mne-brain.local:8080",
+    )
+    with pytest.raises(P10SafetyError, match="same-origin"):
+        context.authorize_mutation(
+            client_host="127.0.0.1",
+            csrf_token=context.csrf_token,
+            nonce="offline_alias_nonce_0002",
+            host_header="untrusted.local:8080",
+            origin_header="http://untrusted.local:8080",
+        )
+
+
 def test_in_memory_audit_zero_enterprise_side_effects_and_no_live_connections(tmp_path):
     driver = SimulatedP10WriteDriver()
     engine = P10ExecutionEngine(BASE, execution_enabled=True, driver=driver)

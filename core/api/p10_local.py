@@ -11,18 +11,26 @@ from core.execution.p10_engine import P10ExecutionEngine, P10SafetyError
 
 
 class P10LocalAPIContext:
-    def __init__(self, engine: P10ExecutionEngine):
+    def __init__(self, engine: P10ExecutionEngine, *, allowed_loopback_hostnames: list[str] | None = None):
         self.engine = engine
         self.csrf_token = secrets.token_urlsafe(32)
         self._nonces: set[str] = set()
         self._lock = threading.Lock()
+        self.allowed_loopback_hostnames = {
+            str(item).strip().lower().rstrip(".")
+            for item in (allowed_loopback_hostnames or [])
+            if str(item).strip()
+        }
 
     @staticmethod
     def is_local(client_host: str) -> bool:
         return client_host in {"127.0.0.1", "::1", "localhost"} or client_host.startswith("127.")
 
-    @classmethod
-    def is_same_origin_loopback(cls, host_header: Any, origin_header: Any) -> bool:
+    def _is_allowed_request_host(self, hostname: str) -> bool:
+        candidate = str(hostname or "").strip().lower().rstrip(".")
+        return self.is_local(candidate) or candidate in self.allowed_loopback_hostnames
+
+    def is_same_origin_loopback(self, host_header: Any, origin_header: Any) -> bool:
         if not isinstance(host_header, str) or not host_header:
             return False
         host_text = host_header.strip()
@@ -30,7 +38,7 @@ class P10LocalAPIContext:
             hostname = host_text[1:host_text.find("]")]
         else:
             hostname = host_text.split(":", 1)[0]
-        if not cls.is_local(hostname):
+        if not self._is_allowed_request_host(hostname):
             return False
         if origin_header in (None, ""):
             return True
@@ -38,7 +46,7 @@ class P10LocalAPIContext:
             origin_host = urllib.parse.urlparse(str(origin_header)).hostname or ""
         except ValueError:
             return False
-        return cls.is_local(origin_host)
+        return self._is_allowed_request_host(origin_host) and urllib.parse.urlparse(str(origin_header)).netloc.lower() == host_text.lower()
 
     def session_metadata(self) -> dict[str, Any]:
         return {

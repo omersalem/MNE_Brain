@@ -87,6 +87,7 @@ owner_sessions = OwnerSessionManager(
     credential_verifier=owner_credentials,
     maximum_failures=int(owner_policy.get("maximum_failures", 5)),
     lockout_seconds=int(owner_policy.get("lockout_seconds", 300)),
+    allowed_loopback_hostnames=list(owner_policy.get("allowed_loopback_hostnames", [])),
 )
 provider_registry = ProviderRegistry(base_dir)
 provider_gateway = ProviderGateway(
@@ -116,7 +117,10 @@ conversation_engine = ConversationEngine(
         security_policy.get("external_data", {}).get("auto_authorize_redacted_conversation", False)
     ),
 )
-p10_api = P10LocalAPIContext(tool_broker.p10)
+p10_api = P10LocalAPIContext(
+    tool_broker.p10,
+    allowed_loopback_hostnames=list(owner_policy.get("allowed_loopback_hostnames", [])),
+)
 p10_readiness = P10ReadinessService(base_dir)
 owner_full_control = InfrastructureCoverageService(base_dir)
 security_review_run_store = SecurityReviewRunStore(base_dir / "operations" / "security_review" / "runs")

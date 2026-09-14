@@ -74,7 +74,7 @@ class _Session:
 
 
 class OwnerSessionManager:
-    def __init__(self, *, inactivity_seconds: int = 900, nonce_ttl_seconds: int = 300, max_sessions: int = 8, cookie_name: str = "mne_owner_session", credential_verifier: OwnerCredentialVerifier | None = None, maximum_failures: int = 5, lockout_seconds: int = 300, now: Any = None):
+    def __init__(self, *, inactivity_seconds: int = 900, nonce_ttl_seconds: int = 300, max_sessions: int = 8, cookie_name: str = "mne_owner_session", credential_verifier: OwnerCredentialVerifier | None = None, maximum_failures: int = 5, lockout_seconds: int = 300, allowed_loopback_hostnames: list[str] | None = None, now: Any = None):
         self.inactivity_seconds = inactivity_seconds
         self.nonce_ttl_seconds = nonce_ttl_seconds
         self.max_sessions = max_sessions
@@ -82,6 +82,11 @@ class OwnerSessionManager:
         self.credential_verifier = credential_verifier
         self.maximum_failures = max(3, min(int(maximum_failures), 20))
         self.lockout_seconds = max(30, min(int(lockout_seconds), 3600))
+        self.allowed_loopback_hostnames = {
+            str(item).strip().lower().rstrip(".")
+            for item in (allowed_loopback_hostnames or [])
+            if str(item).strip()
+        }
         self._now = now or time.time
         self._sessions: dict[str, _Session] = {}
         self._failures: dict[str, list[float]] = {}
@@ -97,15 +102,20 @@ class OwnerSessionManager:
         except ValueError:
             return candidate.lower() == "localhost"
 
-    @classmethod
-    def same_origin_loopback(cls, host_header: str | None, origin_header: str | None) -> bool:
+    def _is_allowed_request_host(self, host: str | None) -> bool:
+        if self.is_loopback(host):
+            return True
+        candidate = str(host or "").strip().lower().rstrip(".")
+        return candidate in self.allowed_loopback_hostnames
+
+    def same_origin_loopback(self, host_header: str | None, origin_header: str | None) -> bool:
         if not host_header:
             return False
         try:
             host = urllib.parse.urlsplit("//" + host_header).hostname
         except ValueError:
             return False
-        if not cls.is_loopback(host):
+        if not self._is_allowed_request_host(host):
             return False
         if not origin_header:
             return True
@@ -113,7 +123,11 @@ class OwnerSessionManager:
             origin = urllib.parse.urlsplit(origin_header)
         except ValueError:
             return False
-        return origin.scheme in {"http", "https"} and cls.is_loopback(origin.hostname) and origin.netloc == host_header
+        return (
+            origin.scheme in {"http", "https"}
+            and self._is_allowed_request_host(origin.hostname)
+            and origin.netloc.lower() == host_header.lower()
+        )
 
     def _prune(self) -> None:
         now = self._now()
