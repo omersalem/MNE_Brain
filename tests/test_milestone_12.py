@@ -47,7 +47,8 @@ def test_milestone_12() -> bool:
         and "type=\"module\"" in html_text
         and "X-CSRF-Token" in scripts
         and "textContent" in scripts
-        and "crypto.randomUUID" in scripts
+        and "crypto.getRandomValues" in scripts
+        and "crypto.randomUUID" not in scripts
         and "unsafe-inline" not in html_text
     ):
         print(" [PASS] Modular GUI presents server-built risk and approval state without calculating hashes, phrases, or commands")
