@@ -3,6 +3,7 @@ import html
 import io
 import logging
 import os
+import re
 import smtplib
 from datetime import datetime, timezone
 from email.mime.application import MIMEApplication
@@ -44,6 +45,10 @@ class StatusWrapper(str):
 class SecurityReporter:
     """Generates executive HTML email reports, renders attached PDFs, and handles SMTP dispatch."""
 
+    HTML_DETAIL_LIMIT = 500
+    EMAIL_DETAIL_LIMIT = 50
+    DEFAULT_SMTP_MAX_MESSAGE_BYTES = 12 * 1024 * 1024
+
     def __init__(self, templates_dir: Optional[str] = None):
         if templates_dir is None:
             templates_dir = os.path.join(os.path.dirname(__file__), "templates")
@@ -57,6 +62,23 @@ class SecurityReporter:
         self.smtp_user = os.getenv("MNE_SMTP_USER", "")
         self.smtp_password = os.getenv("MNE_SMTP_PASSWORD", "")
         self.smtp_sender = os.getenv("MNE_SMTP_SENDER", "security-alert@mne.gov.ps")
+        try:
+            configured_limit = int(os.getenv("MNE_SMTP_MAX_MESSAGE_BYTES", str(self.DEFAULT_SMTP_MAX_MESSAGE_BYTES)))
+        except (TypeError, ValueError):
+            configured_limit = self.DEFAULT_SMTP_MAX_MESSAGE_BYTES
+        self.smtp_max_message_bytes = max(1_000_000, configured_limit)
+        self.last_email_error: Optional[str] = None
+        self.last_email_message_bytes: Optional[int] = None
+
+    @staticmethod
+    def _safe_delivery_error(exc: Exception) -> str:
+        text = str(exc).replace("\r", " ").replace("\n", " ")
+        text = re.sub(
+            r"(?i)(password|passwd|token|secret|api[_ -]?key|authorization)\s*[:=]\s*\S+",
+            r"\1=[REDACTED]",
+            text,
+        )
+        return f"{type(exc).__name__}: {text[:500]}"
 
     @property
     def default_recipients(self) -> List[str]:
@@ -152,6 +174,7 @@ class SecurityReporter:
         run_id: Optional[str] = None,
         generated_at: Optional[str] = None,
         report_context: Optional[Dict[str, Any]] = None,
+        detail_limit: Optional[int] = None,
     ) -> str:
         """Renders the responsive executive HTML report using Jinja2."""
         template = self.jinja_env.get_template("report.html.j2")
@@ -385,6 +408,19 @@ class SecurityReporter:
             )
         )
 
+        requested_detail_limit = self.HTML_DETAIL_LIMIT if detail_limit is None else int(detail_limit)
+        requested_detail_limit = max(0, requested_detail_limit)
+        severity_rank = {"CRITICAL": 0, "HIGH": 1, "MEDIUM": 2, "LOW": 3, "INFO": 4}
+        detailed_incidents = sorted(
+            norm_incidents,
+            key=lambda item: (
+                severity_rank.get(str(item["severity"]), 9),
+                -int(item.get("event_count") or 0),
+                str(item.get("incident_id") or ""),
+            ),
+        )[:requested_detail_limit]
+        omitted_incident_count = max(0, total_incidents - len(detailed_incidents))
+
         return template.render(
             generated_at=now_str,
             run_id=run_id or f"sec-run-{datetime.now(timezone.utc).strftime('%Y%m%d-%H%M%S')}",
@@ -400,7 +436,9 @@ class SecurityReporter:
             threat_posture_class=threat_posture_class,
             posture_summary=posture_summary,
             collectors=norm_collectors,
-            incidents=norm_incidents,
+            incidents=detailed_incidents,
+            rendered_incident_count=len(detailed_incidents),
+            omitted_incident_count=omitted_incident_count,
             top_attackers=top_attackers,
             category_breakdown=category_breakdown,
             threat_clusters=threat_clusters,
@@ -772,20 +810,30 @@ class SecurityReporter:
             assessment_status=assessment_status,
         )
 
+        self.last_email_error = None
+        message_bytes = len(msg.as_bytes())
+        self.last_email_message_bytes = message_bytes
+        if message_bytes > self.smtp_max_message_bytes:
+            self.last_email_error = (
+                f"SMTP_MESSAGE_TOO_LARGE: {message_bytes} bytes exceeds the configured "
+                f"{self.smtp_max_message_bytes}-byte delivery limit."
+            )
+            logger.error("Security report email was not sent: %s", self.last_email_error)
+            return False
+
         try:
             logger.info("Connecting to SMTP server at %s:%s...", self.smtp_host, self.smtp_port)
-            server = smtplib.SMTP(self.smtp_host, self.smtp_port, timeout=30)
-            if self.smtp_port == 587:
-                server.starttls()
-            if self.smtp_user and self.smtp_password:
-                server.login(self.smtp_user, self.smtp_password)
-
-            server.send_message(msg)
-            server.quit()
-            logger.info("Security report successfully emailed to %s", target_recipients)
+            with smtplib.SMTP(self.smtp_host, self.smtp_port, timeout=30) as server:
+                if self.smtp_port == 587:
+                    server.starttls()
+                if self.smtp_user and self.smtp_password:
+                    server.login(self.smtp_user, self.smtp_password)
+                server.send_message(msg)
+            logger.info("Security report successfully emailed to %d recipient(s)", len(target_recipients))
             return True
         except Exception as exc:
-            logger.error("Failed to send security report email via SMTP: %s", exc, exc_info=True)
+            self.last_email_error = self._safe_delivery_error(exc)
+            logger.error("Failed to send security report email via SMTP: %s", self.last_email_error)
             return False
 
     def send_test_email(self, recipients: Optional[List[str]] = None) -> Tuple[bool, str]:

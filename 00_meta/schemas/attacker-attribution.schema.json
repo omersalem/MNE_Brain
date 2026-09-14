@@ -138,12 +138,12 @@
           "event_time_distance_seconds": { "type": ["number", "null"] },
           "freshness": {
             "type": "string",
-            "enum": ["CURRENT", "HISTORICAL", "STALE", "UNKNOWN"]
+            "enum": ["CURRENT", "HISTORICAL", "HISTORICAL_CURRENT", "STALE", "UNKNOWN"]
           },
           "evidence_reference": { "type": "string" },
           "result_status": {
             "type": "string",
-            "enum": ["SUCCESS", "NO_MATCH", "NOT_CONFIGURED", "NOT_AUTHORIZED", "UNREACHABLE", "AUTHENTICATION_FAILED", "QUERY_TIMEOUT", "SKIPPED_DEADLINE", "STALE_RESULT", "AMBIGUOUS", "MALFORMED_RESPONSE", "FAILED"]
+            "enum": ["SUCCESS", "PARTIAL", "NO_MATCH", "NOT_CONFIGURED", "NOT_AUTHORIZED", "UNREACHABLE", "AUTHENTICATION_FAILED", "QUERY_TIMEOUT", "SKIPPED_DEADLINE", "STALE_RESULT", "AMBIGUOUS", "MALFORMED_RESPONSE", "FAILED"]
           }
         },
         "additionalProperties": false

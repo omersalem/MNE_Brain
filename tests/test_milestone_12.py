@@ -112,10 +112,10 @@ def test_milestone_12() -> bool:
         and dashboard["runbooks"] == 12
         and dashboard["operational_runbook_coverage_percent"] == 100.0
         and dashboard["operational_runbook_readiness"] is True
-        and dashboard["connector_families"] == 15
+        and dashboard["connector_families"] == 16
         and dashboard["offline_connector_coverage_percent"] == 100.0
         and dashboard["offline_connector_readiness"] is True
-        and dashboard["live_transport_coverage_percent"] == 2.08
+        and dashboard["live_transport_coverage_percent"] == 2.04
         and set(dashboard["driver_statuses"].values()) == {"PLANNING_ONLY_NOT_CONFIGURED"}
         and "execute_command" not in dashboard_source
         and "DriverFactory" not in dashboard_source
@@ -157,7 +157,7 @@ def test_milestone_12() -> bool:
     serialized_connectors = json.dumps(connectors, sort_keys=True).casefold()
     if (
         connector_statuses == [200]
-        and connectors["total_connectors"] == 15
+        and connectors["total_connectors"] == 16
         and connectors["coverage"]["offline_validation_coverage_percent"] == 100.0
         and connectors["coverage"]["live_transport_entities"] == 1
         and connectors["coverage"]["production_readiness_claimed"] is False

@@ -212,7 +212,8 @@ def run_security_pipeline(
             )
 
     email_sent = (run.email_result or {}).get("sent", False)
-    success = run.state in (RunState.COMPLETED, RunState.PARTIAL)
+    email_error = (run.email_result or {}).get("error")
+    success = run.state in (RunState.COMPLETED, RunState.PARTIAL) and (not should_send_email or email_sent)
 
     return {
         "success": success,
@@ -225,6 +226,7 @@ def run_security_pipeline(
         "html_path": html_path,
         "pdf_path": pdf_path,
         "email_sent": email_sent,
+        "email_error": email_error,
         "analysis_refs": run.analysis_refs,
     }
 

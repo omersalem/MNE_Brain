@@ -115,6 +115,47 @@ def test_partial_email_subject_is_explicit():
     assert msg["Subject"].startswith("[PARTIAL]")
 
 
+def test_html_report_bounds_incident_dossiers_without_losing_total_counts():
+    reporter = SecurityReporter()
+    incidents = [
+        {
+            "incident_id": f"INC-{index:04d}",
+            "title": "Repeated low-priority event",
+            "severity": "LOW",
+            "category": "ANOMALY",
+            "source_device": "FortiGate",
+            "description": "Bounded report test",
+            "event_count": 1,
+        }
+        for index in range(25)
+    ]
+
+    rendered = reporter.render_html_report(incidents, [], detail_limit=5)
+
+    assert "5 of 25 Detailed" in rendered
+    assert "omits 20 lower-priority dossiers" in rendered
+    assert rendered.count('class="incident-card ') == 5
+    assert "Complete incident rows remain available in the JSON and CSV artifacts" in rendered
+
+
+def test_email_preflight_rejects_oversized_message_without_connecting(monkeypatch):
+    reporter = SecurityReporter()
+    reporter.smtp_max_message_bytes = 1_000_000
+    smtp_calls = []
+    monkeypatch.setattr("core.security_review.reporter.smtplib.SMTP", lambda *args, **kwargs: smtp_calls.append((args, kwargs)))
+
+    sent = reporter.send_daily_security_email(
+        html_content="x" * 1_100_000,
+        pdf_bytes=b"%PDF-1.4",
+        recipients=["security@example.com"],
+    )
+
+    assert sent is False
+    assert reporter.last_email_error.startswith("SMTP_MESSAGE_TOO_LARGE")
+    assert reporter.last_email_message_bytes > reporter.smtp_max_message_bytes
+    assert smtp_calls == []
+
+
 def test_analysis_html_report_rendering():
     reporter = SecurityReporter()
     sample_analysis = {

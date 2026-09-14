@@ -108,6 +108,32 @@ def test_unresolved_ip_question_falls_back_to_selected_agent_harness():
     assert events[0]["redacted_payload"]["agent_harness"] == "CODEX_APP_SERVER"
 
 
+def test_opencode_turn_uses_governed_provider_timeout():
+    engine = ConversationEngine(BASE)
+    invoked = []
+
+    def complete(**kwargs):
+        invoked.append(kwargs)
+        engine._opencode_completed(kwargs["gui_thread_id"], kwargs["gui_turn_id"], "Completed within the governed window.")
+
+    engine.opencode.start_turn = complete
+    thread = engine.create_thread(
+        title="Long OpenCode turn",
+        provider_id=OPENCODE_PROVIDER_ID,
+        engine_id="opencode",
+        model_id="sample/slow-model",
+    )
+    turn = engine.start_turn(
+        thread["thread_id"], content="perform a detailed repository investigation",
+        owner_session_digest="b" * 64, run_async=False,
+    )
+
+    assert turn["status"] == "COMPLETED"
+    assert invoked[0]["timeout_seconds"] == 1800
+    started = engine.events.list_after(turn["turn_id"])[0]
+    assert started["redacted_payload"]["timeout_seconds"] == 1800
+
+
 def test_p11_schemas_and_adr_are_strict():
     names = {
         "conversation-thread.schema.json", "conversation-turn.schema.json", "conversation-message.schema.json",

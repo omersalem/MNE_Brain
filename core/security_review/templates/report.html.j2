@@ -1212,8 +1212,14 @@
     <!-- Section 4: Detailed Incident Dossiers -->
     <div class="section-header">
       <div class="section-title">Evidence Findings &amp; Read-Only Triage Guidance</div>
-      <span class="section-badge">{{ total_incidents }} Incidents</span>
+      <span class="section-badge">{{ rendered_incident_count }} of {{ total_incidents }} Detailed</span>
     </div>
+
+    {% if omitted_incident_count > 0 %}
+    <div class="empty-state" style="padding: 14px; margin-bottom: 14px; text-align: left;">
+      The HTML briefing shows the {{ rendered_incident_count }} highest-priority incident dossiers and omits {{ omitted_incident_count }} lower-priority dossiers to keep browser and email delivery bounded. Complete incident rows remain available in the JSON and CSV artifacts.
+    </div>
+    {% endif %}
 
     <!-- Filter Toolbar (Client-Side JS) -->
     <div class="filter-toolbar" id="filterToolbar">
@@ -1221,7 +1227,7 @@
         <input type="text" id="incidentSearch" class="search-input" placeholder="Search incidents by IP, device, title, or ID..." aria-label="Search incidents">
       </div>
       <div class="filter-pills">
-        <button type="button" class="filter-btn active" data-sev="ALL">All ({{ total_incidents }})</button>
+        <button type="button" class="filter-btn active" data-sev="ALL">All details ({{ rendered_incident_count }})</button>
         {% if critical_count > 0 %}<button type="button" class="filter-btn" data-sev="CRITICAL">Critical ({{ critical_count }})</button>{% endif %}
         {% if high_count > 0 %}<button type="button" class="filter-btn" data-sev="HIGH">High ({{ high_count }})</button>{% endif %}
         {% if medium_count > 0 %}<button type="button" class="filter-btn" data-sev="MEDIUM">Medium ({{ medium_count }})</button>{% endif %}

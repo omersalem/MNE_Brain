@@ -34,6 +34,7 @@ CODEX_PROVIDER_ID = "prv_codex_app_server"
 CODEX_SERVICE_TIER = "fast"
 CODEX_SANDBOX = "workspace-write"
 CODEX_APPROVAL_POLICY = "untrusted"
+CODEX_DEFAULT_MODEL = "codex-account-default"
 
 
 class CodexAppServerError(RuntimeError):
@@ -372,14 +373,62 @@ class CodexAppServerHarness:
         self._request_to_approval: dict[Any, str] = {}
         self._restart_count = 0
         self._last_failure: str | None = None
+        self._model_catalog_cache: dict[str, Any] | None = None
 
-    @staticmethod
-    def _find_binary() -> str | None:
+    @classmethod
+    def _find_binary(cls) -> str | None:
+        """Select the newest installed Codex CLI instead of trusting PATH order."""
+        configured = os.environ.get("MNE_BRAIN_CODEX_BINARY", "").strip()
+        if configured and Path(configured).is_file():
+            return str(Path(configured).resolve())
+
+        candidates: list[str] = []
         for name in ("codex.exe", "codex.cmd", "codex"):
             candidate = shutil.which(name)
             if candidate:
-                return candidate
-        return None
+                candidates.append(candidate)
+        local_app_data = os.environ.get("LOCALAPPDATA", "").strip()
+        if local_app_data:
+            candidates.extend(
+                str(path)
+                for path in (
+                    Path(local_app_data) / "Programs" / "OpenAI" / "Codex" / "bin" / "codex.exe",
+                    Path(local_app_data) / "OpenAI" / "Codex" / "bin" / "codex.exe",
+                )
+                if path.is_file()
+            )
+            bundled_root = Path(local_app_data) / "OpenAI" / "Codex" / "bin"
+            if bundled_root.is_dir():
+                candidates.extend(str(path) for path in bundled_root.glob("*/codex.exe") if path.is_file())
+
+        unique: list[str] = []
+        seen: set[str] = set()
+        for candidate in candidates:
+            normalized = str(Path(candidate).resolve())
+            key = normalized.casefold()
+            if key not in seen:
+                seen.add(key)
+                unique.append(normalized)
+        if not unique:
+            return None
+
+        environment = cls._child_environment()
+        ranked: list[tuple[tuple[int, ...], int, str]] = []
+        for index, candidate in enumerate(unique):
+            version_tuple: tuple[int, ...] = ()
+            try:
+                result = subprocess.run(
+                    [candidate, "--version"], shell=False, capture_output=True, text=True,
+                    timeout=10, check=False, env=environment,
+                )
+                match = re.search(r"(\d+(?:\.\d+)+)", result.stdout + result.stderr)
+                if result.returncode == 0 and match:
+                    version_tuple = tuple(int(part) for part in match.group(1).split("."))
+            except (OSError, subprocess.SubprocessError, ValueError):
+                pass
+            ranked.append((version_tuple, -index, candidate))
+        ranked.sort(reverse=True)
+        return ranked[0][2]
 
     @classmethod
     def _child_environment(cls) -> dict[str, str]:
@@ -444,6 +493,7 @@ class CodexAppServerHarness:
         with self._lock:
             rpc = self._rpc
             self._rpc = None
+            self._model_catalog_cache = None
             workspaces = [mapping.get("workspace") for mapping in self._threads.values()]
         if rpc is not None:
             rpc.stop()
@@ -519,11 +569,112 @@ class CodexAppServerHarness:
             "secrets_returned": False,
         }
 
-    def ensure_thread(self, gui_thread_id: str, permission_mode: str = "OWNER_DIRECT") -> dict[str, Any]:
+    def models(self, *, start_process: bool = False) -> dict[str, Any]:
+        """Return the visible model catalog advertised by this ChatGPT session."""
+        with self._lock:
+            if self._model_catalog_cache is not None:
+                return deepcopy(self._model_catalog_cache)
+        default_item = {
+            "id": CODEX_DEFAULT_MODEL,
+            "label": "ChatGPT account default",
+            "display_name": "ChatGPT account default",
+            "description": "Use the model selected by the signed-in ChatGPT account.",
+            "is_default": True,
+            "account_default": True,
+            "reasoning": True,
+            "supported_reasoning_efforts": [],
+        }
+        if start_process:
+            try:
+                self.start()
+            except CodexAppServerError:
+                return {
+                    "models": [default_item],
+                    "default_model": CODEX_DEFAULT_MODEL,
+                    "catalog_status": "UNAVAILABLE",
+                    "secrets_returned": False,
+                }
+        rpc = self._rpc
+        if rpc is None or not rpc.initialized or rpc.process is None or rpc.process.poll() is not None:
+            return {
+                "models": [default_item],
+                "default_model": CODEX_DEFAULT_MODEL,
+                "catalog_status": "UNAVAILABLE",
+                "secrets_returned": False,
+            }
+
+        visible: list[dict[str, Any]] = []
+        cursor: str | None = None
+        seen: set[str] = set()
+        try:
+            for _ in range(10):
+                params: dict[str, Any] = {"includeHidden": False, "limit": 100}
+                if cursor:
+                    params["cursor"] = cursor
+                result = rpc.request("model/list", params, timeout=30)
+                for raw in result.get("data", []):
+                    if not isinstance(raw, dict) or raw.get("hidden") is True:
+                        continue
+                    model_id = str(raw.get("model") or raw.get("id") or "").strip()
+                    if not model_id or model_id in seen:
+                        continue
+                    seen.add(model_id)
+                    efforts = [
+                        str(item.get("reasoningEffort"))
+                        for item in raw.get("supportedReasoningEfforts", [])
+                        if isinstance(item, dict) and item.get("reasoningEffort")
+                    ]
+                    visible.append({
+                        "id": model_id,
+                        "label": str(raw.get("displayName") or model_id),
+                        "display_name": str(raw.get("displayName") or model_id),
+                        "description": str(raw.get("description") or ""),
+                        "is_default": raw.get("isDefault") is True,
+                        "account_default": False,
+                        "reasoning": bool(efforts),
+                        "default_reasoning_effort": str(raw.get("defaultReasoningEffort") or ""),
+                        "supported_reasoning_efforts": efforts,
+                        "input_modalities": [str(value) for value in raw.get("inputModalities", []) if value],
+                    })
+                next_cursor = result.get("nextCursor")
+                if not isinstance(next_cursor, str) or not next_cursor or next_cursor == cursor:
+                    break
+                cursor = next_cursor
+        except CodexAppServerError:
+            return {
+                "models": [default_item],
+                "default_model": CODEX_DEFAULT_MODEL,
+                "catalog_status": "UNAVAILABLE",
+                "secrets_returned": False,
+            }
+        catalog = {
+            "models": [default_item, *visible],
+            "default_model": CODEX_DEFAULT_MODEL,
+            "runtime_default_model": next((item["id"] for item in visible if item["is_default"]), None),
+            "catalog_status": "READY",
+            "secrets_returned": False,
+        }
+        with self._lock:
+            self._model_catalog_cache = deepcopy(catalog)
+        return catalog
+
+    def validate_model(self, model_id: str) -> str:
+        selected = str(model_id or CODEX_DEFAULT_MODEL).strip()
+        if selected == CODEX_DEFAULT_MODEL:
+            return selected
+        available = {item["id"] for item in self.models(start_process=True)["models"]}
+        if selected not in available:
+            raise CodexAppServerError("The selected Codex model is not available to this ChatGPT account.")
+        return selected
+
+    def ensure_thread(self, gui_thread_id: str, permission_mode: str = "OWNER_DIRECT", model_id: str = CODEX_DEFAULT_MODEL) -> dict[str, Any]:
         self.start()
+        selected_model = self.validate_model(model_id)
         with self._lock:
             existing = self._threads.get(gui_thread_id)
             if existing and existing.get("codex_thread_id"):
+                if existing.get("model_id", CODEX_DEFAULT_MODEL) != selected_model:
+                    raise CodexAppServerError("The Codex model is pinned after the thread starts. Create a new conversation to switch models.")
                 return existing
             workspace = existing.get("workspace") if existing else SanitizedWorkspace(self.base_dir, gui_thread_id)
         tools = []
@@ -539,49 +690,52 @@ class CodexAppServerHarness:
                 "deferLoading": False,
             })
         rpc = self._require_rpc()
-        result = rpc.request(
-            "thread/start",
-            {
-                "cwd": str(workspace.root),
-                "sandbox": CODEX_SANDBOX,
-                "approvalPolicy": CODEX_APPROVAL_POLICY,
-                "approvalsReviewer": "user",
-                "serviceTier": CODEX_SERVICE_TIER,
-                "ephemeral": False,
-                "dynamicTools": tools,
-                "developerInstructions": self._developer_instructions(),
-            },
-            timeout=45,
-        )
+        params = {
+            "cwd": str(workspace.root),
+            "sandbox": CODEX_SANDBOX,
+            "approvalPolicy": CODEX_APPROVAL_POLICY,
+            "approvalsReviewer": "user",
+            "serviceTier": CODEX_SERVICE_TIER,
+            "ephemeral": False,
+            "dynamicTools": tools,
+            "developerInstructions": self._developer_instructions(),
+        }
+        if selected_model != CODEX_DEFAULT_MODEL:
+            params["model"] = selected_model
+        result = rpc.request("thread/start", params, timeout=45)
         codex_thread_id = str(result.get("thread", {}).get("id", ""))
         if not codex_thread_id:
             raise CodexAppServerError("Codex App Server did not create a thread.")
-        mapping = {"codex_thread_id": codex_thread_id, "workspace": workspace, "permission_mode": permission_mode}
+        mapping = {
+            "codex_thread_id": codex_thread_id,
+            "workspace": workspace,
+            "permission_mode": permission_mode,
+            "model_id": selected_model,
+        }
         with self._lock:
             self._threads[gui_thread_id] = mapping
             self._codex_threads[codex_thread_id] = gui_thread_id
         return mapping
 
-    def start_turn(self, *, gui_thread_id: str, gui_turn_id: str, content: str, owner_session_digest: str, permission_mode: str = "OWNER_DIRECT") -> None:
-        mapping = self.ensure_thread(gui_thread_id, permission_mode)
+    def start_turn(self, *, gui_thread_id: str, gui_turn_id: str, content: str, owner_session_digest: str, permission_mode: str = "OWNER_DIRECT", model_id: str = CODEX_DEFAULT_MODEL) -> None:
+        mapping = self.ensure_thread(gui_thread_id, permission_mode, model_id)
         rpc = self._require_rpc()
-        result = rpc.request(
-            "turn/start",
-            {
-                "threadId": mapping["codex_thread_id"],
-                "input": [{"type": "text", "text": content}],
-                "approvalPolicy": CODEX_APPROVAL_POLICY,
-                "sandboxPolicy": {
-                    "type": "workspaceWrite",
-                    "writableRoots": [str(mapping["workspace"].root)],
-                    "networkAccess": False,
-                    "excludeSlashTmp": True,
-                    "excludeTmpdirEnvVar": True,
-                },
-                "serviceTier": CODEX_SERVICE_TIER,
+        params = {
+            "threadId": mapping["codex_thread_id"],
+            "input": [{"type": "text", "text": content}],
+            "approvalPolicy": CODEX_APPROVAL_POLICY,
+            "sandboxPolicy": {
+                "type": "workspaceWrite",
+                "writableRoots": [str(mapping["workspace"].root)],
+                "networkAccess": False,
+                "excludeSlashTmp": True,
+                "excludeTmpdirEnvVar": True,
             },
-            timeout=45,
-        )
+            "serviceTier": CODEX_SERVICE_TIER,
+        }
+        if mapping["model_id"] != CODEX_DEFAULT_MODEL:
+            params["model"] = mapping["model_id"]
+        result = rpc.request("turn/start", params, timeout=45)
         codex_turn_id = str(result.get("turn", {}).get("id", ""))
         if not codex_turn_id:
             raise CodexAppServerError("Codex App Server did not start a turn.")
@@ -592,6 +746,7 @@ class CodexAppServerHarness:
             "codex_turn_id": codex_turn_id,
             "owner_session_digest": owner_session_digest,
             "permission_mode": mapping.get("permission_mode", permission_mode),
+            "model_id": mapping.get("model_id", CODEX_DEFAULT_MODEL),
             "final_text": [],
             "authoritative_final_text": "",
             "progress_text": [],

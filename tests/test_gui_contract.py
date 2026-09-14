@@ -121,3 +121,10 @@ def test_security_js_has_no_business_logic_calculations():
     assert "calculateRisk" not in content
     assert "scoreRisk" not in content
     assert "computeSeverity" not in content
+
+
+def test_provider_settings_refreshes_on_open_and_degrades_per_engine():
+    content = PROVIDERS_JS.read_text(encoding="utf-8")
+    assert "Promise.allSettled" in content
+    assert "Refreshing provider diagnostics" in content
+    assert "document.addEventListener('owner-authenticated'" in content

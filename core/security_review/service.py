@@ -889,18 +889,22 @@ class SecurityReviewService:
                 csv_path = self.run_store.save_report(run_id, "report.csv", csv_buf.getvalue())
                 report_artifacts["csv"] = str(csv_path)
 
-            # Save legacy copy for existing downloader
-            legacy_dir = Path(__file__).resolve().parent.parent.parent / "operations" / "reports"
-            legacy_dir.mkdir(parents=True, exist_ok=True)
-            today_str = self.clock().strftime("%Y%m%d")
-            legacy_html = legacy_dir / f"MNE_Daily_Security_Report_{today_str}.html"
-            legacy_pdf = legacy_dir / f"MNE_Daily_Security_Report_{today_str}.pdf"
-            if html_content:
-                with open(legacy_html, "w", encoding="utf-8") as f:
-                    f.write(html_content)
-            if pdf_bytes:
-                with open(legacy_pdf, "wb") as f:
-                    f.write(pdf_bytes)
+            # Save the dated compatibility copy only for the canonical production
+            # run store. Tests and alternate stores must never overwrite live reports.
+            repository_root = Path(__file__).resolve().parent.parent.parent
+            canonical_run_root = (repository_root / "operations" / "security_review" / "runs").resolve()
+            if self.run_store.base_dir.resolve() == canonical_run_root:
+                legacy_dir = repository_root / "operations" / "reports"
+                legacy_dir.mkdir(parents=True, exist_ok=True)
+                today_str = self.clock().strftime("%Y%m%d")
+                legacy_html = legacy_dir / f"MNE_Daily_Security_Report_{today_str}.html"
+                legacy_pdf = legacy_dir / f"MNE_Daily_Security_Report_{today_str}.pdf"
+                if html_content:
+                    with open(legacy_html, "w", encoding="utf-8") as f:
+                        f.write(html_content)
+                if pdf_bytes:
+                    with open(legacy_pdf, "wb") as f:
+                        f.write(pdf_bytes)
 
         except Exception as exc:
             logger.error("Report generation error: %s", exc, exc_info=True)
@@ -911,6 +915,7 @@ class SecurityReviewService:
         # Stage: EMAIL
         email_sent = False
         email_err: Optional[str] = None
+        email_message_bytes: Optional[int] = None
         if req.send_email and html_content:
             run.stage = "EMAIL"
             self.run_store.save_run(run)
@@ -921,14 +926,22 @@ class SecurityReviewService:
                 data={"stage": "EMAIL", "recipients": recipients},
             )
             try:
+                email_html_content = self.reporter.render_html_report(
+                    incidents=incidents,
+                    collectors=collector_results,
+                    run_id=run_id,
+                    report_context=report_context,
+                    detail_limit=self.reporter.EMAIL_DETAIL_LIMIT,
+                )
                 email_sent = self.reporter.send_daily_security_email(
-                    html_content=html_content,
+                    html_content=email_html_content,
                     pdf_bytes=pdf_bytes,
                     recipients=recipients,
                     assessment_status=run.assessment_status,
                 )
                 if not email_sent:
-                    email_err = "SMTP dispatch returned False."
+                    email_err = self.reporter.last_email_error or "SMTP dispatch returned False."
+                email_message_bytes = self.reporter.last_email_message_bytes
             except Exception as exc:
                 logger.error("Email dispatch failed: %s", exc, exc_info=True)
                 email_err = str(exc)
@@ -939,6 +952,7 @@ class SecurityReviewService:
                 "recipients": recipients,
                 "sent_at": self.clock().isoformat() if email_sent else None,
                 "error": email_err,
+                "message_bytes": email_message_bytes,
             }
         else:
             run.email_result = {
@@ -946,11 +960,15 @@ class SecurityReviewService:
                 "recipients": [],
                 "sent_at": None,
                 "error": None if not req.send_email else "No report content to email.",
+                "message_bytes": None,
             }
 
         # Stage: FINALIZATION
         completed_at = self.clock().isoformat()
         run.completed_at = completed_at
+        email_delivery_failed = req.send_email and not email_sent
+        if email_delivery_failed:
+            run.warnings.append(email_err or "Scheduled email delivery did not complete.")
 
         # Calculate final state
         if correlation_error:
@@ -969,10 +987,21 @@ class SecurityReviewService:
                 run.stage = "COMPLETED_PARTIAL"
                 if reconciliation_error and not run.failure_summary:
                     run.failure_summary = f"Completed with incident persistence/reconciliation error: {reconciliation_error}"
+                elif email_delivery_failed and not run.failure_summary:
+                    run.failure_summary = email_err or "Reports were generated, but scheduled email delivery failed."
             else:
                 run.state = RunState.FAILED
                 run.stage = "FAILED"
                 run.failure_summary = "No requested collector produced usable data."
+        elif email_delivery_failed:
+            if (successful_collectors + partial_collectors) > 0:
+                run.state = RunState.PARTIAL
+                run.stage = "COMPLETED_PARTIAL"
+                run.failure_summary = email_err or "Reports were generated, but scheduled email delivery failed."
+            else:
+                run.state = RunState.FAILED
+                run.stage = "FAILED"
+                run.failure_summary = email_err or "Scheduled email delivery failed."
         elif successful_collectors == len(req.collector_ids) and (report_artifacts.get("html") or report_artifacts.get("pdf") or report_artifacts.get("json")):
             run.state = RunState.COMPLETED
             run.stage = "COMPLETED"
@@ -987,8 +1016,9 @@ class SecurityReviewService:
         self.run_store.save_run(run)
 
         # Record compatibility run result into SecurityAgentConfig
+        delivery_succeeded = not req.send_email or email_sent
         legacy_summary = {
-            "success": run.state in (RunState.COMPLETED, RunState.PARTIAL),
+            "success": run.state in (RunState.COMPLETED, RunState.PARTIAL) and delivery_succeeded,
             "run_id": run_id,
             "run_state": run.state.value,
             "run_stage": run.stage,
@@ -1003,6 +1033,8 @@ class SecurityReviewService:
             "medium_count": counts["medium"],
             "total_incidents": counts["total"],
             "email_sent": email_sent,
+            "email_error": email_err,
+            "email_message_bytes": email_message_bytes,
             "html_path": report_artifacts.get("html"),
             "pdf_path": report_artifacts.get("pdf"),
             "collectors": [

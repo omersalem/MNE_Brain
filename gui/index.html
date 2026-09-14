@@ -240,6 +240,10 @@
           </div>
         </div>
 
+        <div id="sec-report-reliability" class="sec-reliability-banner unknown" role="status" aria-live="polite">
+          No completed evidence assessment is available yet. Risk totals are not established.
+        </div>
+
         <!-- Threat Stat Metric Strip -->
         <div class="sec-metrics-strip" aria-label="Threat Overview">
           <div class="sec-stat-card critical">
@@ -263,9 +267,9 @@
             <span class="sec-stat-hint">Consolidated events</span>
           </div>
           <div class="sec-stat-card appliances">
-            <span class="sec-stat-label">Appliances</span>
-            <span id="sec-stat-devices" class="sec-stat-value">7 / 7</span>
-            <span class="sec-stat-hint">Infrastructure active</span>
+            <span class="sec-stat-label">Collectors</span>
+            <span id="sec-stat-devices" class="sec-stat-value">N/A</span>
+            <span class="sec-stat-hint">Transport responded</span>
           </div>
         </div>
 
@@ -277,7 +281,7 @@
               <h3 id="sec-schedule-heading">⏰ Daily Schedule Automation</h3>
               <span id="sec-scheduler-badge" class="status-pill safe">Checking…</span>
             </div>
-            <p class="sec-card-desc">Automatically executes 24-hour log reviews across all 7 appliances and emails reports every morning.</p>
+            <p class="sec-card-desc">Automatically executes bounded 24-hour log reviews across all 8 collectors and emails evidence-status reports every morning.</p>
             <form id="sec-schedule-form" class="sec-form">
               <div class="sec-form-row">
                 <label class="sec-switch-label" for="sec-schedule-enabled">
@@ -397,7 +401,7 @@
             <!-- Appliance Selection -->
             <div class="sec-field sec-field-full">
               <div class="sec-field-header">
-                <label><strong>Monitored Collectors (7 Appliances)</strong></label>
+                <label><strong>Monitored Collectors (8 Appliances)</strong></label>
                 <div class="sec-sub-actions">
                   <button id="sec-btn-select-all-collectors" type="button" class="link-btn">Select All</button>
                   <span class="sep">·</span>
@@ -432,6 +436,10 @@
                 <label class="sec-checkbox-card">
                   <input type="checkbox" name="sec-collector" value="exchange_2019" checked>
                   <span><strong>Exchange 2019 Mailbox</strong> (172.23.71.36)</span>
+                </label>
+                <label class="sec-checkbox-card">
+                  <input type="checkbox" name="sec-collector" value="fortiedr" checked>
+                  <span><strong>FortiEDR Cloud Central Manager</strong> (fortiedrconnectil.console.ensilo.com)</span>
                 </label>
               </div>
             </div>

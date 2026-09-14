@@ -2525,6 +2525,28 @@ pre {
   border-radius: 12px;
 }
 
+.sec-reliability-banner {
+  margin: 12px 0 14px;
+  padding: 10px 14px;
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--warning);
+  border-radius: 8px;
+  background: rgba(245, 158, 11, 0.08);
+  color: var(--text);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.sec-reliability-banner.complete {
+  border-left-color: var(--success);
+  background: rgba(16, 185, 129, 0.08);
+}
+
+.sec-reliability-banner.unavailable {
+  border-left-color: var(--danger);
+  background: rgba(239, 68, 68, 0.09);
+}
+
 .sec-action-left, .sec-action-right {
   display: flex;
   align-items: center;

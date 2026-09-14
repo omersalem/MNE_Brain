@@ -412,12 +412,13 @@ class ConversationEngine:
         self.events.append(
             thread_id=turn["thread_id"], turn_id=turn_id, provider_id=CODEX_PROVIDER_ID,
             event_type="turn.started", status="RUNNING",
-            redacted_payload={"permission_mode": turn["permission_mode"], "agent_harness": "CODEX_APP_SERVER"},
+            redacted_payload={"permission_mode": turn["permission_mode"], "agent_harness": "CODEX_APP_SERVER", "model_id": turn["model_id"]},
         )
         try:
             self.codex.start_turn(
                 gui_thread_id=turn["thread_id"], gui_turn_id=turn_id,
                 content=content, owner_session_digest=owner_session_digest, permission_mode=turn["permission_mode"],
+                model_id=turn["model_id"],
             )
         except CodexAppServerError:
             self._codex_failed(turn_id, "CODEX_APP_SERVER_UNAVAILABLE")
@@ -452,10 +453,11 @@ class ConversationEngine:
 
     def _run_opencode_turn(self, turn_id: str, content: str, owner_session_digest: str) -> None:
         turn = self.store.update_turn(turn_id, "RUNNING")
+        timeout_seconds = int(self.registry.get(OPENCODE_PROVIDER_ID)["limits"]["timeout_seconds"])
         self.events.append(
             thread_id=turn["thread_id"], turn_id=turn_id, provider_id=OPENCODE_PROVIDER_ID,
             event_type="turn.started", status="RUNNING",
-            redacted_payload={"permission_mode": turn["permission_mode"], "agent_harness": "OPENCODE_HTTP_SSE", "model_id": turn["model_id"]},
+            redacted_payload={"permission_mode": turn["permission_mode"], "agent_harness": "OPENCODE_HTTP_SSE", "model_id": turn["model_id"], "timeout_seconds": timeout_seconds},
         )
         try:
             self.opencode.start_turn(
@@ -463,6 +465,7 @@ class ConversationEngine:
                 content=content, owner_session_digest=owner_session_digest,
                 model_id=turn["model_id"],
                 permission_mode=turn["permission_mode"],
+                timeout_seconds=timeout_seconds,
             )
         except OpenCodeError as exc:
             self._opencode_failed(turn_id, exc.code)

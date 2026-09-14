@@ -18,8 +18,8 @@ ROOT = Path(__file__).resolve().parent.parent
 def test_p7_catalog_covers_every_entity_and_is_disabled():
     registry = TransportRegistry(base_dir=ROOT)
     status = registry.public_status()
-    assert status["total_entities"] == 48
-    assert status["transport_implementation_coverage"] == 48
+    assert status["total_entities"] == 49
+    assert status["transport_implementation_coverage"] == 49
     assert status["transport_implementation_coverage_percent"] == 100.0
     assert len(status["drivers"]) == 7
     assert all(driver["default_enabled"] is False for driver in status["drivers"])
@@ -60,7 +60,7 @@ def test_all_device_preflight_is_owner_gated_and_trust_zero():
     assert calls == []
     result = validator.validate_all(owner_proceed=True)
     assert result["status"] == "COMPLETE"
-    assert result["total_entities"] == 48
+    assert result["total_entities"] == 49
     assert all(item["trust_level"] == 0 and item["evidence_accepted"] is False for item in result["results"])
     assert result["persistence_attempted"] is False
     assert result["notifications_sent"] is False
@@ -94,7 +94,7 @@ def test_transport_api_is_redacted_and_non_connecting():
     payload = json.loads(handler.wfile.getvalue().decode("utf-8"))
     serialized = json.dumps(payload, sort_keys=True).casefold()
     assert statuses == [200]
-    assert payload["transport_implementation_coverage"] == payload["total_entities"] == 48
+    assert payload["transport_implementation_coverage"] == payload["total_entities"] == 49
     assert payload["live_connection_attempted"] is False
     assert payload["credentials_included"] is False
     assert payload["raw_output_included"] is False

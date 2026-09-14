@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import shutil
 import threading
 import time
 from pathlib import Path
@@ -105,6 +106,25 @@ def test_dynamic_catalog_preserves_reported_models_costs_auth_and_warnings():
     assert OpenCodeRuntime._cost_classification({"input": 0, "output": 0.01}) == "PAID"
 
 
+def test_dynamic_catalog_prefers_connected_provider_reported_default():
+    class DefaultClient(FakeClient):
+        def request(self, method, path, payload=None, timeout=0):
+            result = super().request(method, path, payload, timeout)
+            if path.startswith("/provider") and not path.startswith("/provider/auth") and method == "GET":
+                result["all"][0]["models"]["alternate-model"] = {
+                    **_model(),
+                    "id": "alternate-model",
+                    "name": "AAA Alternate Model",
+                }
+                result["default"] = {"sample": "temporary-free-model"}
+            return result
+
+    runtime = _runtime(DefaultClient())
+    runtime.refresh_catalog(start_process=False)
+
+    assert runtime.readiness()["default_model"] == "sample/temporary-free-model"
+
+
 def test_open_code_turn_uses_explicit_model_denies_native_tools_and_hides_reasoning():
     client = FakeClient(); events = []; completed = []; failed = []
     runtime = _runtime(client, events=events, completed=completed, failed=failed)
@@ -142,6 +162,17 @@ def test_opencode_child_environment_excludes_mne_device_credentials(monkeypatch)
     environment = _runtime()._child_environment()
     assert "MNE_FORTIGATE_PASSWORD" not in environment
     assert environment["AI_SAMPLE_API_KEY"] == "provider-value"
+
+
+def test_opencode_binary_discovery_uses_owner_appdata_when_service_path_is_missing(monkeypatch, tmp_path):
+    native = tmp_path / "npm" / "node_modules" / "opencode-ai" / "bin" / "opencode.exe"
+    native.parent.mkdir(parents=True)
+    native.touch()
+    monkeypatch.delenv("MNE_BRAIN_OPENCODE_BINARY", raising=False)
+    monkeypatch.setenv("APPDATA", str(tmp_path))
+    monkeypatch.setattr(shutil, "which", lambda _name: None)
+
+    assert OpenCodeRuntime._find_binary() == str(native.resolve())
 
 
 def test_governed_mcp_bridge_routes_only_allowlisted_broker_calls():

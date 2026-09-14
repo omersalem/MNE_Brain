@@ -106,7 +106,8 @@
           "items": { "type": "string" }
         },
         "sent_at": { "type": ["string", "null"] },
-        "error": { "type": ["string", "null"] }
+        "error": { "type": ["string", "null"] },
+        "message_bytes": { "type": ["integer", "null"], "minimum": 0 }
       },
       "additionalProperties": false
     },

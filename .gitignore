@@ -21,6 +21,7 @@ htmlcov/
 operations/actions/*.json
 operations/discovery/*.json
 operations/logs/*.jsonl
+operations/logs/*.log
 operations/verification/*.txt
 operations/conversations/*.json
 operations/conversations/*.tmp

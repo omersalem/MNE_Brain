@@ -39,7 +39,8 @@
           "sophos",
           "ad",
           "exchange",
-          "fortianalyzer"
+          "fortianalyzer",
+          "fortiedr"
         ],
         "time_window": {
           "mode": "HOURS",

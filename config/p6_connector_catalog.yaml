@@ -115,6 +115,24 @@ connectors:
     review_sources: ["MNE_INFRASTRUCTURE_MASTER_GUIDE.md", "f5-bigip-publishing.md"]
     safety: *offline_safety
 
+  - connector_id: "p6-fortiedr-cloud"
+    title: "FortiEDR Cloud Read-Only REST Connector"
+    platform: "fortinet_fortiedr"
+    protocol: "rest"
+    adapter_id: "fortiedr_rest_readonly"
+    implementation_status: "offline_validated"
+    live_transport_status: "NOT_REGISTERED"
+    entity_ids: ["edr-fortiedr-cloud-01"]
+    port_env: "FORTIEDR_HTTPS_PORT"
+    credential_ref_env: "FORTIEDR_CREDENTIAL_REF"
+    timeout_seconds: 20
+    max_output_bytes: 131072
+    checks:
+      - {id: "console_health", operation: "GET /api", evidence_objective: "collect-console-state"}
+      - {id: "tls_metadata", operation: "TLS_CERTIFICATE_METADATA", evidence_objective: "collect-certificate-state"}
+    review_sources: ["fortiedr-canonical.md", "FortiEDR Administration Guide 6.2"]
+    safety: *offline_safety
+
   - connector_id: "p6-windows-identity"
     title: "Windows AD and DNS Read-Only Connector"
     platform: "windows_identity"

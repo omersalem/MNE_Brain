@@ -17,6 +17,7 @@ const secStatHigh = document.querySelector('#sec-stat-high');
 const secStatMedium = document.querySelector('#sec-stat-medium');
 const secStatTotal = document.querySelector('#sec-stat-total');
 const secStatDevices = document.querySelector('#sec-stat-devices');
+const secReportReliability = document.querySelector('#sec-report-reliability');
 
 // Schedule Controls
 const secScheduleForm = document.querySelector('#sec-schedule-form');
@@ -397,13 +398,25 @@ export async function refreshSecurityStatus() {
     secLocalRecipients = [...(cfg.recipients || [])];
     renderSecRecipients();
 
-    if (secStatCritical) secStatCritical.textContent = last.critical_count ?? 0;
-    if (secStatHigh) secStatHigh.textContent = last.high_count ?? 0;
-    if (secStatMedium) secStatMedium.textContent = last.medium_count ?? 0;
-    if (secStatTotal) secStatTotal.textContent = last.total_incidents ?? 0;
+    const countsAvailable = last.incident_counts_available === true;
+    const countValue = (value) => countsAvailable ? (value ?? 0) : 'N/A';
+    if (secStatCritical) secStatCritical.textContent = countValue(last.critical_count);
+    if (secStatHigh) secStatHigh.textContent = countValue(last.high_count);
+    if (secStatMedium) secStatMedium.textContent = countValue(last.medium_count);
+    if (secStatTotal) secStatTotal.textContent = countValue(last.total_incidents);
     if (secStatDevices) {
-      const onlineCount = (last.collectors || []).filter(c => c.status === 'SUCCESS').length;
-      secStatDevices.textContent = (last.collectors && last.collectors.length) ? `${onlineCount} / ${last.collectors.length}` : '7 / 7';
+      const respondedCount = (last.collectors || []).filter(c => ['SUCCESS', 'PARTIAL'].includes(c.status)).length;
+      secStatDevices.textContent = (last.collectors && last.collectors.length) ? `${respondedCount} / ${last.collectors.length}` : 'N/A';
+    }
+
+    if (secReportReliability) {
+      const assessmentStatus = String(last.assessment_status || 'UNAVAILABLE').toUpperCase();
+      const statusClass = assessmentStatus === 'COMPLETE' ? 'complete' : (assessmentStatus === 'UNAVAILABLE' ? 'unavailable' : 'unknown');
+      const warningCount = Array.isArray(last.evidence_warnings) ? last.evidence_warnings.length : 0;
+      const warningSuffix = warningCount ? ` ${warningCount} evidence limitation${warningCount === 1 ? '' : 's'} recorded.` : '';
+      const deliverySuffix = last.email_error ? ` Email delivery failed: ${last.email_error}` : (last.email_sent ? ' Email delivery confirmed.' : '');
+      secReportReliability.className = `sec-reliability-banner ${statusClass}`;
+      secReportReliability.textContent = `Evidence status: ${assessmentStatus}. ${last.assessment_message || 'Risk totals are not established.'}${warningSuffix}${deliverySuffix}`;
     }
 
     if (secBtnViewHtml) {
@@ -429,7 +442,7 @@ export async function refreshSecurityStatus() {
 // --- Profiles Management ---
 
 const COLLECTOR_SHORT_MAP = {
-  all: ['fortigate_core', 'fortianalyzer', 'f5_bigip', 'cisco_fmc', 'sophos_email', 'active_directory', 'exchange_2019'],
+  all: ['fortigate_core', 'fortianalyzer', 'f5_bigip', 'cisco_fmc', 'sophos_email', 'active_directory', 'exchange_2019', 'fortiedr'],
   fortigate: ['fortigate_core'],
   fortianalyzer: ['fortianalyzer'],
   f5: ['f5_bigip'],
@@ -443,6 +456,8 @@ const COLLECTOR_SHORT_MAP = {
   active_directory: ['active_directory'],
   exchange: ['exchange_2019'],
   exchange_2019: ['exchange_2019'],
+  fortiedr: ['fortiedr'],
+  edr: ['fortiedr'],
 };
 
 const ENGINE_MODEL_OPTIONS = {
@@ -812,7 +827,8 @@ async function fetchHistory() {
       const tr = document.createElement('tr');
 
       const stClass = run.state === 'COMPLETED' ? 'safe' : (run.state === 'FAILED' ? 'danger' : 'warning');
-      const incCount = (run.incident_counts && run.incident_counts.total) ?? 0;
+      const countsAvailable = run.incident_counts_available === true;
+      const incCount = countsAvailable ? ((run.incident_counts && run.incident_counts.total) ?? 0) : null;
       const createdStr = run.created_at ? new Date(run.created_at).toLocaleString() : '—';
       const encodedId = encodeURIComponent(run.run_id);
 
@@ -833,14 +849,14 @@ async function fetchHistory() {
 
       const td4 = document.createElement('td');
       const strongInc = document.createElement('strong');
-      strongInc.textContent = String(incCount);
-      td4.append(strongInc, ' incidents');
+      strongInc.textContent = incCount === null ? 'N/A' : String(incCount);
+      td4.append(strongInc, incCount === null ? ' - assessment unavailable' : ' incidents');
 
       const td5 = document.createElement('td');
-      td5.textContent = `${run.collector_count ?? 7} collectors`;
+      td5.textContent = `${run.collector_count ?? 8} collectors`;
 
       const td6 = document.createElement('td');
-      td6.textContent = run.email_sent ? 'Sent' : 'Skipped';
+      td6.textContent = run.email_sent ? 'Sent' : (run.email_error ? 'Failed' : 'Skipped');
 
       const td7 = document.createElement('td');
       td7.className = 'sec-download-cell';

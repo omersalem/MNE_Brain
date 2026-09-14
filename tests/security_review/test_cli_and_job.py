@@ -14,6 +14,7 @@ from core.security_review.cli import build_parser, run_security_pipeline
 from core.security_review.config import SecurityAgentConfig
 from core.security_review.daily_job import run_daily_job
 from core.security_review.run_store import SecurityReviewRunStore
+from core.security_review.reporter import SecurityReporter
 from core.security_review.service import SecurityReviewService
 
 
@@ -116,6 +117,50 @@ def test_daily_job_execution(tmp_path):
 
     assert exit_code == 0
     assert mock_pipeline.called
+
+
+def test_daily_job_returns_failure_when_email_was_not_delivered(tmp_path):
+    cfg_mgr = SecurityAgentConfig(str(tmp_path / "test_config.json"))
+    cfg_mgr.save({"schedule_enabled": True, "schedule_time": "07:00", "recipients": ["admin@mne.gov.ps"]})
+    mock_pipeline = MagicMock(return_value={"success": False, "email_sent": False, "email_error": "SMTP rejected message"})
+
+    assert run_daily_job(config_mgr=cfg_mgr, pipeline_fn=mock_pipeline) == 1
+
+
+def test_pipeline_marks_requested_email_failure_unsuccessful(tmp_path):
+    store = SecurityReviewRunStore(tmp_path / "runs")
+    cfg_mgr = SecurityAgentConfig(str(tmp_path / "config.json"))
+    reporter = SecurityReporter()
+
+    def fail_email(**_kwargs):
+        reporter.last_email_error = "SMTPDataError: message rejected"
+        reporter.last_email_message_bytes = 4567
+        return False
+
+    reporter.send_daily_security_email = fail_email
+    service = SecurityReviewService(
+        run_store=store,
+        collector_registry={"fortigate_core": FakeCollector("FortiGate")},
+        reporter=reporter,
+        config_mgr=cfg_mgr,
+    )
+
+    result = run_security_pipeline(
+        dry_run=False,
+        send_email=True,
+        recipients=["admin@mne.gov.ps"],
+        service=service,
+        collectors="fortigate_core",
+        formats="html",
+    )
+
+    assert result["success"] is False
+    assert result["state"] == "PARTIAL"
+    assert result["email_sent"] is False
+    assert result["email_error"] == "SMTPDataError: message rejected"
+    saved = store.get_run(result["run_id"])
+    assert saved["email_result"]["message_bytes"] == 4567
+    assert "message rejected" in saved["failure_summary"]
 
 
 def test_run_security_pipeline_parameterized(tmp_path):

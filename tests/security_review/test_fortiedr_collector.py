@@ -64,11 +64,14 @@ def test_parse_dwr_reply_fallback():
     assert result == sample
 
 
+FIXTURE_CREDENTIAL = "fixture-" + "credential"
+
+
 def test_fortiedr_parse_security_event_malicious():
     collector = FortiEDRSecurityCollector(
         host="test.console.ensilo.com",
         username="testuser",
-        password="testpassword",
+        password=FIXTURE_CREDENTIAL,
         organization="MNE",
     )
     raw_event = {
@@ -97,7 +100,7 @@ def test_fortiedr_parse_security_event_suspicious():
     collector = FortiEDRSecurityCollector(
         host="test.console.ensilo.com",
         username="testuser",
-        password="testpassword",
+        password=FIXTURE_CREDENTIAL,
         organization="MNE",
     )
     raw_event = {
@@ -117,7 +120,7 @@ def test_fortiedr_parse_security_event_inconclusive():
     collector = FortiEDRSecurityCollector(
         host="test.console.ensilo.com",
         username="testuser",
-        password="testpassword",
+        password=FIXTURE_CREDENTIAL,
         organization="MNE",
     )
     raw_event = {
@@ -134,7 +137,7 @@ def test_fortiedr_safe_event_is_not_malware():
     collector = FortiEDRSecurityCollector(
         host="test.console.ensilo.com",
         username="testuser",
-        password="testpassword",
+        password=FIXTURE_CREDENTIAL,
         organization="MNE",
     )
     norm = collector.parse_security_event({"id": "1004", "classification": "Safe"})
@@ -154,7 +157,7 @@ def test_fortiedr_mock_collection_flow():
     collector = FortiEDRSecurityCollector(
         host="mock.console.ensilo.com",
         username="mockuser",
-        password="mockpassword",
+        password=FIXTURE_CREDENTIAL,
         organization="MNE",
     )
 
@@ -227,7 +230,7 @@ def test_fortiedr_auth_failure_handling():
     collector = FortiEDRSecurityCollector(
         host="mock.console.ensilo.com",
         username="baduser",
-        password="badpassword",
+        password=FIXTURE_CREDENTIAL,
         organization="MNE",
     )
     with patch("requests.Session") as mock_session_cls:
@@ -269,8 +272,8 @@ def test_fortiedr_pipeline_registration():
 
 
 @pytest.mark.skipif(
-    not os.getenv("MNE_FORTIEDR_PASSWORD"),
-    reason="MNE_FORTIEDR_PASSWORD not configured in .env",
+    os.getenv("MNE_RUN_LIVE_SECURITY_TESTS") != "1" or not os.getenv("MNE_FORTIEDR_PASSWORD"),
+    reason="Live security tests require MNE_RUN_LIVE_SECURITY_TESTS=1 and configured credentials",
 )
 def test_fortiedr_live_collection():
     collector = FortiEDRSecurityCollector()

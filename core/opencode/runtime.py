@@ -27,6 +27,7 @@ from core.tools.mcp_relay import ALIASES
 
 
 OPENCODE_PROVIDER_ID = "prv_opencode"
+OPENCODE_MAX_TURN_TIMEOUT_SECONDS = 1800
 OPENCODE_MINIMUM_VERSION = (1, 0, 0)
 OPENCODE_SAFE_ERRORS = {
     "OPENCODE_NOT_INSTALLED",
@@ -308,6 +309,7 @@ class OpenCodeRuntime:
         self._models: list[dict[str, Any]] = []
         self._auth_methods: dict[str, list[dict[str, Any]]] = {}
         self._connected: set[str] = set()
+        self._default_model: str | None = None
         self._sessions: dict[str, dict[str, str]] = {}
         self._active: dict[str, dict[str, Any]] = {}
         self._cancelled: set[str] = set()
@@ -319,15 +321,52 @@ class OpenCodeRuntime:
 
     @staticmethod
     def _find_binary() -> str | None:
-        discovered = shutil.which("opencode") or shutil.which("opencode.cmd") or shutil.which("opencode.exe")
-        if not discovered:
-            return None
-        path = Path(discovered)
-        if path.suffix.casefold() in {".cmd", ".ps1"}:
-            executable = path.parent / "node_modules/opencode-ai/bin/opencode.exe"
-            if executable.is_file():
-                return str(executable)
-        return discovered
+        """Resolve the native OpenCode binary without relying on a user PATH.
+
+        Windows services commonly inherit the system PATH even when USERPROFILE,
+        APPDATA, and LOCALAPPDATA are intentionally pointed at the owner profile.
+        Prefer an explicit non-secret path, then inspect the standard per-user npm
+        installation before falling back to PATH discovery.
+        """
+        candidates: list[Path] = []
+        configured = os.environ.get("MNE_BRAIN_OPENCODE_BINARY", "").strip()
+        if configured:
+            candidates.append(Path(configured))
+
+        for name in ("opencode", "opencode.cmd", "opencode.exe"):
+            discovered = shutil.which(name)
+            if discovered:
+                candidates.append(Path(discovered))
+
+        app_data = os.environ.get("APPDATA", "").strip()
+        if app_data:
+            npm_root = Path(app_data) / "npm"
+            candidates.extend(
+                [
+                    npm_root / "node_modules" / "opencode-ai" / "bin" / "opencode.exe",
+                    npm_root / "opencode.exe",
+                    npm_root / "opencode.cmd",
+                ]
+            )
+
+        seen: set[str] = set()
+        for candidate in candidates:
+            try:
+                path = candidate.expanduser().resolve()
+            except OSError:
+                continue
+            key = str(path).casefold()
+            if key in seen:
+                continue
+            seen.add(key)
+            if path.suffix.casefold() in {".cmd", ".ps1"}:
+                native = path.parent / "node_modules" / "opencode-ai" / "bin" / "opencode.exe"
+                if native.is_file():
+                    return str(native)
+                continue
+            if path.is_file():
+                return str(path)
+        return None
 
     @staticmethod
     def _free_port() -> int:
@@ -566,7 +605,9 @@ class OpenCodeRuntime:
         auth_payload = self._client.request("GET", "/provider/auth" + self._directory_query(), timeout=60)
         if not isinstance(provider_payload, dict) or not isinstance(provider_payload.get("all"), list) or not isinstance(auth_payload, dict):
             raise OpenCodeError("OPENCODE_CONNECTION_FAILED", "OpenCode returned an invalid provider catalog.")
-        connected = {str(item) for item in provider_payload.get("connected", [])}
+        connected_order = [str(item) for item in provider_payload.get("connected", []) if str(item)]
+        connected = set(connected_order)
+        reported_defaults = provider_payload.get("default") if isinstance(provider_payload.get("default"), dict) else {}
         custom_ids = {str(item.get("provider_id")) for item in self.custom_providers.list()}
         providers: list[dict[str, Any]] = []
         models: list[dict[str, Any]] = []
@@ -660,6 +701,28 @@ class OpenCodeRuntime:
             self._providers = sorted(providers, key=lambda item: (not item["connected"], item["display_name"].casefold()))
             self._models = sorted(models, key=lambda item: (not item["connected"], item["cost_classification"] != "FREE", item["provider_id"], item["display_name"].casefold()))
             self._auth_methods = methods
+            eligible = [item for item in self._models if item["connected"] and item["availability"] != "DEPRECATED"]
+            eligible_by_id = {item["selection_id"]: item for item in eligible}
+            self._default_model = None
+            for provider_id in connected_order:
+                model_id = reported_defaults.get(provider_id)
+                selection_id = f"{provider_id}/{model_id}" if isinstance(model_id, str) and model_id else ""
+                if selection_id in eligible_by_id:
+                    self._default_model = selection_id
+                    break
+            if self._default_model is None and eligible:
+                provider_rank = {provider_id: index for index, provider_id in enumerate(connected_order)}
+                self._default_model = min(
+                    eligible,
+                    key=lambda item: (
+                        not item["tool_support"],
+                        not item["reasoning"],
+                        item["context_limit"] <= 0 or item["output_limit"] <= 0,
+                        item["cost_classification"] != "FREE",
+                        provider_rank.get(item["provider_id"], len(provider_rank)),
+                        item["display_name"].casefold(),
+                    ),
+                )["selection_id"]
             if not connected:
                 self._status = "NO_CONNECTED_PROVIDER"
                 self._missing = ["Connect at least one OpenCode provider."]
@@ -675,7 +738,6 @@ class OpenCodeRuntime:
         if start_process and self._client is None and self._status not in {"NOT_INSTALLED", "VERSION_UNSUPPORTED"}:
             return self.start()
         with self._lock:
-            default = next((item["selection_id"] for item in self._models if item["connected"] and item["availability"] != "DEPRECATED"), None)
             return {
                 "status": self._status,
                 "provider_id": OPENCODE_PROVIDER_ID,
@@ -690,7 +752,7 @@ class OpenCodeRuntime:
                 "uncontrolled_mcp": "DENIED",
                 "connected_provider_count": len(self._connected),
                 "model_count": len(self._models),
-                "default_model": default,
+                "default_model": self._default_model,
                 "missing_prerequisites": list(self._missing),
                 "restart_count": self._restart_count,
                 "secrets_returned": False,
@@ -860,7 +922,7 @@ class OpenCodeRuntime:
         owner_session_digest: str,
         model_id: str,
         permission_mode: str,
-        timeout_seconds: int = 600,
+        timeout_seconds: int = OPENCODE_MAX_TURN_TIMEOUT_SECONDS,
     ) -> None:
         worker = threading.Thread(
             target=self._run_turn,
@@ -945,7 +1007,7 @@ class OpenCodeRuntime:
                     },
                     timeout=30,
                 )
-                deadline = time.monotonic() + max(1, min(timeout_seconds, 1800))
+                deadline = time.monotonic() + max(1, min(timeout_seconds, OPENCODE_MAX_TURN_TIMEOUT_SECONDS))
                 idle = False
                 reconnects = 0
                 while time.monotonic() < deadline and not idle:

@@ -276,6 +276,8 @@ class SecurityAgentConfig:
                 "medium_count": result_summary.get("medium_count", 0),
                 "total_incidents": result_summary.get("total_incidents", 0),
                 "email_sent": result_summary.get("email_sent", False),
+                "email_error": result_summary.get("email_error"),
+                "email_message_bytes": result_summary.get("email_message_bytes"),
                 "html_path": result_summary.get("html_path"),
                 "pdf_path": result_summary.get("pdf_path"),
                 "collectors": result_summary.get("collectors", []),

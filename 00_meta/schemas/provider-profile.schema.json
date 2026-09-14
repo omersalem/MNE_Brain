@@ -18,7 +18,7 @@
       "properties": {
         "context_tokens": {"type": "integer", "minimum": 256, "maximum": 10000000},
         "output_tokens": {"type": "integer", "minimum": 1, "maximum": 1000000},
-        "timeout_seconds": {"type": "integer", "minimum": 1, "maximum": 600},
+        "timeout_seconds": {"type": "integer", "minimum": 1, "maximum": 1800},
         "max_cost_usd": {"type": "number", "minimum": 0, "maximum": 1000}
       }
     },

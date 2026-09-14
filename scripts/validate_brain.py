@@ -129,7 +129,7 @@ def run_master_validation() -> dict[str, Any]:
             base_dir / "00_meta" / "schemas" / "canonical-note.schema.json",
         )
         statuses = report.get("status_counts", {})
-        passed = report["compliant"] and report["notes_scanned"] == 48 and statuses == {"unverified": 48}
+        passed = report["compliant"] and report["notes_scanned"] == 49 and statuses == {"documented": 1, "unverified": 48}
         return passed, f"{report['notes_scanned']} compliant notes; statuses={statuses}"
 
     router = QueryRouter(base_dir=base_dir)
@@ -154,7 +154,7 @@ def run_master_validation() -> dict[str, Any]:
         index = entity_builder.build_index(persist=False)
         match = entity_builder.resolve_entity("172.23.70.4")
         passed = (
-            index["total_entities"] == 48
+            index["total_entities"] == 49
             and len(match) == 1
             and match[0]["entity_id"] == "fw-fortigate-edge-01"
             and match[0]["knowledge_status"] == "unverified"
@@ -388,8 +388,8 @@ def run_master_validation() -> dict[str, Any]:
         selection = registry.select_for_target(entity_builder.resolve_entity("waf-f5-bigip-01")[0])
         passed = (
             registry.build_registry()["total_runbooks"] == 12
-            and coverage["context_covered_entities"] == coverage["total_entities"] == 48
-            and coverage["operationally_covered_entities"] == 48
+            and coverage["context_covered_entities"] == coverage["total_entities"] == 49
+            and coverage["operationally_covered_entities"] == 49
             and coverage["operational_runbook_readiness"] is True
             and coverage["production_readiness_claimed"] is False
             and selection["candidates"][0]["runbook_id"] == "p5-published-service-triage"
@@ -407,7 +407,7 @@ def run_master_validation() -> dict[str, Any]:
                 )
             )
         )
-        return passed, "48 entities have context and owner-reviewed procedures; production remains unclaimed"
+        return passed, "49 entities have context and owner-reviewed procedures; production remains unclaimed"
 
     def p0_containment_check() -> tuple[bool, str]:
         report = validate_p0_containment()
@@ -435,8 +435,8 @@ def run_master_validation() -> dict[str, Any]:
         p9_plan = p9.plan({"scenario_id": "p9-vpn-access", "binding_id": "p7-fortigate-edge", "symptom": "vpn down"})
         bindings = p7["credential_bindings"]
         passed = (
-            registry.public_catalog()["total_connectors"] == 15
-            and coverage["total_entities"] == coverage["planned_entities"] == coverage["offline_validated_entities"] == 48
+            registry.public_catalog()["total_connectors"] == 16
+            and coverage["total_entities"] == coverage["planned_entities"] == coverage["offline_validated_entities"] == 49
             and coverage["planning_coverage_percent"] == coverage["offline_validation_coverage_percent"] == 100.0
             and coverage["live_transport_entities"] == 1
             and coverage["live_collection_enabled"] is False
@@ -448,7 +448,7 @@ def run_master_validation() -> dict[str, Any]:
             and fixture["connection_attempted"] is False
             and live["reason"] == "P6_LIVE_TRANSPORTS_DISABLED"
             and live["connection_attempted"] is False
-            and p7["total_entities"] == p7["transport_implementation_coverage"] == 48
+            and p7["total_entities"] == p7["transport_implementation_coverage"] == 49
             and p7["transport_implementation_coverage_percent"] == 100.0
             and len(p7["drivers"]) == 7
             and p7["live_enabled"] is False

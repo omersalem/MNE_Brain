@@ -100,6 +100,11 @@ function renderModelPickerOptions(query=''){
 
     const sub=document.createElement('div');
     sub.className='model-opt-sub';
+    if(model.description){
+      const description=document.createElement('span');
+      description.textContent=model.description;
+      sub.append(description);
+    }
     if(model.context_limit){
       const ctxSpan=document.createElement('span');
       ctxSpan.textContent=`ctx ${formatLimit(model.context_limit)}`;
@@ -188,11 +193,33 @@ function renderModels(selected){
   }
   renderModelDetails();
 }
-function renderModelDetails(){const engine=activeEngine();const model=(engine?.models||[]).find(item=>item.id===modelSelect.value);const root=document.querySelector('#model-details');if(!model){root.textContent=engine?.engine_id==='opencode'?'Select an exact connected OpenCode model; no automatic fallback will occur.':'';return;}if(engine?.engine_id==='opencode')root.textContent=`${model.provider_id}/${model.model_id} · ${model.cost_classification} · context ${model.context_limit||'unknown'} · output ${model.output_limit||'unknown'} · tools ${model.tool_support?'supported':'not reported'} · reasoning ${model.reasoning?'reported':'not reported'} · ${model.availability} · ${model.connection_status}${model.warnings?.length?' · '+model.warnings.join(' · '):''}`;else if(engine?.engine_id==='antigravity')root.textContent=`${engine.label} · ${model.label}${model.effort?' · effort: '+model.effort:''} · Unrestricted Read & Governed Write Review`;else root.textContent=`${engine.label} · ${model.label}`;}
+function renderModelDetails(){const engine=activeEngine();const model=(engine?.models||[]).find(item=>item.id===modelSelect.value);const root=document.querySelector('#model-details');if(!model){root.textContent=engine?.engine_id==='opencode'?'Select an exact connected OpenCode model; no automatic fallback will occur.':'';return;}if(engine?.engine_id==='opencode')root.textContent=`${model.provider_id}/${model.model_id} · ${model.cost_classification} · context ${model.context_limit||'unknown'} · output ${model.output_limit||'unknown'} · tools ${model.tool_support?'supported':'not reported'} · reasoning ${model.reasoning?'reported':'not reported'} · ${model.availability} · ${model.connection_status}${model.warnings?.length?' · '+model.warnings.join(' · '):''}`;else if(engine?.engine_id==='antigravity')root.textContent=`${engine.label} · ${model.label}${model.effort?' · effort: '+model.effort:''} · Unrestricted Read & Governed Write Review`;else if(engine?.engine_id==='codex')root.textContent=`${engine.label} · ${model.description||model.label}${model.default_reasoning_effort?' · default reasoning: '+model.default_reasoning_effort:''}${model.supported_reasoning_efforts?.length?' · available reasoning: '+model.supported_reasoning_efforts.join(', '):''}`;else root.textContent=`${engine.label} · ${model.label}`;}
 function renderEngines(){
   engineSelect.replaceChildren();
-  for(const engine of appState().engines){const option=document.createElement('option');option.value=engine.engine_id;option.textContent=`${engine.label} · ${engine.authentication} · ${engine.status}`;option.disabled=engine.status!=='READY';engineSelect.append(option);}
-  engineSelect.value=appState().currentThread?.engine_id||appState().engines.find(item=>item.status==='READY')?.engine_id||'codex';
+  const engines = appState().engines || [];
+  const readyEngine = engines.find(item => item.status === 'READY');
+  const threadEngineId = appState().currentThread?.engine_id;
+  const threadHasTurns = Boolean((appState().currentThread?.turn_ids || []).length || (appState().currentThread?.turns || []).length);
+
+  for(const engine of engines){
+    const option=document.createElement('option');
+    option.value=engine.engine_id;
+    option.textContent=`${engine.label} · ${engine.authentication} · ${engine.status}`;
+    if(engine.status !== 'READY' && !(threadHasTurns && threadEngineId === engine.engine_id)){
+      option.disabled = true;
+    }
+    engineSelect.append(option);
+  }
+
+  if(!threadHasTurns){
+    const preferredEngine = engines.find(item => item.engine_id === threadEngineId && item.status === 'READY')
+      || readyEngine
+      || engines[0];
+    engineSelect.value = preferredEngine ? preferredEngine.engine_id : 'antigravity';
+  }else{
+    engineSelect.value = threadEngineId || readyEngine?.engine_id || 'antigravity';
+  }
+
   renderModels(appState().currentThread?.model_id);
 }
 function addText(parent,tag,text,className=''){const node=document.createElement(tag);node.textContent=text;if(className)node.className=className;parent.append(node);return node;}
@@ -227,8 +254,10 @@ function refreshAuthSelects(){
   }
   renderOAuthMethods();
 }
-function renderOpenCodeProviders(){
+function renderOpenCodeProviders(unavailableMessage=''){
   const root=document.querySelector('#provider-settings-list');root.replaceChildren();
+  if(unavailableMessage){addText(root,'p',unavailableMessage,'tool-error');}
+  if(!openCodeCatalog.providers.length&&!unavailableMessage){addText(root,'p','No OpenCode providers are available from the local runtime.','tool-error');}
   for(const provider of openCodeCatalog.providers){
     const card=document.createElement('section');card.className='provider-card';addText(card,'span',provider.connection_status,`provider-health ${provider.connected?'configured':'missing'}`);addText(card,'h3',provider.display_name);
     const free=openCodeCatalog.models.filter(model=>model.provider_id===provider.provider_id&&model.cost_classification==='FREE').length;
@@ -249,14 +278,23 @@ function renderOpenCodeProviders(){
 }
 export async function loadProviders(){
   const server=await getJSON('/api/v2/settings');
-  const [providers,engines,catalog]=await Promise.all([getJSON('/api/v2/providers'),getJSON('/api/v2/engines'),getJSON('/api/v2/opencode/providers')]);
-  appState().providers=providers.profiles;appState().engines=engines.engines;openCodeCatalog=catalog;renderEngines();renderOpenCodeProviders();
   readinessCard('#codex-readiness','Codex App Server readiness',server.codex,`ChatGPT session · ${server.codex.sandbox} · ${server.codex.approval_policy} approvals · network ${server.codex.network_access?'enabled':'off'}`);
-  readinessCard('#opencode-readiness','OpenCode readiness',server.opencode,`Version ${server.opencode.version||'unknown'} · Basic Auth ${server.opencode.basic_auth} · native shell ${server.opencode.native_shell} · native edits ${server.opencode.native_edits}`);
+  readinessCard('#opencode-readiness','OpenCode readiness',server.opencode,`Version ${server.opencode.version||'unknown'} · turn timeout ${Math.round((server.opencode.turn_timeout_seconds||0)/60)} min · Basic Auth ${server.opencode.basic_auth} · native shell ${server.opencode.native_shell} · native edits ${server.opencode.native_edits}`);
   if(server.antigravity)readinessCard('#antigravity-readiness','Antigravity CLI readiness',server.antigravity,`Version ${server.antigravity.version||'1.1.26'} · Unrestricted read & governed write review · Google AI session`);
+  const [providersResult,enginesResult,catalogResult]=await Promise.allSettled([getJSON('/api/v2/providers'),getJSON('/api/v2/engines'),getJSON('/api/v2/opencode/providers')]);
+  const failures=[];
+  if(providersResult.status==='fulfilled')appState().providers=providersResult.value.profiles||[];
+  else failures.push(`Provider profiles: ${providersResult.reason.message}`);
+  if(enginesResult.status==='fulfilled')appState().engines=enginesResult.value.engines||[];
+  else failures.push(`Engine catalog: ${enginesResult.reason.message}`);
+  if(catalogResult.status==='fulfilled')openCodeCatalog=catalogResult.value;
+  else{openCodeCatalog={providers:[],models:[]};failures.push(`OpenCode catalog: ${catalogResult.reason.message}`);}
+  renderEngines();renderOpenCodeProviders(catalogResult.status==='rejected'?failures.at(-1):'');
   document.querySelector('#codex-status').textContent=`Codex ${server.codex.status} · OpenCode ${server.opencode.status}${server.antigravity?' · Antigravity '+server.antigravity.status:''}`;
   document.querySelector('#live-status').textContent=server.p7_live_reads_enabled?'Globally active':(server.p7_owner_scoped_live_reads_available?'Automatic exact reads':'Unavailable');
   const current=activeEngine();status.textContent=current?`${current.label} · ${modelSelect.value} · ${current.status}`:'No AI engine';
+  const settingsStatus=document.querySelector('#settings-status');
+  if(settingsStatus)settingsStatus.textContent=failures.length?failures.join(' · '):'All provider diagnostics loaded.';
 }
 async function pinSelection(){
   const thread=appState().currentThread;if(!thread)return;
@@ -348,7 +386,7 @@ window.addEventListener('keydown',e=>{
 });
 
 async function providerAction(action,providerId){const output=document.querySelector('#settings-status');try{output.textContent=`${action} in progress…`;const result=await mutateJSON(`/api/v2/opencode/providers/${action}`,{provider_id:providerId});output.textContent=`${result.status} · no credential material returned`;await loadProviders();}catch(error){output.textContent=error.message;}}
-document.querySelector('#settings-button').addEventListener('click',()=>settings.showModal());
+document.querySelector('#settings-button').addEventListener('click',()=>{settings.showModal();const output=document.querySelector('#settings-status');if(output)output.textContent='Refreshing provider diagnostics…';loadProviders().catch(error=>{if(output)output.textContent=error.message;});});
 document.querySelector('#refresh-opencode').addEventListener('click',async()=>{try{document.querySelector('#settings-status').textContent='Refreshing OpenCode providers and models…';await mutateJSON('/api/v2/opencode/providers/refresh',{});await loadProviders();document.querySelector('#settings-status').textContent='OpenCode catalog refreshed.';}catch(error){document.querySelector('#settings-status').textContent=error.message;}});
 document.querySelector('#opencode-oauth-provider').addEventListener('change',renderOAuthMethods);document.querySelector('#opencode-oauth-method').addEventListener('change',renderOAuthInputs);
 document.querySelector('#opencode-api-key-form').addEventListener('submit',async event=>{event.preventDefault();const input=document.querySelector('#opencode-api-key');const apiKey=input.value;input.value='';try{const result=await mutateJSON('/api/v2/opencode/providers/connect-api',{provider_id:document.querySelector('#opencode-api-provider').value,api_key:apiKey});document.querySelector('#settings-status').textContent=`${result.status} · credential sent directly to OpenCode and not returned`;await loadProviders();}catch(error){document.querySelector('#settings-status').textContent=error.message;}});
@@ -358,4 +396,5 @@ document.querySelector('#opencode-custom-provider-form').addEventListener('submi
 
 const themeButton=document.querySelector('#theme-toggle');function applyTheme(theme){document.documentElement.dataset.theme=theme;themeButton.setAttribute('aria-pressed',String(theme==='light'));themeButton.textContent=theme==='light'?'Use dark theme':'Use light theme';localStorage.setItem('mne-theme',theme);}themeButton.addEventListener('click',()=>applyTheme(document.documentElement.dataset.theme==='light'?'dark':'light'));applyTheme(localStorage.getItem('mne-theme')||'dark');
 document.addEventListener('thread-selected',()=>renderEngines());
+document.addEventListener('owner-authenticated',()=>loadProviders().catch(error=>{status.textContent=error.message;}));
 loadProviders().catch(error=>{status.textContent=error.message;});

@@ -6,9 +6,11 @@ import hashlib
 import json
 import re
 import secrets
+import shutil
 import subprocess
 import tempfile
 import threading
+import time
 from copy import deepcopy
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -157,21 +159,61 @@ class ToolBroker:
             raise ToolBrokerError("Search query rejected.")
         root = self.boundary.resolve(path)
         matches: list[dict[str, Any]] = []
-        for candidate in root.rglob("*"):
-            if len(matches) >= 500 or not candidate.is_file() or candidate.is_symlink() or candidate.stat().st_size > 2_000_000:
+        truncated = False
+        scanned_files = 0
+        scanned_bytes = 0
+        deadline = time.monotonic() + 8.0
+        rg_path = shutil.which("rg")
+        candidates: list[Path]
+        if rg_path:
+            try:
+                listed = subprocess.run(
+                    [rg_path, "--files", "--glob", "!.git/**"],
+                    cwd=root,
+                    shell=False,
+                    capture_output=True,
+                    text=True,
+                    timeout=5,
+                    check=False,
+                )
+                candidates = [root / item for item in listed.stdout.splitlines() if item]
+            except (OSError, subprocess.SubprocessError):
+                candidates = root.rglob("*")
+        else:
+            candidates = root.rglob("*")
+        for candidate in candidates:
+            if len(matches) >= 500 or scanned_files >= 10_000 or scanned_bytes >= 50_000_000 or time.monotonic() >= deadline:
+                truncated = True
+                break
+            if not candidate.is_file() or candidate.is_symlink():
                 continue
             relative = str(candidate.relative_to(self.base_dir)).replace("\\", "/")
             if self.boundary.is_protected(relative):
                 continue
             try:
-                for line_no, line in enumerate(candidate.read_text(encoding="utf-8", errors="ignore").splitlines(), 1):
-                    if query.casefold() in line.casefold():
-                        matches.append({"path": str(candidate.relative_to(self.base_dir)).replace("\\", "/"), "line": line_no, "text": line[:500]})
+                size = candidate.stat().st_size
+                if size > 2_000_000 or scanned_bytes + size > 50_000_000:
+                    continue
+                scanned_files += 1
+                scanned_bytes += size
+                with candidate.open("r", encoding="utf-8", errors="ignore") as handle:
+                    lines = enumerate(handle, 1)
+                    for line_no, line in lines:
+                        if query.casefold() not in line.casefold():
+                            continue
+                        matches.append({"path": relative, "line": line_no, "text": line.rstrip("\r\n")[:500]})
                         if len(matches) >= 500:
+                            truncated = True
                             break
             except OSError:
                 continue
-        return {"query": query, "matches": matches}
+        return {
+            "query": query,
+            "matches": matches,
+            "truncated": truncated,
+            "scanned_files": scanned_files,
+            "scanned_bytes": scanned_bytes,
+        }
 
     def read_workspace(self, path: str, *, max_bytes: int = 200000) -> dict[str, Any]:
         target = self.boundary.resolve(path)

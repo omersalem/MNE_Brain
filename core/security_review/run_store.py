@@ -248,6 +248,7 @@ class SecurityReviewRunStore:
                     "assessment_status": data.get("assessment_status", "UNAVAILABLE"),
                     "collector_count": len(data.get("collector_diagnostics", {})),
                     "email_sent": (data.get("email_result") or {}).get("sent", False),
+                    "email_error": (data.get("email_result") or {}).get("error"),
                     "reports": data.get("report_artifacts", {}),
                     "retry_of_run_id": data.get("retry_of_run_id"),
                 })

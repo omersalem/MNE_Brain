@@ -531,6 +531,8 @@ class SecurityAIAnalyzer:
         engine_clean = engine.upper()
         aid = self._generate_analysis_id("dual" if engine_clean == "BOTH" else engine_clean)
         self.emit_event(aid, "analysis.queued", {"analysis_id": aid, "run_id": run_id, "engine": engine_clean})
+        with self._lock:
+            self._results[aid] = {"analysis_id": aid, "engine": engine_clean, "status": "QUEUED"}
 
         def _worker():
             try:
@@ -559,6 +561,8 @@ class SecurityAIAnalyzer:
         engine_clean = engine.upper()
         aid = self._generate_analysis_id("dual" if engine_clean == "BOTH" else engine_clean)
         self.emit_event(aid, "analysis.queued", {"analysis_id": aid, "incident_fingerprint": fingerprint, "engine": engine_clean})
+        with self._lock:
+            self._results[aid] = {"analysis_id": aid, "engine": engine_clean, "status": "QUEUED"}
 
         def _worker():
             try:

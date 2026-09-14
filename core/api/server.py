@@ -175,6 +175,7 @@ def _codex_readiness(*, start_process: bool = False) -> Dict[str, Any]:
 def _opencode_readiness(*, start_process: bool = False) -> Dict[str, Any]:
     """Return a secret-free OpenCode server/provider readiness summary."""
     result = conversation_engine.opencode.readiness(start_process=start_process)
+    result["turn_timeout_seconds"] = int(provider_registry.get(OPENCODE_PROVIDER_ID)["limits"]["timeout_seconds"])
     result["p7"] = {"owner_scoped_available": tool_broker.p7_scoped_available, "globally_enabled": tool_broker.p7_live_enabled}
     result["p10"] = {"execution_enabled": tool_broker.p10.execution_enabled, "writes_require_exact_approval": True}
     return result
@@ -192,12 +193,13 @@ def _antigravity_readiness(*, start_process: bool = False) -> Dict[str, Any]:
 
 def _engine_catalog(*, start_process: bool = False) -> Dict[str, Any]:
     codex = _codex_readiness(start_process=start_process)
+    codex_catalog = conversation_engine.codex.models(start_process=False)
     opencode = _opencode_readiness(start_process=start_process)
     opencode_catalog = conversation_engine.opencode.catalog(start_process=False)
     antigravity = _antigravity_readiness(start_process=start_process)
     return {
         "engines": [
-            {"engine_id": "codex", "provider_id": CODEX_PROVIDER_ID, "label": "Codex App Server", "authentication": "ChatGPT session", "status": codex["status"], "models": [{"id": "codex-account-default", "label": "ChatGPT account default"}], "default_model": "codex-account-default", "details": codex},
+            {"engine_id": "codex", "provider_id": CODEX_PROVIDER_ID, "label": "Codex App Server", "authentication": "ChatGPT session", "status": codex["status"], "models": codex_catalog["models"], "default_model": codex_catalog["default_model"], "details": {**codex, "model_catalog_status": codex_catalog["catalog_status"]}},
             {"engine_id": "opencode", "provider_id": OPENCODE_PROVIDER_ID, "label": "OpenCode", "authentication": "Dynamic provider connection", "status": opencode["status"], "models": [{"id": item["selection_id"], "label": f"{item['display_name']} · {item['provider_id']} · {item['cost_classification']}", **item} for item in opencode_catalog["models"] if item["connected"]], "default_model": opencode["default_model"], "details": opencode},
             {"engine_id": "antigravity", "provider_id": ANTIGRAVITY_PROVIDER_ID, "label": "Antigravity CLI (1.1.26)", "authentication": "Google AI session", "status": antigravity["status"], "models": antigravity["models"], "default_model": antigravity["default_model"], "details": antigravity},
         ],
@@ -557,8 +559,12 @@ class MNEBrainAPIHandler(BaseHTTPRequestHandler):
             self._json_response(200, _opencode_readiness(start_process=True))
             return
         if path == "/api/v2/opencode/providers":
-            conversation_engine.opencode.refresh_catalog(start_process=True)
-            self._json_response(200, conversation_engine.opencode.catalog(start_process=False))
+            readiness = conversation_engine.opencode.readiness(start_process=True)
+            if readiness.get("status") == "READY":
+                conversation_engine.opencode.refresh_catalog(start_process=False)
+            catalog = conversation_engine.opencode.catalog(start_process=False)
+            catalog["readiness"] = readiness
+            self._json_response(200, catalog)
             return
         if path == "/api/v2/antigravity/readiness":
             self._json_response(200, _antigravity_readiness(start_process=True))
@@ -813,14 +819,20 @@ class MNEBrainAPIHandler(BaseHTTPRequestHandler):
             codex_ready = conversation_engine.codex.readiness(start_process=True)["status"] == "READY"
             antigravity_ready = conversation_engine.antigravity.readiness(start_process=True)["status"] == "READY"
             default_engine = "codex" if codex_ready else ("antigravity" if antigravity_ready else "opencode")
-            requested_engine = str(payload.get("engine_id", default_engine))
             engine_providers = {"codex": CODEX_PROVIDER_ID, "opencode": OPENCODE_PROVIDER_ID, "antigravity": ANTIGRAVITY_PROVIDER_ID}
-            if requested_engine not in engine_providers:
+            explicit_provider = str(payload["provider_id"]) if payload.get("provider_id") else None
+            requested_engine = str(
+                payload.get("engine_id")
+                or (conversation_engine.store._engine_for_provider(explicit_provider) if explicit_provider else default_engine)
+            )
+            if payload.get("engine_id") and requested_engine not in engine_providers:
                 raise ValueError("Only Codex App Server, OpenCode, and Antigravity CLI are selectable AI engines.")
-            provider_id = str(payload.get("provider_id", engine_providers[requested_engine]))
+            provider_id = explicit_provider or engine_providers[requested_engine]
             profile = provider_registry.get(provider_id)
             selected_model = str(payload.get("model_id") or profile["model_id"])
-            if requested_engine == "opencode":
+            if requested_engine == "codex":
+                selected_model = conversation_engine.codex.validate_model(selected_model)
+            elif requested_engine == "opencode":
                 ready = conversation_engine.opencode.readiness(start_process=True)
                 selected_model = str(payload.get("model_id") or ready.get("default_model") or "select-model")
                 if selected_model != "select-model":
@@ -872,7 +884,9 @@ class MNEBrainAPIHandler(BaseHTTPRequestHandler):
                 raise ValueError("Only Codex App Server, OpenCode, and Antigravity CLI are selectable AI engines.")
             profile = provider_registry.get(provider_id)
             model_id = str(payload.get("model_id", profile["model_id"]))
-            if engine_id == "opencode":
+            if engine_id == "codex":
+                model_id = conversation_engine.codex.validate_model(model_id)
+            elif engine_id == "opencode":
                 conversation_engine.opencode.refresh_catalog(start_process=True)
                 conversation_engine.opencode._selected_model(model_id)
                 current = conversation_engine.store.get_thread(match.group(1), include_items=False)
@@ -1813,6 +1827,7 @@ class MNEBrainAPIHandler(BaseHTTPRequestHandler):
                 "sophos_email": "Sophos Email",
                 "active_directory": "Active Directory",
                 "exchange_2019": "Exchange",
+                "fortiedr": "FortiEDR",
             }
             enriched_devices = []
             for d in devices:

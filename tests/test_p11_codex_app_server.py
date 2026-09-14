@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 import re
+import shutil
 import subprocess
 import tempfile
 from pathlib import Path
@@ -45,6 +46,24 @@ class _FakeRpc:
 
     def request(self, method, params=None, timeout=None):
         self.requests.append((method, params, timeout))
+        if method == "model/list":
+            return {
+                "data": [
+                    {
+                        "id": "gpt-6-astra", "model": "gpt-6-astra", "displayName": "GPT-6-Astra",
+                        "description": "Most capable.", "hidden": False, "isDefault": True,
+                        "defaultReasoningEffort": "low",
+                        "supportedReasoningEfforts": [{"reasoningEffort": "low", "description": "Fast"}],
+                        "inputModalities": ["text", "image"],
+                    },
+                    {
+                        "id": "hidden-model", "model": "hidden-model", "displayName": "Hidden",
+                        "description": "Hidden.", "hidden": True, "isDefault": False,
+                        "defaultReasoningEffort": "medium", "supportedReasoningEfforts": [],
+                    },
+                ],
+                "nextCursor": None,
+            }
         if method == "thread/start":
             return {"thread": {"id": "cth_test"}}
         if method == "turn/start":
@@ -128,6 +147,39 @@ def test_child_environment_is_allowlisted_and_never_inherits_api_or_device_secre
     assert "MNE_FORTIGATE_PASSWORD" not in child
     assert "UNRELATED_SECRET" not in child
     assert "PATH" in {key.upper() for key in child}
+
+
+def test_binary_discovery_prefers_the_newest_installed_codex(monkeypatch, tmp_path):
+    old_binary = tmp_path / "codex-old.exe"
+    new_binary = tmp_path / "codex-new.exe"
+    old_binary.touch()
+    new_binary.touch()
+    monkeypatch.delenv("MNE_BRAIN_CODEX_BINARY", raising=False)
+    monkeypatch.delenv("LOCALAPPDATA", raising=False)
+    monkeypatch.setattr(shutil, "which", lambda name: str(old_binary) if name == "codex.exe" else (str(new_binary) if name == "codex" else None))
+
+    def fake_run(argv, **_kwargs):
+        version = "0.153.4" if Path(argv[0]).resolve() == new_binary.resolve() else "0.151.0"
+        return SimpleNamespace(returncode=0, stdout=f"codex-cli {version}\n", stderr="")
+
+    monkeypatch.setattr(subprocess, "run", fake_run)
+    assert CodexAppServerHarness._find_binary() == str(new_binary.resolve())
+
+
+def test_binary_discovery_checks_desktop_install_when_service_path_is_missing(monkeypatch, tmp_path):
+    desktop_binary = tmp_path / "Programs" / "OpenAI" / "Codex" / "bin" / "codex.exe"
+    desktop_binary.parent.mkdir(parents=True)
+    desktop_binary.touch()
+    monkeypatch.delenv("MNE_BRAIN_CODEX_BINARY", raising=False)
+    monkeypatch.setenv("LOCALAPPDATA", str(tmp_path))
+    monkeypatch.setattr(shutil, "which", lambda _name: None)
+    monkeypatch.setattr(
+        subprocess,
+        "run",
+        lambda argv, **_kwargs: SimpleNamespace(returncode=0, stdout="codex-cli 0.151.0\n", stderr=""),
+    )
+
+    assert CodexAppServerHarness._find_binary() == str(desktop_binary.resolve())
 
 
 def test_responses_dynamic_tool_aliases_are_valid_and_map_only_to_governed_tools():
@@ -359,3 +411,39 @@ def test_codex_app_server_start_turn_passes_pack_content_directly_without_mirror
     workspace_root = mapping["workspace"].root
     disk_files = [f.name for f in workspace_root.iterdir()]
     assert disk_files == ["README.md"]
+
+
+def test_codex_model_catalog_and_selected_model_are_forwarded_to_app_server(tmp_path):
+    repo = _git_repo(tmp_path / "repo")
+    (repo / "README.md").write_text("# Test Repo\n", encoding="utf-8")
+    harness, _ = _harness(repo)
+
+    catalog = harness.models()
+    assert [item["id"] for item in catalog["models"]] == ["codex-account-default", "gpt-6-astra"]
+    assert catalog["runtime_default_model"] == "gpt-6-astra"
+    harness.start_turn(
+        gui_thread_id="thr_model_choice",
+        gui_turn_id="trn_model_choice",
+        content="Use the selected model.",
+        owner_session_digest="d" * 64,
+        model_id="gpt-6-astra",
+    )
+    thread_params = next(params for method, params, _ in harness._rpc.requests if method == "thread/start")
+    turn_params = next(params for method, params, _ in harness._rpc.requests if method == "turn/start")
+    assert thread_params["model"] == "gpt-6-astra"
+    assert turn_params["model"] == "gpt-6-astra"
+
+
+def test_codex_account_default_omits_protocol_model_override(tmp_path):
+    repo = _git_repo(tmp_path / "repo")
+    harness, _ = _harness(repo)
+    harness.start_turn(
+        gui_thread_id="thr_account_default",
+        gui_turn_id="trn_account_default",
+        content="Use my account default.",
+        owner_session_digest="e" * 64,
+    )
+    thread_params = next(params for method, params, _ in harness._rpc.requests if method == "thread/start")
+    turn_params = next(params for method, params, _ in harness._rpc.requests if method == "turn/start")
+    assert "model" not in thread_params
+    assert "model" not in turn_params

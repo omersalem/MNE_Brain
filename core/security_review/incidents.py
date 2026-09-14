@@ -170,8 +170,21 @@ class IncidentRecord:
             "attacker_identity_candidates": list(self.attacker_identity_candidates),
             "attacker_identity_diagnostics": list(self.attacker_identity_diagnostics),
             "supporting_event_ids": list(self.supporting_event_ids),
-            "attacker_attribution": dict(self.attacker_attribution) if self.attacker_attribution else None,
         }
+        attacker_attr_dict = None
+        if self.attacker_attribution:
+            try:
+                from core.security_review.identity_enrichment import AttackerAttribution
+                if isinstance(self.attacker_attribution, AttackerAttribution):
+                    attacker_attr_dict = self.attacker_attribution.to_dict()
+                elif isinstance(self.attacker_attribution, dict):
+                    attacker_attr_dict = AttackerAttribution.from_dict(self.attacker_attribution).to_dict()
+                else:
+                    attacker_attr_dict = dict(self.attacker_attribution)
+            except Exception:
+                attacker_attr_dict = dict(self.attacker_attribution)
+
+        data["attacker_attribution"] = attacker_attr_dict
         return data
 
     @classmethod
@@ -223,7 +236,13 @@ class IncidentRecord:
             attacker_identity_candidates=list(data.get("attacker_identity_candidates", [])),
             attacker_identity_diagnostics=list(data.get("attacker_identity_diagnostics", [])),
             supporting_event_ids=list(data.get("supporting_event_ids", [])),
-            attacker_attribution=data.get("attacker_attribution"),
+            attacker_attribution=(
+                (lambda a: (
+                    (lambda aa: aa.to_dict())(__import__("core.security_review.identity_enrichment", fromlist=["AttackerAttribution"]).AttackerAttribution.from_dict(a))
+                    if isinstance(a, dict) else a
+                ))(data.get("attacker_attribution"))
+                if data.get("attacker_attribution") else None
+            ),
         )
 
 

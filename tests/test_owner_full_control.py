@@ -57,8 +57,8 @@ def test_owner_full_control_coverage_includes_every_canonical_entity_without_val
     report = InfrastructureCoverageService(BASE).status()
     serialized = json.dumps(report, sort_keys=True)
     assert report["mode"] == "OWNER_FULL_CONTROL"
-    assert report["total_entities"] == len(report["entities"]) == 48
-    assert sum(report["coverage_counts"].values()) == 48
+    assert report["total_entities"] == len(report["entities"]) == 49
+    assert sum(report["coverage_counts"].values()) == 49
     assert report["engine_capabilities"]["parity"] is True
     assert report["secrets_returned"] is False and report["connection_attempted"] is False
     assert "credential_value" not in serialized and "password" not in serialized.casefold()

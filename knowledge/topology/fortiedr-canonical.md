@@ -12,7 +12,7 @@ owner: "Cybersecurity & Endpoint Infrastructure Team"
 related_entities: ["fw-fortigate-hq-01", "dc-windows-ad-01", "faz-fortianalyzer-hq-01"]
 knowledge_status: "documented"
 source: "https://docs.fortinet.com/document/fortiedr/6.2.0/administration-guide/354083/introducing-fortiedr"
-last_verified: null
+last_verified: "2026-09-12T10:07:00Z"
 freshness_ttl_hours: 720
 ---
 
