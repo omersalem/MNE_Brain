@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import json
+import re
 import secrets
 import threading
+import unicodedata
 from copy import deepcopy
 from datetime import datetime, timezone
 from pathlib import Path
@@ -46,7 +48,7 @@ class ThreadStore:
     def _validate(self, name: str, value: dict[str, Any]) -> None:
         jsonschema.Draft7Validator(self._schemas[name], format_checker=jsonschema.FormatChecker()).validate(value)
 
-    def _save_thread_to_disk(self, thread_id: str) -> None:
+    def _save_thread_to_disk(self, thread_id: str, *, raise_on_error: bool = False) -> None:
         if not self.storage_dir:
             return
         with self._lock:
@@ -66,6 +68,7 @@ class ThreadStore:
                     messages.append(deepcopy(msg))
                     ordered_message_ids.append(msg["message_id"])
 
+        temp_path = None
         try:
             self.storage_dir.mkdir(parents=True, exist_ok=True)
             file_path = self.storage_dir / f"{thread_id}.json"
@@ -80,7 +83,13 @@ class ThreadStore:
             temp_path.write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
             temp_path.replace(file_path)
         except OSError:
-            pass
+            if temp_path and temp_path.exists():
+                try:
+                    temp_path.unlink()
+                except OSError:
+                    pass
+            if raise_on_error:
+                raise ThreadStoreError("Failed to persist thread to disk.") from None
 
     def _load_from_disk(self) -> None:
         if not self.storage_dir or not self.storage_dir.exists():
@@ -112,25 +121,143 @@ class ThreadStore:
 
     def delete_thread(self, thread_id: str) -> bool:
         with self._lock:
-            thread = self._threads.pop(thread_id, None)
+            thread = self._threads.get(thread_id)
             if not thread:
                 raise ThreadStoreError("Thread not found.")
+            for turn_id in thread.get("turn_ids", []):
+                turn = self._turns.get(turn_id)
+                if turn and turn.get("status") in {"QUEUED", "RUNNING"}:
+                    raise ThreadStoreError("Cannot delete thread while a turn is queued or running. Stop the turn first.")
+            if self.storage_dir:
+                file_path = self.storage_dir / f"{thread_id}.json"
+                if file_path.exists():
+                    try:
+                        file_path.unlink()
+                    except OSError as e:
+                        raise ThreadStoreError(f"Failed to delete thread persistence file: {e}")
+            self._threads.pop(thread_id, None)
             for turn_id in thread.get("turn_ids", []):
                 turn = self._turns.pop(turn_id, None)
                 if turn:
                     for msg_id in turn.get("message_ids", []):
                         self._messages.pop(msg_id, None)
-            for msg_id in [k for k, v in self._messages.items() if v.get("thread_id") == thread_id]:
+            for msg_id in [k for k, v in list(self._messages.items()) if v.get("thread_id") == thread_id]:
                 self._messages.pop(msg_id, None)
-
-        if self.storage_dir:
-            file_path = self.storage_dir / f"{thread_id}.json"
-            if file_path.exists():
-                try:
-                    file_path.unlink()
-                except OSError:
-                    pass
         return True
+
+    def delete_threads(self, thread_ids: list[str]) -> dict[str, Any]:
+        if not isinstance(thread_ids, list) or not thread_ids:
+            raise ThreadStoreError("thread_ids must be a non-empty list.")
+        if len(thread_ids) > 100:
+            raise ThreadStoreError("Cannot delete more than 100 threads in a single batch.")
+
+        id_pattern = re.compile(r"^thr_[A-Za-z0-9_-]{16,64}$")
+        for tid in thread_ids:
+            if not isinstance(tid, str) or not id_pattern.match(tid):
+                raise ThreadStoreError(f"Invalid thread ID format: {tid}")
+
+        deleted: list[str] = []
+        blocked: list[dict[str, str]] = []
+
+        with self._lock:
+            for tid in thread_ids:
+                thread = self._threads.get(tid)
+                if not thread:
+                    blocked.append({"thread_id": tid, "reason": "NOT_FOUND"})
+                    continue
+                has_active_turn = False
+                for turn_id in thread.get("turn_ids", []):
+                    turn = self._turns.get(turn_id)
+                    if turn and turn.get("status") in {"QUEUED", "RUNNING"}:
+                        has_active_turn = True
+                        break
+                if has_active_turn:
+                    blocked.append({"thread_id": tid, "reason": "ACTIVE_TURN_RUNNING"})
+                    continue
+
+                if self.storage_dir:
+                    file_path = self.storage_dir / f"{tid}.json"
+                    if file_path.exists():
+                        try:
+                            file_path.unlink()
+                        except OSError as e:
+                            blocked.append({"thread_id": tid, "reason": f"PERSISTENCE_DELETE_FAILED: {e}"})
+                            continue
+
+                thread = self._threads.pop(tid, None)
+                if thread:
+                    for turn_id in thread.get("turn_ids", []):
+                        turn = self._turns.pop(turn_id, None)
+                        if turn:
+                            for msg_id in turn.get("message_ids", []):
+                                self._messages.pop(msg_id, None)
+                    for msg_id in [k for k, v in list(self._messages.items()) if v.get("thread_id") == tid]:
+                        self._messages.pop(msg_id, None)
+                    deleted.append(tid)
+
+        return {"deleted": deleted, "blocked": blocked}
+
+    def archive_thread(self, thread_id: str) -> dict[str, Any]:
+        with self._lock:
+            thread = self._threads.get(thread_id)
+            if thread is None:
+                raise ThreadStoreError("Thread not found.")
+            for turn_id in thread.get("turn_ids", []):
+                turn = self._turns.get(turn_id)
+                if turn and turn.get("status") in {"QUEUED", "RUNNING"}:
+                    raise ThreadStoreError("Cannot archive thread while a turn is queued or running. Stop the turn first.")
+            prev_status = thread.get("status")
+            prev_updated_at = thread.get("updated_at")
+            thread["status"] = "ARCHIVED"
+            thread["updated_at"] = self._now()
+            try:
+                self._validate("conversation-thread.schema.json", thread)
+                self._save_thread_to_disk(thread_id, raise_on_error=True)
+            except Exception:
+                thread["status"] = prev_status
+                thread["updated_at"] = prev_updated_at
+                raise
+            return deepcopy(thread)
+
+    def unarchive_thread(self, thread_id: str) -> dict[str, Any]:
+        with self._lock:
+            thread = self._threads.get(thread_id)
+            if thread is None:
+                raise ThreadStoreError("Thread not found.")
+            for turn_id in thread.get("turn_ids", []):
+                turn = self._turns.get(turn_id)
+                if turn and turn.get("status") in {"QUEUED", "RUNNING"}:
+                    raise ThreadStoreError("Cannot unarchive thread while a turn is queued or running. Stop the turn first.")
+            prev_status = thread.get("status")
+            prev_updated_at = thread.get("updated_at")
+            thread["status"] = "ACTIVE"
+            thread["updated_at"] = self._now()
+            try:
+                self._validate("conversation-thread.schema.json", thread)
+                self._save_thread_to_disk(thread_id, raise_on_error=True)
+            except Exception:
+                thread["status"] = prev_status
+                thread["updated_at"] = prev_updated_at
+                raise
+            return deepcopy(thread)
+
+    def rename_thread(self, thread_id: str, title: str) -> dict[str, Any]:
+        if not isinstance(title, str):
+            raise ThreadStoreError("Thread title must be a string.")
+        trimmed = title.strip()
+        if not (1 <= len(trimmed) <= 160):
+            raise ThreadStoreError("Thread title must be between 1 and 160 characters.")
+        if any(unicodedata.category(c) == "Cc" or ord(c) < 32 or (127 <= ord(c) <= 159) for c in trimmed):
+            raise ThreadStoreError("Thread title cannot contain control characters.")
+        with self._lock:
+            thread = self._threads.get(thread_id)
+            if thread is None:
+                raise ThreadStoreError("Thread not found.")
+            thread["title"] = trimmed
+            thread["updated_at"] = self._now()
+            self._validate("conversation-thread.schema.json", thread)
+            self._save_thread_to_disk(thread_id)
+            return deepcopy(thread)
 
     @staticmethod
     def _engine_for_provider(provider_id: str) -> str:
@@ -241,6 +368,8 @@ class ThreadStore:
             thread = self._threads.get(thread_id)
             if thread is None:
                 raise ThreadStoreError("Thread not found.")
+            if thread.get("status") == "ARCHIVED":
+                raise ThreadStoreError("Archived conversations are read-only. Unarchive this conversation before sending a message.")
             now = self._now()
             turn = {"turn_id": self._id("trn_"), "thread_id": thread_id, "provider_id": thread["provider_id"], "engine_id": thread["engine_id"], "model_id": thread["model_id"], "permission_mode": thread["permission_mode"], "status": "QUEUED", "created_at": now, "updated_at": now, "message_ids": [], "external_authorization_id": external_authorization_id}
             self._validate("conversation-turn.schema.json", turn)

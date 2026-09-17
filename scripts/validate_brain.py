@@ -325,7 +325,7 @@ def run_master_validation() -> dict[str, Any]:
         turn = engine.start_turn(thread["thread_id"], content="offline deterministic check", run_async=False)
         broker = ToolBroker(base_dir)
         modules = {path.name for path in (base_dir / "gui/scripts").glob("*.js")}
-        required_modules = {"api.js", "auth.js", "threads.js", "composer.js", "streaming.js", "activity.js", "evidence.js", "tool_calls.js", "approvals.js", "providers.js", "p10.js", "security_agent.js"}
+        required_modules = {"api.js", "auth.js", "threads.js", "composer.js", "streaming.js", "activity.js", "evidence.js", "tool_calls.js", "approvals.js", "providers.js", "p10.js", "security_agent.js", "preferences.js"}
         passed = (
             len(providers) == 8
             and {profile["provider_type"] for profile in providers if profile["enabled"]} == {"codex_app_server", "opencode", "antigravity_cli", "deterministic_local"}
@@ -334,7 +334,7 @@ def run_master_validation() -> dict[str, Any]:
             and not broker.p10.execution_enabled
             and modules == required_modules
         )
-        return passed, "8 provider profiles including Codex App Server, OpenCode, and Antigravity CLI; local fallback lifecycle passed; P7/P10 live execution disabled; 12 GUI modules"
+        return passed, "8 provider profiles including Codex App Server, OpenCode, and Antigravity CLI; local fallback lifecycle passed; P7/P10 live execution disabled; 13 GUI modules"
 
     def presentation_automation_check() -> tuple[bool, str]:
         html = (base_dir / "gui" / "index.html").read_text(encoding="utf-8")

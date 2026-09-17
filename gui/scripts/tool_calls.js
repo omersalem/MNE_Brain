@@ -82,12 +82,74 @@ function renderP10Plan(card,plan){
   cancel.addEventListener('click',async()=>{cancel.disabled=true;accept.disabled=true;try{const result=await mutateJSON(`/api/v2/p10/plans/${plan.plan_id}/cancel`,{});addText(card,'p',result.status);setStatus(result.status);}catch(error){cancel.disabled=false;accept.disabled=false;setStatus(error.message);}});
   card.append(accept,cancel);
 }
+function makeWarningIcon(){
+  const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+  svg.setAttribute('width','16');
+  svg.setAttribute('height','16');
+  svg.setAttribute('viewBox','0 0 16 16');
+  svg.setAttribute('fill','currentColor');
+  svg.setAttribute('aria-hidden','true');
+  svg.style.verticalAlign='text-bottom';
+  svg.style.marginRight='6px';
+  const p=document.createElementNS('http://www.w3.org/2000/svg','path');
+  p.setAttribute('d','M7.16 2.48a1 1 0 0 1 1.68 0l6.2 10.74A1 1 0 0 1 14.18 14H1.82a1 1 0 0 1-.86-1.48l6.2-10.74zM8 6v3.5M8 11.5h.01');
+  p.setAttribute('stroke','currentColor');
+  p.setAttribute('stroke-width','1.2');
+  p.setAttribute('stroke-linecap','round');
+  svg.append(p);
+  return svg;
+}
+
+function makeRefreshIcon(){
+  const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+  svg.setAttribute('width','14');
+  svg.setAttribute('height','14');
+  svg.setAttribute('viewBox','0 0 16 16');
+  svg.setAttribute('fill','currentColor');
+  svg.setAttribute('aria-hidden','true');
+  svg.style.verticalAlign='text-bottom';
+  svg.style.marginRight='6px';
+  const p=document.createElementNS('http://www.w3.org/2000/svg','path');
+  p.setAttribute('d','M11.534 7h3.932a.25.25 0 0 1 .192.41l-1.966 2.36a.25.25 0 0 1-.384 0l-1.966-2.36a.25.25 0 0 1 .192-.41zm-11 2h3.932a.25.25 0 0 0 .192-.41L2.692 6.23a.25.25 0 0 0-.384 0L.342 8.59A.25.25 0 0 0 .534 9z');
+  const p2=document.createElementNS('http://www.w3.org/2000/svg','path');
+  p2.setAttribute('fill-rule','evenodd');
+  p2.setAttribute('d','M8 3c-1.552 0-2.94.707-3.857 1.818a.5.5 0 1 1-.771-.636A6.002 6.002 0 0 1 13.917 7H12.9A5.002 5.002 0 0 0 8 3zM3.1 9a5.002 5.002 0 0 0 8.757 2.182.5.5 0 1 1 .771.636A6.002 6.002 0 0 1 2.083 9H3.1z');
+  svg.append(p,p2);
+  return svg;
+}
+
+function makeBlockIcon(){
+  const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+  svg.setAttribute('width','14');
+  svg.setAttribute('height','14');
+  svg.setAttribute('viewBox','0 0 16 16');
+  svg.setAttribute('fill','currentColor');
+  svg.setAttribute('aria-hidden','true');
+  svg.style.verticalAlign='text-bottom';
+  svg.style.marginRight='6px';
+  const c=document.createElementNS('http://www.w3.org/2000/svg','circle');
+  c.setAttribute('cx','8');
+  c.setAttribute('cy','8');
+  c.setAttribute('r','7');
+  c.setAttribute('fill','none');
+  c.setAttribute('stroke','currentColor');
+  c.setAttribute('stroke-width','1.5');
+  const p=document.createElementNS('http://www.w3.org/2000/svg','path');
+  p.setAttribute('d','M4 8h8');
+  p.setAttribute('stroke','currentColor');
+  p.setAttribute('stroke-width','1.5');
+  svg.append(c,p);
+  return svg;
+}
+
 function renderOwnerDirect(card,payload){
   if(payload.status==='AWAITING_FINAL_CONFIRMATION'){
     const warning=payload.warning||{};
     const canRollback=warning.can_rollback??(warning.rollback_status==='DECLARED');
     const riskLevel=warning.risk_level||payload.risk_level||'HIGH';
-    addText(card,'h3','⚠️ Administrator Risk & Rollback Review — Owner Direct Write');
+    const heading=document.createElement('h3');
+    heading.append(makeWarningIcon(),'Administrator Risk & Rollback Review — Owner Direct Write');
+    card.append(heading);
     const riskBadge=document.createElement('div');
     riskBadge.className='provider-health configured';
     riskBadge.style.display='inline-block';
@@ -103,11 +165,11 @@ function renderOwnerDirect(card,payload){
     if(canRollback){
       rollbackBanner.style.background='#1b4332';
       rollbackBanner.style.color='#d8f3dc';
-      rollbackBanner.textContent='🔄 ROLLBACK FEASIBLE: YES — Automated rollback steps are available.';
+      rollbackBanner.append(makeRefreshIcon(),'ROLLBACK FEASIBLE: YES — Automated rollback steps are available.');
     }else{
       rollbackBanner.style.background='#5c1d1d';
       rollbackBanner.style.color='#ffcdd2';
-      rollbackBanner.textContent='⛔ ROLLBACK FEASIBLE: NO — IRREVERSIBLE CHANGE / NO AUTOMATED ROLLBACK.';
+      rollbackBanner.append(makeBlockIcon(),'ROLLBACK FEASIBLE: NO — IRREVERSIBLE CHANGE / NO AUTOMATED ROLLBACK.');
     }
     card.append(rollbackBanner);
     addText(card,'p',`Target: ${warning.target_device_system||payload.target} · Identity: ${warning.identity_status||payload.identity_status}`);

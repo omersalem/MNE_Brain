@@ -269,7 +269,7 @@ function renderSecRecipients() {
     removeBtn.className = 'chip-remove-btn';
     removeBtn.title = `Remove ${email}`;
     removeBtn.dataset.index = String(index);
-    removeBtn.textContent = '✕';
+    removeBtn.textContent = '×';
     chip.appendChild(removeBtn);
 
     secRecipientsListEl.appendChild(chip);
@@ -1428,7 +1428,7 @@ async function fetchIncidents() {
       atkSpan.textContent = attacker;
       const tgtSpan = document.createElement('span');
       tgtSpan.textContent = target;
-      tdFlow.append(atkSpan, ' ➔ ', tgtSpan);
+      tdFlow.append(atkSpan, ' -> ', tgtSpan);
 
       const pc = inc.attacker_pc_name;
       const user = inc.attacker_username;
@@ -1441,8 +1441,8 @@ async function fetchIncidents() {
         idSpan.style.fontSize = '11px';
         idSpan.style.color = '#38bdf8';
         const parts = [];
-        if (hasPc) parts.push(`💻 ${pc}`);
-        if (hasUser) parts.push(`👤 ${user}`);
+        if (hasPc) parts.push(`PC: ${pc}`);
+        if (hasUser) parts.push(`User: ${user}`);
         idSpan.textContent = parts.join(' · ');
         tdFlow.appendChild(idSpan);
       }
@@ -1743,7 +1743,7 @@ async function handleResolveIncidentIdentity() {
   } finally {
     if (secDetailBtnResolveIdentity) {
       secDetailBtnResolveIdentity.disabled = false;
-      secDetailBtnResolveIdentity.textContent = '🔍 Resolve Identity';
+      secDetailBtnResolveIdentity.textContent = 'Resolve Identity';
     }
   }
 }
@@ -1828,7 +1828,7 @@ function renderSingleAnalysisCard(res, titleLabel = '') {
 
   const titleDiv = document.createElement('div');
   const h4 = document.createElement('h4');
-  h4.textContent = `🤖 ${engine} Assessment`;
+  h4.textContent = `${engine} Assessment`;
   const sub = document.createElement('span');
   sub.className = 'sec-card-subtitle';
   sub.textContent = `${provider} • ${model}`;
@@ -1855,7 +1855,7 @@ function renderSingleAnalysisCard(res, titleLabel = '') {
     htmlBtn.target = '_blank';
     htmlBtn.rel = 'noopener noreferrer';
     htmlBtn.title = 'View publication-grade HTML report';
-    htmlBtn.textContent = '📄 Export HTML';
+    htmlBtn.textContent = 'Export HTML';
 
     const pdfBtn = document.createElement('a');
     pdfBtn.className = 'sec-export-btn';
@@ -1863,7 +1863,7 @@ function renderSingleAnalysisCard(res, titleLabel = '') {
     pdfBtn.target = '_blank';
     pdfBtn.rel = 'noopener noreferrer';
     pdfBtn.title = 'Download forensic PDF report';
-    pdfBtn.textContent = '📥 Export PDF';
+    pdfBtn.textContent = 'Export PDF';
 
     actionsDiv.append(htmlBtn, pdfBtn);
     badgesDiv.appendChild(actionsDiv);
@@ -1933,7 +1933,7 @@ function renderSingleAnalysisCard(res, titleLabel = '') {
     if (supporting.length > 0) {
       const subhead = document.createElement('p');
       subhead.className = 'sec-subhead';
-      subhead.textContent = '✅ Supporting Facts:';
+      subhead.textContent = 'Supporting Facts:';
       sec.appendChild(subhead);
 
       const ul = document.createElement('ul');
@@ -1949,7 +1949,7 @@ function renderSingleAnalysisCard(res, titleLabel = '') {
     if (contradicting.length > 0) {
       const subhead = document.createElement('p');
       subhead.className = 'sec-subhead';
-      subhead.textContent = '❌ Contradicting / Excluded Factors:';
+      subhead.textContent = 'Contradicting / Excluded Factors:';
       sec.appendChild(subhead);
 
       const ul = document.createElement('ul');
@@ -1999,7 +1999,7 @@ function renderSingleAnalysisCard(res, titleLabel = '') {
     if (imm.length > 0) {
       const subhead = document.createElement('p');
       subhead.className = 'sec-subhead';
-      subhead.textContent = '⚡ Immediate Containment:';
+      subhead.textContent = 'Immediate Containment:';
       sec.appendChild(subhead);
 
       const ul = document.createElement('ul');
@@ -2015,7 +2015,7 @@ function renderSingleAnalysisCard(res, titleLabel = '') {
     if (lt.length > 0) {
       const subhead = document.createElement('p');
       subhead.className = 'sec-subhead';
-      subhead.textContent = '🛡️ Long-Term Hardening:';
+      subhead.textContent = 'Long-Term Hardening:';
       sec.appendChild(subhead);
 
       const ul = document.createElement('ul');
@@ -2068,7 +2068,7 @@ function renderComparisonCard(cmp) {
   header.className = 'sec-analysis-card-header';
   const titleDiv = document.createElement('div');
   const h4 = document.createElement('h4');
-  h4.textContent = '🔬 Multi-Engine Comparison (Codex vs Antigravity)';
+  h4.textContent = 'Multi-Engine Comparison (Codex vs Antigravity)';
   const sub = document.createElement('span');
   sub.className = 'sec-card-subtitle';
   sub.textContent = `Comparison ID: ${cmp.comparison_id || ''}`;
@@ -2081,7 +2081,7 @@ function renderComparisonCard(cmp) {
     const sec = document.createElement('div');
     sec.className = 'sec-analysis-section';
     const h5 = document.createElement('h5');
-    h5.textContent = '🤝 Common Conclusions (Consensus)';
+    h5.textContent = 'Common Conclusions (Consensus)';
     sec.appendChild(h5);
 
     const ul = document.createElement('ul');
@@ -2102,7 +2102,7 @@ function renderComparisonCard(cmp) {
     const sec = document.createElement('div');
     sec.className = 'sec-analysis-section sec-conflict-section';
     const h5 = document.createElement('h5');
-    h5.textContent = '⚠️ Conflicting Assessments (Divergence)';
+    h5.textContent = 'Conflicting Assessments (Divergence)';
     sec.appendChild(h5);
 
     for (const cf of cmp.conflicting_conclusions) {
@@ -2187,7 +2187,7 @@ function renderComparisonCard(cmp) {
     const sec = document.createElement('div');
     sec.className = 'sec-analysis-section';
     const h5 = document.createElement('h5');
-    h5.textContent = '🔬 Jointly Recommended Diagnostics';
+    h5.textContent = 'Jointly Recommended Diagnostics';
     sec.appendChild(h5);
 
     const ul = document.createElement('ul');
@@ -2208,7 +2208,7 @@ function renderComparisonCard(cmp) {
     const sec = document.createElement('div');
     sec.className = 'sec-analysis-section';
     const h5 = document.createElement('h5');
-    h5.textContent = '❓ Unresolved Questions & Missing Evidence';
+    h5.textContent = 'Unresolved Questions & Missing Evidence';
     sec.appendChild(h5);
 
     const ul = document.createElement('ul');
@@ -2255,7 +2255,7 @@ function renderAnalysisResponse(data) {
 function subscribeAnalysisEvents(analysisId, engine) {
   if (secAnalysisProgress) {
     secAnalysisProgress.style.display = 'block';
-    secAnalysisProgress.textContent = `🚀 Dispatched ${engine} analysis (${analysisId})...\n`;
+    secAnalysisProgress.textContent = `Dispatched ${engine} analysis (${analysisId})...\n`;
   }
   const es = new EventSource(`/api/v2/security-agent/analyses/${encodeURIComponent(analysisId)}/events`);
 
@@ -2283,7 +2283,7 @@ function subscribeAnalysisEvents(analysisId, engine) {
     if (secAnalysisContainer) {
       const errDiv = document.createElement('div');
       errDiv.className = 'sec-empty-hint error';
-      errDiv.textContent = `❌ AI Analysis failed: ${errorMsg || 'Analysis unsuccessful'}`;
+      errDiv.textContent = `AI Analysis failed: ${errorMsg || 'Analysis unsuccessful'}`;
       secAnalysisContainer.replaceChildren(errDiv);
     }
   };
@@ -2333,12 +2333,12 @@ async function runIncidentAnalysis(fingerprint, engine = 'BOTH') {
 
   if (secAnalysisProgress) {
     secAnalysisProgress.style.display = 'block';
-    secAnalysisProgress.textContent = `🚀 Launching ${engine} analysis for incident ${fingerprint}...\n`;
+    secAnalysisProgress.textContent = `Launching ${engine} analysis for incident ${fingerprint}...\n`;
   }
   if (secAnalysisContainer) {
     const hint = document.createElement('div');
     hint.className = 'sec-empty-hint';
-    hint.textContent = `⏳ AI Analysis in progress (${engine})...`;
+    hint.textContent = `AI Analysis in progress (${engine})...`;
     secAnalysisContainer.replaceChildren(hint);
   }
 
@@ -2355,7 +2355,7 @@ async function runIncidentAnalysis(fingerprint, engine = 'BOTH') {
     if (secAnalysisContainer) {
       const errDiv = document.createElement('div');
       errDiv.className = 'sec-empty-hint error';
-      errDiv.textContent = `❌ AI Analysis failed: ${err.message || err}`;
+      errDiv.textContent = `AI Analysis failed: ${err.message || err}`;
       secAnalysisContainer.replaceChildren(errDiv);
     }
   }
@@ -2382,12 +2382,12 @@ async function runRunAnalysis(runId, engine = 'BOTH') {
   switchTab('sec-panel-analysis');
   if (secAnalysisProgress) {
     secAnalysisProgress.style.display = 'block';
-    secAnalysisProgress.textContent = `🚀 Launching ${engine} analysis for run ${actualRunId}...\n`;
+    secAnalysisProgress.textContent = `Launching ${engine} analysis for run ${actualRunId}...\n`;
   }
   if (secAnalysisContainer) {
     const hint = document.createElement('div');
     hint.className = 'sec-empty-hint';
-    hint.textContent = `⏳ AI Analysis in progress (${engine})...`;
+    hint.textContent = `AI Analysis in progress (${engine})...`;
     secAnalysisContainer.replaceChildren(hint);
   }
 
@@ -2404,7 +2404,7 @@ async function runRunAnalysis(runId, engine = 'BOTH') {
     if (secAnalysisContainer) {
       const errDiv = document.createElement('div');
       errDiv.className = 'sec-empty-hint error';
-      errDiv.textContent = `❌ AI Analysis failed: ${err.message || err}`;
+      errDiv.textContent = `AI Analysis failed: ${err.message || err}`;
       secAnalysisContainer.replaceChildren(errDiv);
     }
   }
@@ -2484,7 +2484,21 @@ async function handleStartTroubleshooting(fingerprint) {
   const spinSpan = document.createElement('span');
   spinSpan.className = 'sec-spinner';
   spinSpan.setAttribute('aria-hidden', 'true');
-  spinSpan.textContent = '⏳';
+  const spinSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  spinSvg.setAttribute('width', '14');
+  spinSvg.setAttribute('height', '14');
+  spinSvg.setAttribute('viewBox', '0 0 16 16');
+  spinSvg.setAttribute('fill', 'none');
+  spinSvg.setAttribute('stroke', 'currentColor');
+  spinSvg.setAttribute('stroke-width', '2');
+  const spinCircle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+  spinCircle.setAttribute('cx', '8');
+  spinCircle.setAttribute('cy', '8');
+  spinCircle.setAttribute('r', '6');
+  spinCircle.setAttribute('stroke-dasharray', '28');
+  spinCircle.setAttribute('stroke-dashoffset', '10');
+  spinSvg.append(spinCircle);
+  spinSpan.append(spinSvg);
 
   const spinText = document.createElement('span');
   spinText.textContent = 'Generating P8 diagnostic troubleshooting plan…';
@@ -2519,7 +2533,7 @@ async function handleStartTroubleshooting(fingerprint) {
     h4.style.alignItems = 'center';
 
     const titleSpan = document.createElement('span');
-    titleSpan.textContent = '🛠️ P8 Troubleshooting Plan Prepared';
+    titleSpan.textContent = 'P8 Troubleshooting Plan Prepared';
 
     const pillSpan = document.createElement('span');
     pillSpan.className = 'status-pill safe';
@@ -2611,13 +2625,13 @@ async function handleStartTroubleshooting(fingerprint) {
     copyBtn.id = 'sec-troubleshoot-copy-prompt-btn';
     copyBtn.className = 'compact link-btn';
     copyBtn.type = 'button';
-    copyBtn.textContent = '📋 Copy AI Prompt';
+    copyBtn.textContent = 'Copy AI Prompt';
 
     if (handoff.suggested_ai_prompt) {
       copyBtn.addEventListener('click', () => {
         navigator.clipboard.writeText(handoff.suggested_ai_prompt);
-        copyBtn.textContent = '✅ Copied!';
-        setTimeout(() => { copyBtn.textContent = '📋 Copy AI Prompt'; }, 3000);
+        copyBtn.textContent = 'Copied!';
+        setTimeout(() => { copyBtn.textContent = 'Copy AI Prompt'; }, 3000);
       });
     }
 
@@ -2631,7 +2645,7 @@ async function handleStartTroubleshooting(fingerprint) {
     const errDiv = document.createElement('div');
     errDiv.style.color = '#f87171';
     errDiv.style.fontSize = '0.85rem';
-    errDiv.textContent = `❌ Troubleshooting handoff failed: ${err.message}`;
+    errDiv.textContent = `Troubleshooting handoff failed: ${err.message}`;
     secIncidentTroubleshootContainer.replaceChildren(errDiv);
   } finally {
     if (secDetailBtnTroubleshoot) secDetailBtnTroubleshoot.disabled = false;

@@ -912,6 +912,36 @@ class MNEBrainAPIHandler(BaseHTTPRequestHandler):
         if match:
             self._json_response(200, conversation_engine.store.set_permission_mode(match.group(1), payload["permission_mode"]))
             return
+        match = re.fullmatch(r"/api/v2/threads/(thr_[A-Za-z0-9_-]{16,64})/title", path)
+        if match:
+            if set(payload) != {"title"}:
+                raise ValueError("Only the title field is allowed.")
+            updated = conversation_engine.rename_thread(match.group(1), payload["title"])
+            self._json_response(200, updated)
+            return
+        if path == "/api/v2/threads/batch-delete":
+            if set(payload) != {"thread_ids"}:
+                raise ValueError("Only the thread_ids field is allowed.")
+            thread_ids = payload.get("thread_ids")
+            if not isinstance(thread_ids, list) or not thread_ids:
+                raise ValueError("thread_ids must be a non-empty list.")
+            result = conversation_engine.delete_threads(thread_ids)
+            self._json_response(200, result)
+            return
+        match = re.fullmatch(r"/api/v2/threads/(thr_[A-Za-z0-9_-]{16,64})/archive", path)
+        if match:
+            if payload:
+                raise ValueError("Unexpected fields in archive payload.")
+            archived = conversation_engine.archive_thread(match.group(1))
+            self._json_response(200, archived)
+            return
+        match = re.fullmatch(r"/api/v2/threads/(thr_[A-Za-z0-9_-]{16,64})/unarchive", path)
+        if match:
+            if payload:
+                raise ValueError("Unexpected fields in unarchive payload.")
+            unarchived = conversation_engine.unarchive_thread(match.group(1))
+            self._json_response(200, unarchived)
+            return
         match = re.fullmatch(r"/api/v2/threads/(thr_[A-Za-z0-9_-]{16,64})/delete", path)
         if match:
             conversation_engine.delete_thread(match.group(1))

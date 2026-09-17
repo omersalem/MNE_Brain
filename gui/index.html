@@ -33,6 +33,9 @@
     <span class="safety-label">Development console only · ZERO Business Logic in GUI · server policy is authoritative.</span>
   </div>
 
+  <div id="sidebar-backdrop" class="drawer-backdrop" aria-hidden="true"></div>
+  <div id="inspector-backdrop" class="drawer-backdrop" aria-hidden="true"></div>
+
   <main class="workspace">
     <nav class="threads-panel" aria-label="Conversation threads">
       <div class="sidebar-header">
@@ -40,9 +43,32 @@
           <span class="brand-mark" aria-hidden="true">M</span>
           <strong>MNE_Brain</strong>
         </div>
-        <button id="new-thread" class="primary compact" type="button" title="New conversation">+ New</button>
+        <div class="sidebar-header-actions">
+          <button id="sidebar-enlarge-btn" class="icon-button-subtle" type="button" aria-label="Enlarge conversations sidebar" title="Enlarge conversations bar (440px)">
+            <svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+              <path fill-rule="evenodd" d="M14 2.5a.5.5 0 0 0-.5-.5h-6a.5.5 0 0 0 0 1h4.793L2.146 13.146a.5.5 0 0 0 .708.708L13 3.707V8.5a.5.5 0 0 0 1 0v-6z"/>
+            </svg>
+          </button>
+          <button id="thread-select-mode-btn" class="icon-button-subtle" type="button" aria-label="Select multiple conversations" title="Select multiple conversations">
+            <svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+              <path d="M2.5 1A1.5 1.5 0 0 0 1 2.5v11A1.5 1.5 0 0 0 2.5 15h6.086a1.5 1.5 0 0 0 1.06-.44l4.914-4.914A1.5 1.5 0 0 0 15 8.586V2.5A1.5 1.5 0 0 0 13.5 1h-11zM2 2.5a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 .5.5v6.086a.5.5 0 0 1-.146.353l-4.914 4.915a.5.5 0 0 1-.354.146H2.5a.5.5 0 0 1-.5-.5v-11z"/>
+              <path d="M10.854 5.146a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708 0l-1.5-1.5a.5.5 0 1 1 .708-.708L7.5 7.793l2.646-2.647a.5.5 0 0 1 .708 0z"/>
+            </svg>
+          </button>
+          <button id="new-thread" class="primary compact" type="button" title="New conversation">+ New</button>
+        </div>
       </div>
       <label class="search-field" for="thread-search"><span class="sr-only">Search conversations</span><input id="thread-search" type="search" autocomplete="off" placeholder="Search conversations" aria-label="Search conversations"></label>
+      <div id="thread-batch-bar" class="thread-batch-bar" hidden aria-label="Batch conversation actions">
+        <div class="batch-bar-info">
+          <button id="thread-select-all-btn" class="batch-text-btn" type="button">Select all</button>
+          <span id="thread-selected-count" class="batch-count-badge">0 selected</span>
+        </div>
+        <div class="batch-bar-actions">
+          <button id="thread-batch-delete-btn" class="danger-btn compact" type="button" disabled title="Delete selected conversations">Delete</button>
+          <button id="thread-batch-cancel-btn" class="compact" type="button" title="Exit select mode">Done</button>
+        </div>
+      </div>
       <ul id="thread-list" class="thread-list"></ul>
       <div class="sidebar-bottom">
         <div class="thread-actions">
@@ -52,25 +78,38 @@
         </div>
         <div class="sidebar-user-controls">
           <button id="security-agent-button" class="sidebar-action-btn" type="button" aria-controls="security-agent-dialog" title="Cyber Threat Review & Reporting Agent">
-            <span class="btn-icon" aria-hidden="true">🛡️</span>
+            <span class="btn-icon" aria-hidden="true"><svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M5.072.56C6.157.265 7.31 0 8 0s1.843.265 2.928.56c1.11.3 2.229.655 2.887.87a1.54 1.54 0 0 1 1.044 1.262c.596 4.477-.787 7.795-2.465 9.99a11.775 11.775 0 0 1-2.517 2.453 7.159 7.159 0 0 1-1.048.625c-.28.132-.581.24-.829.24s-.548-.108-.829-.24a7.158 7.158 0 0 1-1.048-.625 11.777 11.777 0 0 1-2.517-2.453C1.928 10.487.545 7.169 1.141 2.692A1.54 1.54 0 0 1 2.185 1.43 62.456 62.456 0 0 1 5.072.56z"/></svg></span>
             <span>Security Agent</span>
           </button>
           <button id="settings-button" class="sidebar-action-btn" type="button" aria-controls="settings-panel" title="Settings">
-            <span class="btn-icon" aria-hidden="true">⚙️</span>
+            <span class="btn-icon" aria-hidden="true"><svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 4.754a3.246 3.246 0 1 0 0 6.492 3.246 3.246 0 0 0 0-6.492zM5.754 8a2.246 2.246 0 1 1 4.492 0 2.246 2.246 0 0 1-4.492 0z"/><path d="M9.796 1.343c-.527-1.79-3.065-1.79-3.592 0l-.094.319a.873.873 0 0 1-1.255.52l-.292-.16c-1.64-.892-3.433.902-2.54 2.541l.159.292a.873.873 0 0 1-.52 1.255l-.319.094c-1.79.527-1.79 3.065 0 3.592l.319.094a.873.873 0 0 1 .52 1.255l-.16.292c-.892 1.64.901 3.434 2.541 2.54l.292-.159a.873.873 0 0 1 1.255.52l.094.319c.527 1.79 3.065 1.79 3.592 0l.094-.319a.873.873 0 0 1 1.255-.52l.292.16c1.64.893 3.434-.902 2.54-2.541l-.159-.292a.873.873 0 0 1 .52-1.255l.319-.094c1.79-.527 1.79-3.065 0-3.592l-.319-.094a.873.873 0 0 1-.52-1.255l.16-.292c.893-1.64-.902-3.433-2.541-2.54l-.292.159a.873.873 0 0 1-1.255-.52l-.094-.319z"/></svg></span>
             <span>Settings</span>
           </button>
           <button id="logout-button" class="sidebar-action-btn" type="button" title="End the owner session">
-            <span class="btn-icon" aria-hidden="true">🚪</span>
+            <span class="btn-icon" aria-hidden="true"><svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M10 12.5a.5.5 0 0 1-.5.5h-8a.5.5 0 0 1-.5-.5v-9a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 .5.5v2a.5.5 0 0 0 1 0v-2A1.5 1.5 0 0 0 9.5 2h-8A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h8a1.5 1.5 0 0 0 1.5-1.5v-2a.5.5 0 0 0-1 0v2z"/><path fill-rule="evenodd" d="M15.854 8.354a.5.5 0 0 0 0-.708l-3-3a.5.5 0 0 0-.708.708L14.293 7.5H5.5a.5.5 0 0 0 0 1h8.793l-2.147 2.146a.5.5 0 0 0 .708.708l3-3z"/></svg></span>
             <span>Sign out</span>
           </button>
         </div>
       </div>
     </nav>
+    <div id="sidebar-resizer" class="sidebar-resizer" role="separator" aria-orientation="vertical" tabindex="0" title="Drag or use Left/Right arrow keys to resize conversations bar" aria-label="Resize conversations sidebar" aria-valuenow="280" aria-valuemin="240" aria-valuemax="600"></div>
 
     <section id="conversation" class="conversation-panel" aria-labelledby="conversation-title">
       <header class="conversation-header">
         <div class="conversation-header-info">
-          <h1 id="conversation-title" class="conversation-title">New conversation</h1>
+          <button id="sidebar-toggle-btn" class="sidebar-toggle-btn" type="button" aria-label="Toggle conversation sidebar" aria-expanded="false" title="Toggle conversations">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+              <path fill-rule="evenodd" d="M3 5a1 1 0 0 1 1-1h12a1 1 0 1 1 0 2H4a1 1 0 0 1-1-1zm0 5a1 1 0 0 1 1-1h12a1 1 0 1 1 0 2H4a1 1 0 0 1-1-1zm0 5a1 1 0 0 1 1-1h12a1 1 0 1 1 0 2H4a1 1 0 0 1-1-1z"/>
+            </svg>
+          </button>
+          <div class="conversation-title-group">
+            <h1 id="conversation-title" class="conversation-title">New conversation</h1>
+            <button id="rename-conversation-btn" class="rename-title-btn" type="button" aria-label="Rename conversation" title="Rename conversation">
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+                <path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168l10-10zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207 11.207 2.5zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293l6.5-6.5zm-9.761 5.175-.806 2.016 2.016-.806L4.5 11.5h-.5a.5.5 0 0 1-.5-.5v-.5h-.5a.5.5 0 0 1-.5-.5v-.5l-.268-.268z"/>
+              </svg>
+            </button>
+          </div>
           <label class="control-field control-mode" for="permission-mode"><span>Mode</span>
             <select id="permission-mode" disabled title="Owner Direct policy is enforced by the server">
               <option value="OWNER_DIRECT">Owner Direct</option>
@@ -79,7 +118,7 @@
         </div>
         <div class="conversation-header-actions">
           <button id="toggle-evidence" class="evidence-toggle-btn" type="button" aria-expanded="false" title="Toggle Context & Evidence (sources & live telemetry)">
-            <span class="btn-icon" aria-hidden="true">🛡️</span>
+            <span class="btn-icon" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M5.072.56C6.157.265 7.31 0 8 0s1.843.265 2.928.56c1.11.3 2.229.655 2.887.87a1.54 1.54 0 0 1 1.044 1.262c.596 4.477-.787 7.795-2.465 9.99a11.775 11.775 0 0 1-2.517 2.453 7.159 7.159 0 0 1-1.048.625c-.28.132-.581.24-.829.24s-.548-.108-.829-.24a7.158 7.158 0 0 1-1.048-.625 11.777 11.777 0 0 1-2.517-2.453C1.928 10.487.545 7.169 1.141 2.692A1.54 1.54 0 0 1 2.185 1.43 62.456 62.456 0 0 1 5.072.56z"/></svg></span>
             <span>Evidence</span>
             <span id="evidence-count-badge" class="evidence-count-badge">0</span>
           </button>
@@ -109,6 +148,10 @@
         </div>
       </section>
       <form id="composer" class="composer">
+        <div id="composer-archived-banner" class="composer-archived-banner" hidden>
+          <span>This conversation is archived and read-only.</span>
+          <button id="composer-unarchive-btn" class="secondary" type="button">Unarchive Conversation</button>
+        </div>
         <div id="composer-attachments" class="composer-attachments" hidden></div>
         <div class="composer-input-wrapper">
           <label for="composer-input"><span class="sr-only">Message</span></label>
@@ -117,22 +160,22 @@
         </div>
         <div class="composer-footer">
           <div class="composer-engine-bar">
-            <button id="attach-file-btn" class="composer-attach-btn" type="button" title="Attach files or images (or drag & drop / paste)" aria-label="Attach file">📎 Attach</button>
+            <button id="attach-file-btn" class="composer-attach-btn" type="button" title="Attach files or images (or drag & drop / paste)" aria-label="Attach file"><svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M4.5 3a2.5 2.5 0 0 1 5 0v9a1.5 1.5 0 0 1-3 0V5a.5.5 0 0 1 1 0v7a.5.5 0 0 0 1 0V3a1.5 1.5 0 1 0-3 0v9a2.5 2.5 0 0 0 5 0V5a.5.5 0 0 1 1 0v7a3.5 3.5 0 1 1-7 0V3z"/></svg> <span>Attach</span></button>
             <label class="control-field" for="provider-select"><span>Engine</span><select id="provider-select" aria-describedby="provider-status" title="Select AI Engine"></select></label>
             <div class="model-picker-wrapper">
               <label class="control-field" for="model-select"><span>Model</span>
                 <select id="model-select" class="sr-only" aria-describedby="provider-status" title="Select Model"></select>
                 <button id="model-picker-btn" class="model-picker-trigger" type="button" aria-haspopup="listbox" aria-expanded="false" title="Search and select model">
                   <span id="model-picker-label" class="model-picker-label">Select model…</span>
-                  <span class="model-picker-arrow" aria-hidden="true">▾</span>
+                  <span class="model-picker-arrow" aria-hidden="true"><svg width="10" height="10" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z"/></svg></span>
                 </button>
               </label>
               <div id="model-picker-dropdown" class="model-picker-dropdown" hidden role="listbox" aria-label="Available models">
                 <div class="model-search-header">
                   <div class="model-search-input-box">
-                    <span class="model-search-icon" aria-hidden="true">🔍</span>
+                    <span class="model-search-icon" aria-hidden="true"><svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001q.044.06.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1 1 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0"/></svg></span>
                     <input id="model-search-input" type="search" placeholder="Search models (e.g. deepseek, llama, gpt-4)…" autocomplete="off" aria-label="Search models">
-                    <button id="model-search-clear" class="model-search-clear" type="button" aria-label="Clear search" hidden>✕</button>
+                    <button id="model-search-clear" class="model-search-clear" type="button" aria-label="Clear search" hidden><svg width="11" height="11" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8 2.146 2.854z"/></svg></button>
                   </div>
                   <span id="model-search-count" class="model-search-count">0 models</span>
                 </div>
@@ -147,26 +190,72 @@
               <span id="composer-hint">Enter to send · Shift+Enter for a new line</span>
             </div>
             <button id="cancel-turn" class="danger-quiet" type="button" disabled title="Stop AI response">Stop</button>
-            <button id="send-turn" class="primary send-button" type="submit">Send <span aria-hidden="true">↑</span></button>
+            <button id="send-turn" class="primary send-button" type="submit">Send <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M8 15a.5.5 0 0 0 .5-.5V2.707l3.146 3.147a.5.5 0 0 0 .708-.708l-4-4a.5.5 0 0 0-.708 0l-4 4a.5.5 0 1 0 .708.708L7.5 2.707V14.5a.5.5 0 0 0 .5.5z"/></svg></button>
           </div>
         </div>
       </form>
     </section>
 
-    <aside class="evidence-panel" aria-labelledby="evidence-title">
+    <aside id="inspector-panel" class="evidence-panel" aria-labelledby="evidence-title">
       <div class="panel-heading">
         <div class="evidence-heading-title">
-          <span class="panel-icon" aria-hidden="true">🛡️</span>
-          <h2 id="evidence-title">Context & evidence</h2>
+          <span class="panel-icon" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M5.072.56C6.157.265 7.31 0 8 0s1.843.265 2.928.56c1.11.3 2.229.655 2.887.87a1.54 1.54 0 0 1 1.044 1.262c.596 4.477-.787 7.795-2.465 9.99a11.775 11.775 0 0 1-2.517 2.453 7.159 7.159 0 0 1-1.048.625c-.28.132-.581.24-.829.24s-.548-.108-.829-.24a7.158 7.158 0 0 1-1.048-.625 11.777 11.777 0 0 1-2.517-2.453C1.928 10.487.545 7.169 1.141 2.692A1.54 1.54 0 0 1 2.185 1.43 62.456 62.456 0 0 1 5.072.56z"/></svg></span>
+          <h2 id="evidence-title">Operational Inspector</h2>
         </div>
         <div class="evidence-heading-actions">
           <span class="trust-badge">Truth gated</span>
-          <button id="close-evidence" class="close-evidence-btn" type="button" title="Close evidence panel" aria-label="Close">✕</button>
+          <button id="close-evidence" class="close-evidence-btn" type="button" title="Close inspector panel" aria-label="Close"><svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8 2.146 2.854z"/></svg></button>
         </div>
       </div>
-      <section class="evidence-card"><h3>Sources</h3><ul id="evidence-sources"><li>No attributable source accepted.</li></ul></section>
-      <section class="evidence-card"><h3>Unknowns</h3><ul id="evidence-unknowns"><li>No evidence accepted yet.</li></ul></section>
-      <section class="evidence-card status-card"><h3>Control status</h3><dl><div><dt>Live reads</dt><dd id="live-status">Loading…</dd></div><div><dt>Codex harness</dt><dd id="codex-status">Loading…</dd></div><div><dt>Provider</dt><dd id="provider-status">Loading…</dd></div></dl></section>
+
+      <nav class="inspector-tabs" role="tablist" aria-label="Inspector Views">
+        <button class="inspector-tab-btn active" type="button" role="tab" aria-selected="true" data-target="inspector-panel-evidence">Evidence</button>
+        <button class="inspector-tab-btn" type="button" role="tab" aria-selected="false" data-target="inspector-panel-activity">Activity</button>
+        <button class="inspector-tab-btn" type="button" role="tab" aria-selected="false" data-target="inspector-panel-approvals">Approvals</button>
+        <button class="inspector-tab-btn" type="button" role="tab" aria-selected="false" data-target="inspector-panel-diagnostics">Diagnostics</button>
+      </nav>
+
+      <div class="inspector-body">
+        <section id="inspector-panel-evidence" class="inspector-tab-panel active" role="tabpanel">
+          <section class="evidence-card">
+            <h3>Sources</h3>
+            <ul id="evidence-sources"><li>No attributable source accepted.</li></ul>
+          </section>
+          <section class="evidence-card">
+            <h3>Unknowns</h3>
+            <ul id="evidence-unknowns"><li>No evidence accepted yet.</li></ul>
+          </section>
+        </section>
+
+        <section id="inspector-panel-activity" class="inspector-tab-panel" role="tabpanel" hidden>
+          <div class="inspector-tab-intro">
+            <p class="activity-note">Shows server-approved progress, plans, commands, tools, evidence, validation, and approvals. Credentials and private model reasoning are never displayed.</p>
+          </div>
+          <div class="inspector-activity-placeholder">
+            <p>Real-time execution telemetry is displayed in the live activity timeline during active turns.</p>
+          </div>
+        </section>
+
+        <section id="inspector-panel-approvals" class="inspector-tab-panel" role="tabpanel" hidden>
+          <div class="inspector-tab-intro">
+            <p class="approval-policy-summary">Owner Direct reads show live identity evidence. For a real change, the server displays the exact operation and risk warning; one final confirmation sends it once. Unseen future changes are never included.</p>
+          </div>
+          <div class="inspector-approvals-box">
+            <p>Detailed tool proposals and diffs are also available in the Governed Operations drawer.</p>
+          </div>
+        </section>
+
+        <section id="inspector-panel-diagnostics" class="inspector-tab-panel" role="tabpanel" hidden>
+          <section class="evidence-card status-card">
+            <h3>Control status</h3>
+            <dl>
+              <div><dt>Live reads</dt><dd id="live-status">Loading…</dd></div>
+              <div><dt>Codex harness</dt><dd id="codex-status">Loading…</dd></div>
+              <div><dt>Provider</dt><dd id="provider-status">Loading…</dd></div>
+            </dl>
+          </section>
+        </section>
+      </div>
     </aside>
   </main>
 
@@ -175,24 +264,360 @@
     <div id="tool-content" hidden><p class="approval-policy-summary">Owner Direct reads show live identity evidence. For a real change, the server displays the exact operation and risk warning; one final confirmation sends it once. Unseen future changes are never included.</p><div id="tool-proposals" class="empty-tools" role="status">No tool proposals for this conversation.</div><div id="workspace-diffs"></div><div id="p10-status" class="p10-status">Owner Direct is primary; legacy P10 remains available for existing governed plans.</div></div>
   </section>
 
-  <dialog id="settings-panel" aria-labelledby="settings-title">
-    <form method="dialog" class="dialog-header"><div><span class="eyebrow">Console configuration</span><h2 id="settings-title">Provider settings</h2></div><button value="close" aria-label="Close settings">Close</button></form>
-    <p class="settings-note">OpenCode credentials are forwarded directly to the protected local OpenCode server and are never returned, logged, exported, or stored by MNE Brain. Redacted conversation and documented workspace context may reach the explicitly selected model; live evidence and all writes remain separately gated.</p>
-    <section id="codex-readiness" class="provider-card" aria-live="polite"><h3>Codex App Server readiness</h3><p>Checking the local ChatGPT-authenticated harness…</p></section>
-    <section id="opencode-readiness" class="provider-card" aria-live="polite"><h3>OpenCode readiness</h3><p>Checking the protected loopback HTTP/SSE server…</p></section>
-    <section id="antigravity-readiness" class="provider-card" aria-live="polite"><h3>Antigravity CLI readiness</h3><p>Checking the local Antigravity CLI harness…</p></section>
-    <div class="theme-row"><span>Appearance</span><button id="theme-toggle" type="button" aria-pressed="false">Use light theme</button></div>
-    <section aria-labelledby="opencode-provider-title"><div class="panel-heading"><h3 id="opencode-provider-title">OpenCode providers</h3><button id="refresh-opencode" type="button">Refresh catalog</button></div><div id="provider-settings-list"></div></section>
-    <details open><summary>Connect with an API key</summary><form id="opencode-api-key-form"><label for="opencode-api-provider">Provider</label><select id="opencode-api-provider" required></select><label for="opencode-api-key">API key</label><input id="opencode-api-key" type="password" autocomplete="new-password" required><button type="submit">Connect directly through OpenCode</button></form></details>
-    <details id="opencode-oauth-panel"><summary>OAuth or device-code flow</summary><form id="opencode-oauth-complete-form"><label for="opencode-oauth-provider">Provider</label><select id="opencode-oauth-provider" required></select><label for="opencode-oauth-method">Authentication method</label><select id="opencode-oauth-method" required></select><div id="opencode-oauth-inputs"></div><button id="opencode-oauth-start" type="button">Start through OpenCode</button><label for="opencode-oauth-code">Code, only when OpenCode requests one</label><input id="opencode-oauth-code" autocomplete="one-time-code"><button type="submit">Complete through OpenCode</button></form></details>
-    <details><summary>Add custom OpenAI-compatible provider</summary><form id="opencode-custom-provider-form"><label for="custom-provider-id">Provider ID</label><input id="custom-provider-id" pattern="[a-z][a-z0-9_-]{2,63}" required><label for="custom-provider-name">Display name</label><input id="custom-provider-name" maxlength="100" required><label for="custom-provider-url">HTTPS base URL</label><input id="custom-provider-url" type="url" required><label for="custom-provider-protocol">Protocol</label><select id="custom-provider-protocol"><option value="chat_completions">Chat Completions</option><option value="responses">Responses API</option></select><label for="custom-provider-key">API key, optional and never saved by MNE Brain</label><input id="custom-provider-key" type="password" autocomplete="new-password"><label for="custom-provider-env">Environment credential reference, optional alternative to an API key</label><input id="custom-provider-env" pattern="[A-Z][A-Z0-9_]{2,80}"><label for="custom-provider-models">Models, one per line: id | display name | context | output</label><textarea id="custom-provider-models" rows="4" required></textarea><label for="custom-provider-headers">Optional non-secret headers as JSON</label><textarea id="custom-provider-headers" rows="3">{}</textarea><label><input id="custom-provider-loopback" type="checkbox"> Explicitly approve a loopback local-model endpoint</label><button type="submit">Validate and save metadata</button></form></details>
-    <p id="settings-status" role="status"></p>
+  <dialog id="thread-delete-dialog" class="mne-dialog delete-confirm-dialog" aria-labelledby="delete-dialog-heading">
+    <div class="dialog-content">
+      <div class="dialog-header danger-header">
+        <span class="dialog-icon" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M7.938 2.016A.13.13 0 0 1 8.002 2a.13.13 0 0 1 .063.016.146.146 0 0 1 .054.057l6.857 11.667c.036.06.035.124.002.183a.163.163 0 0 1-.054.06.145.145 0 0 1-.066.017H1.146a.145.145 0 0 1-.066-.017.163.163 0 0 1-.054-.06.176.176 0 0 1 .002-.183L7.884 2.073a.147.147 0 0 1 .054-.057zm1.044-.45a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566z"/><path d="M7.002 12a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 5.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0z"/></svg></span>
+        <div>
+          <span class="eyebrow danger-eyebrow">Safe Conversation Deletion</span>
+          <h2 id="delete-dialog-heading">Delete Conversation</h2>
+        </div>
+      </div>
+      <div class="dialog-body">
+        <p>Are you sure you want to delete <strong id="delete-dialog-thread-title">this conversation</strong>?</p>
+        <p class="dialog-note">All persisted messages, turns, and trace records associated with this conversation will be permanently removed from disk.</p>
+        <div id="delete-dialog-active-turn-warning" class="active-turn-warning" hidden>
+          <span class="warning-icon" aria-hidden="true"><svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M15 8a6.973 6.973 0 0 0-1.71-4.584l-9.874 9.874A7 7 0 0 0 15 8M2.71 12.584l9.874-9.874A7 7 0 0 0 2.71 12.584M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8"/></svg></span>
+          <span>Cannot delete conversation while a turn is actively queued or running. Please stop or wait for the active turn to finish before deleting.</span>
+        </div>
+      </div>
+      <div class="dialog-footer">
+        <button id="delete-dialog-cancel-btn" type="button" class="compact">Cancel</button>
+        <button id="delete-dialog-confirm-btn" type="button" class="danger-btn compact">Delete Permanently</button>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog id="thread-batch-delete-dialog" class="mne-dialog delete-confirm-dialog" aria-labelledby="batch-delete-dialog-heading">
+    <div class="dialog-content">
+      <div class="dialog-header danger-header">
+        <span class="dialog-icon" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M7.938 2.016A.13.13 0 0 1 8.002 2a.13.13 0 0 1 .063.016.146.146 0 0 1 .054.057l6.857 11.667c.036.06.035.124.002.183a.163.163 0 0 1-.054.06.145.145 0 0 1-.066.017H1.146a.145.145 0 0 1-.066-.017.163.163 0 0 1-.054-.06.176.176 0 0 1 .002-.183L7.884 2.073a.147.147 0 0 1 .054-.057zm1.044-.45a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566z"/><path d="M7.002 12a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 5.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0z"/></svg></span>
+        <div>
+          <span class="eyebrow danger-eyebrow">Safe Conversation Deletion</span>
+          <h2 id="batch-delete-dialog-heading">Delete Conversations</h2>
+        </div>
+      </div>
+      <div class="dialog-body">
+        <p>Are you sure you want to delete <strong id="batch-delete-count-label">0 conversations</strong>?</p>
+        <div id="batch-delete-preview-list" class="batch-delete-preview-list"></div>
+        <p class="dialog-note">All persisted messages, turns, and trace records associated with the confirmed conversations will be permanently removed from disk.</p>
+        <div id="batch-delete-active-turn-warning" class="active-turn-warning" hidden>
+          <span class="warning-icon" aria-hidden="true"><svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M15 8a6.973 6.973 0 0 0-1.71-4.584l-9.874 9.874A7 7 0 0 0 15 8M2.71 12.584l9.874-9.874A7 7 0 0 0 2.71 12.584M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8"/></svg></span>
+          <span id="batch-delete-active-turn-msg">Active running conversations cannot be deleted.</span>
+        </div>
+      </div>
+      <div class="dialog-footer">
+        <button id="batch-delete-cancel-btn" type="button" class="compact">Cancel</button>
+        <button id="batch-delete-confirm-btn" type="button" class="danger-btn compact">Delete Permanently</button>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog id="settings-panel" class="mne-dialog settings-dialog" aria-labelledby="settings-title">
+    <div class="settings-dialog-layout">
+      <header class="settings-dialog-header">
+        <div class="settings-header-title">
+          <span class="brand-mark" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 4.754a3.246 3.246 0 1 0 0 6.492 3.246 3.246 0 0 0 0-6.492zM5.754 8a2.246 2.246 0 1 1 4.492 0 2.246 2.246 0 0 1-4.492 0z"/><path d="M9.796 1.343c-.527-1.79-3.065-1.79-3.592 0l-.094.319a.873.873 0 0 1-1.255.52l-.292-.16c-1.64-.892-3.433.902-2.54 2.541l.159.292a.873.873 0 0 1-.52 1.255l-.319.094c-1.79.527-1.79 3.065 0 3.592l.319.094a.873.873 0 0 1 .52 1.255l-.16.292c-.892 1.64.901 3.434 2.541 2.54l.292-.159a.873.873 0 0 1 1.255.52l.094.319c.527 1.79 3.065 1.79 3.592 0l.094-.319a.873.873 0 0 1 1.255-.52l.292.16c1.64.893 3.434-.902 2.54-2.541l-.159-.292a.873.873 0 0 1 .52-1.255l.319-.094c1.79-.527 1.79-3.065 0-3.592l-.319-.094a.873.873 0 0 1-.52-1.255l.16-.292c.893-1.64-.902-3.433-2.541-2.54l-.292.159a.873.873 0 0 1-1.255-.52l-.094-.319z"/></svg></span>
+          <div>
+            <span class="eyebrow">Console Configuration</span>
+            <h2 id="settings-title">Settings & Policy</h2>
+          </div>
+        </div>
+        <div class="settings-header-actions">
+          <output id="settings-status" role="status" class="settings-status-badge"></output>
+          <form method="dialog"><button class="close-btn" value="close" aria-label="Close settings"><svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8 2.146 2.854z"/></svg></button></form>
+        </div>
+      </header>
+
+      <div class="settings-dialog-body">
+        <nav class="settings-nav-sidebar" role="tablist" aria-label="Settings Categories">
+          <button class="settings-nav-tab active" type="button" role="tab" aria-selected="true" data-target="settings-panel-general">
+            <span class="tab-icon" aria-hidden="true"><svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 4.754a3.246 3.246 0 1 0 0 6.492 3.246 3.246 0 0 0 0-6.492zM5.754 8a2.246 2.246 0 1 1 4.492 0 2.246 2.246 0 0 1-4.492 0z"/><path d="M9.796 1.343c-.527-1.79-3.065-1.79-3.592 0l-.094.319a.873.873 0 0 1-1.255.52l-.292-.16c-1.64-.892-3.433.902-2.54 2.541l.159.292a.873.873 0 0 1-.52 1.255l-.319.094c-1.79.527-1.79 3.065 0 3.592l.319.094a.873.873 0 0 1 .52 1.255l-.16.292c-.892 1.64.901 3.434 2.541 2.54l.292-.159a.873.873 0 0 1 1.255.52l.094.319c.527 1.79 3.065 1.79 3.592 0l.094-.319a.873.873 0 0 1 1.255-.52l.292.16c1.64.893 3.434-.902 2.54-2.541l-.159-.292a.873.873 0 0 1 .52-1.255l.319-.094c1.79-.527 1.79-3.065 0-3.592l-.319-.094a.873.873 0 0 1-.52-1.255l.16-.292c.893-1.64-.902-3.433-2.541-2.54l-.292.159a.873.873 0 0 1-1.255-.52l-.094-.319z"/></svg></span>
+            <span>General</span>
+          </button>
+          <button class="settings-nav-tab" type="button" role="tab" aria-selected="false" data-target="settings-panel-appearance">
+            <span class="tab-icon" aria-hidden="true"><svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0a8 8 0 1 0 4.596 14.569.5.5 0 0 0-.172-.686l-.812-.466a.5.5 0 0 0-.687.172A6 6 0 1 1 14 8c0 .34-.035.672-.102.994a.5.5 0 0 0 .332.585l.896.257a.5.5 0 0 0 .585-.332A7.95 7.95 0 0 0 16 8a8 8 0 0 0-8-8M4.5 5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3m4-1a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3m4 2a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3m-9 4a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3"/></svg></span>
+            <span>Appearance</span>
+          </button>
+          <button class="settings-nav-tab" type="button" role="tab" aria-selected="false" data-target="settings-panel-engines">
+            <span class="tab-icon" aria-hidden="true"><svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M6 1v1H4a2 2 0 0 0-2 2v2H1v2h1v2H1v2h1v2a2 2 0 0 0 2 2h2v1h2v-1h2v1h2v-1h2a2 2 0 0 0 2-2v-2h1v-2h-1V8h1V6h-1V4a2 2 0 0 0-2-2h-2V1H9v1H7V1zm-2 3h8a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1m2 2.5a.5.5 0 0 0-.5.5v3a.5.5 0 0 0 .5.5h4a.5.5 0 0 0 .5-.5V7a.5.5 0 0 0-.5-.5z"/></svg></span>
+            <span>AI Engines</span>
+          </button>
+          <button class="settings-nav-tab" type="button" role="tab" aria-selected="false" data-target="settings-panel-conversations">
+            <span class="tab-icon" aria-hidden="true"><svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M0 2a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-2.5a1 1 0 0 0-.8.4l-1.9 2.533a1 1 0 0 1-1.6 0L5.3 12.4a1 1 0 0 0-.8-.4H2a2 2 0 0 1-2-2zm3.5 1a.5.5 0 0 0 0 1h9a.5.5 0 0 0 0-1zm0 2.5a.5.5 0 0 0 0 1h9a.5.5 0 0 0 0-1zm0 2.5a.5.5 0 0 0 0 1h5a.5.5 0 0 0 0-1z"/></svg></span>
+            <span>Conversations</span>
+          </button>
+          <button class="settings-nav-tab" type="button" role="tab" aria-selected="false" data-target="settings-panel-safety">
+            <span class="tab-icon" aria-hidden="true"><svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M5.072.56C6.157.265 7.31 0 8 0s1.843.265 2.928.56c1.11.3 2.229.655 2.887.87a1.54 1.54 0 0 1 1.044 1.262c.596 4.477-.787 7.795-2.465 9.99a11.775 11.775 0 0 1-2.517 2.453 7.159 7.159 0 0 1-1.048.625c-.28.132-.581.24-.829.24s-.548-.108-.829-.24a7.158 7.158 0 0 1-1.048-.625 11.777 11.777 0 0 1-2.517-2.453C1.928 10.487.545 7.169 1.141 2.692A1.54 1.54 0 0 1 2.185 1.43 62.456 62.456 0 0 1 5.072.56z"/></svg></span>
+            <span>Operations & Safety</span>
+          </button>
+          <button class="settings-nav-tab" type="button" role="tab" aria-selected="false" data-target="settings-panel-diagnostics">
+            <span class="tab-icon" aria-hidden="true"><svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001q.044.06.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1 1 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0"/></svg></span>
+            <span>Diagnostics</span>
+          </button>
+        </nav>
+
+        <div class="settings-panels-container">
+          <!-- Category 1: General -->
+          <section id="settings-panel-general" class="settings-tab-panel active" role="tabpanel">
+            <h3>General Preferences</h3>
+            <p class="settings-section-desc">Client-side behavioral preferences for interaction and navigation.</p>
+
+            <div class="settings-group">
+              <label class="pref-toggle-row">
+                <input id="pref-restore-conversation" type="checkbox">
+                <div class="pref-label-desc">
+                  <strong>Restore last conversation on startup</strong>
+                  <span>Automatically re-select the most recently updated conversation when opening the console.</span>
+                </div>
+              </label>
+
+              <label class="pref-toggle-row">
+                <input id="pref-enter-send" type="checkbox">
+                <div class="pref-label-desc">
+                  <strong>Enter to send message</strong>
+                  <span>Pressing Enter sends the message; Shift+Enter creates a new line. When disabled, Ctrl/Cmd+Enter sends.</span>
+                </div>
+              </label>
+
+              <label class="pref-toggle-row">
+                <input id="pref-show-timestamps" type="checkbox">
+                <div class="pref-label-desc">
+                  <strong>Show message timestamps</strong>
+                  <span>Display human-readable time labels on conversation messages.</span>
+                </div>
+              </label>
+
+              <label class="pref-toggle-row">
+                <input id="pref-auto-open-evidence" type="checkbox">
+                <div class="pref-label-desc">
+                  <strong>Auto-expand Evidence drawer on new evidence</strong>
+                  <span>Automatically open the right operational inspector when attributable evidence is accepted.</span>
+                </div>
+              </label>
+            </div>
+          </section>
+
+          <!-- Category 2: Appearance -->
+          <section id="settings-panel-appearance" class="settings-tab-panel" role="tabpanel" hidden>
+            <h3>Appearance & Display</h3>
+            <p class="settings-section-desc">Theme, accent color, typography, density, and animation controls.</p>
+
+            <div class="settings-form-grid">
+              <div class="form-row">
+                <label for="pref-theme-select">Theme Mode</label>
+                <select id="pref-theme-select">
+                  <option value="dark">Command Center Dark</option>
+                  <option value="light">High Contrast Light</option>
+                  <option value="system">Follow System</option>
+                </select>
+              </div>
+
+              <div class="form-row">
+                <label for="pref-accent-select">Accent Palette</label>
+                <select id="pref-accent-select">
+                  <option value="cyan">Electric Cyan (#2FBAE8)</option>
+                  <option value="teal">Operational Teal (#22C3A6)</option>
+                  <option value="blue">Deep Sky Blue (#38BDF8)</option>
+                  <option value="amber">Caution Amber (#F2B84B)</option>
+                </select>
+              </div>
+
+              <div class="form-row">
+                <label for="pref-density-select">Interface Density</label>
+                <select id="pref-density-select">
+                  <option value="comfortable">Comfortable (Standard)</option>
+                  <option value="compact">Compact (High Information Density)</option>
+                </select>
+              </div>
+
+              <div class="form-row">
+                <label for="pref-font-select">Font Size</label>
+                <select id="pref-font-select">
+                  <option value="sm">Small (13px)</option>
+                  <option value="md">Default (14px)</option>
+                  <option value="lg">Large (16px)</option>
+                </select>
+              </div>
+
+              <div class="form-row">
+                <label for="pref-motion-select">Animation & Motion</label>
+                <select id="pref-motion-select">
+                  <option value="system">Follow System</option>
+                  <option value="reduce">Reduced Motion (No Animation)</option>
+                  <option value="no-preference">Standard Transitions</option>
+                </select>
+              </div>
+
+              <div class="form-row full-width">
+                <label class="pref-toggle-row">
+                  <input id="pref-code-wrap" type="checkbox">
+                  <div class="pref-label-desc">
+                    <strong>Wrap code blocks</strong>
+                    <span>Wrap long lines in code blocks and diff previews instead of horizontal scrolling.</span>
+                  </div>
+                </label>
+              </div>
+
+              <div class="form-row full-width theme-row" style="margin-top:12px;">
+                <span>Quick Theme Switcher</span>
+                <button id="theme-toggle" type="button" class="compact" aria-pressed="false">Use light theme</button>
+              </div>
+            </div>
+          </section>
+
+          <!-- Category 3: AI Engines -->
+          <section id="settings-panel-engines" class="settings-tab-panel" role="tabpanel" hidden>
+            <h3>AI Engines & Model Providers</h3>
+            <p class="settings-note">OpenCode credentials are forwarded directly to the protected local OpenCode server and are never returned, logged, exported, or stored by MNE Brain. Redacted conversation and documented workspace context may reach the explicitly selected model; live evidence and all writes remain separately gated.</p>
+
+            <div class="settings-form-grid" style="margin-bottom: 1.25rem;">
+              <div class="form-row">
+                <label for="pref-default-engine-select">Preferred AI Engine (New Conversations)</label>
+                <select id="pref-default-engine-select">
+                  <option value="">Server Default</option>
+                  <option value="codex">Codex App Server</option>
+                  <option value="opencode">OpenCode</option>
+                  <option value="antigravity">Antigravity CLI</option>
+                </select>
+              </div>
+              <div id="pref-default-engine-warning" class="form-row full-width" hidden>
+                <span class="warning-pill"></span>
+              </div>
+              <div class="form-row">
+                <label for="pref-default-model-select">Preferred Model (New Conversations)</label>
+                <select id="pref-default-model-select">
+                  <option value="">Engine Default</option>
+                </select>
+              </div>
+              <div id="pref-default-model-warning" class="form-row full-width" hidden>
+                <span class="warning-pill"></span>
+              </div>
+            </div>
+
+            <div class="engine-readiness-grid">
+              <section id="codex-readiness" class="provider-card" aria-live="polite"><h3>Codex App Server readiness</h3><p>Checking the local ChatGPT-authenticated harness…</p></section>
+              <section id="opencode-readiness" class="provider-card" aria-live="polite"><h3>OpenCode readiness</h3><p>Checking the protected loopback HTTP/SSE server…</p></section>
+              <section id="antigravity-readiness" class="provider-card" aria-live="polite"><h3>Antigravity CLI readiness</h3><p>Checking the local Antigravity CLI harness…</p></section>
+            </div>
+
+            <section aria-labelledby="opencode-provider-title" class="opencode-catalog-section">
+              <div class="panel-heading">
+                <h4 id="opencode-provider-title">OpenCode providers</h4>
+                <button id="refresh-opencode" type="button" class="compact">Refresh catalog</button>
+              </div>
+              <div id="provider-settings-list"></div>
+            </section>
+
+            <details class="settings-accordion" open><summary>Connect with an API key</summary><form id="opencode-api-key-form"><label for="opencode-api-provider">Provider</label><select id="opencode-api-provider" required></select><label for="opencode-api-key">API key</label><input id="opencode-api-key" type="password" autocomplete="new-password" required><button type="submit">Connect directly through OpenCode</button></form></details>
+            <details id="opencode-oauth-panel" class="settings-accordion"><summary>OAuth or device-code flow</summary><form id="opencode-oauth-complete-form"><label for="opencode-oauth-provider">Provider</label><select id="opencode-oauth-provider" required></select><label for="opencode-oauth-method">Authentication method</label><select id="opencode-oauth-method" required></select><div id="opencode-oauth-inputs"></div><button id="opencode-oauth-start" type="button">Start through OpenCode</button><label for="opencode-oauth-code">Code, only when OpenCode requests one</label><input id="opencode-oauth-code" autocomplete="one-time-code"><button type="submit">Complete through OpenCode</button></form></details>
+            <details class="settings-accordion"><summary>Add custom OpenAI-compatible provider</summary><form id="opencode-custom-provider-form"><label for="custom-provider-id">Provider ID</label><input id="custom-provider-id" pattern="[a-z][a-z0-9_-]{2,63}" required><label for="custom-provider-name">Display name</label><input id="custom-provider-name" maxlength="100" required><label for="custom-provider-url">HTTPS base URL</label><input id="custom-provider-url" type="url" required><label for="custom-provider-protocol">Protocol</label><select id="custom-provider-protocol"><option value="chat_completions">Chat Completions</option><option value="responses">Responses API</option></select><label for="custom-provider-key">API key, optional and never saved by MNE Brain</label><input id="custom-provider-key" type="password" autocomplete="new-password"><label for="custom-provider-env">Environment credential reference, optional alternative to an API key</label><input id="custom-provider-env" pattern="[A-Z][A-Z0-9_]{2,80}"><label for="custom-provider-models">Models, one per line: id | display name | context | output</label><textarea id="custom-provider-models" rows="4" required></textarea><label for="custom-provider-headers">Optional non-secret headers as JSON</label><textarea id="custom-provider-headers" rows="3">{}</textarea><label><input id="custom-provider-loopback" type="checkbox"> Explicitly approve a loopback local-model endpoint</label><button type="submit">Validate and save metadata</button></form></details>
+          </section>
+
+          <!-- Category 4: Conversations -->
+          <section id="settings-panel-conversations" class="settings-tab-panel" role="tabpanel" hidden>
+            <h3>Conversation Management & Storage</h3>
+            <p class="settings-section-desc">Manage how conversations are displayed, organized, and retained on local disk.</p>
+
+            <div class="settings-form-grid">
+              <div class="form-row">
+                <label for="pref-conv-sort">Conversation Sorting</label>
+                <select id="pref-conv-sort">
+                  <option value="updated_desc">Recently Active First (Default)</option>
+                  <option value="created_desc">Creation Date (Newest First)</option>
+                  <option value="alpha">Alphabetical by Title (A-Z)</option>
+                </select>
+              </div>
+
+              <div class="form-row">
+                <label for="pref-sidebar-width">Sidebar Width & Layout</label>
+                <select id="pref-sidebar-width">
+                  <option value="280">Standard Compact (280px)</option>
+                  <option value="360">Medium (360px)</option>
+                  <option value="440">Enlarged (440px)</option>
+                  <option value="520">Extra Wide (520px)</option>
+                </select>
+              </div>
+
+              <div class="form-row full-width">
+                <label class="pref-toggle-row">
+                  <input id="pref-show-archived" type="checkbox">
+                  <div class="pref-label-desc">
+                    <strong>Show archived conversations</strong>
+                    <span>Include archived conversation threads in the sidebar list.</span>
+                  </div>
+                </label>
+              </div>
+            </div>
+
+            <div class="info-callout">
+              <h4>Local Disk Retention</h4>
+              <p>All conversation threads, messages, and turns are persisted in your local repository data directory. Bounded, sanitized conversation and workspace context may be sent to the explicitly selected AI provider, while live evidence requires separate owner authorization.</p>
+              <p>You can export any conversation as a JSON packet or import previously exported threads using the Export/Import buttons in the sidebar.</p>
+            </div>
+          </section>
+
+          <!-- Category 5: Operations & Safety -->
+          <section id="settings-panel-safety" class="settings-tab-panel" role="tabpanel" hidden>
+            <h3>Operations & Safety Policy</h3>
+            <p class="settings-section-desc">MNE_Brain Release 2 core safety architecture rules and operational boundaries.</p>
+
+            <div class="safety-cards-grid">
+              <div class="safety-rule-card">
+                <span class="safety-card-icon" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M5.072.56C6.157.265 7.31 0 8 0s1.843.265 2.928.56c1.11.3 2.229.655 2.887.87a1.54 1.54 0 0 1 1.044 1.262c.596 4.477-.787 7.795-2.465 9.99a11.775 11.775 0 0 1-2.517 2.453 7.159 7.159 0 0 1-1.048.625c-.28.132-.581.24-.829.24s-.548-.108-.829-.24a7.158 7.158 0 0 1-1.048-.625 11.777 11.777 0 0 1-2.517-2.453C1.928 10.487.545 7.169 1.141 2.692A1.54 1.54 0 0 1 2.185 1.43 62.456 62.456 0 0 1 5.072.56z"/></svg></span>
+                <h4>Read-Only Discovery Default</h4>
+                <p>Telemetry discovery and exact registered P7 checks run only after separate activation under the authenticated owner session; live reads are disabled at rest. Read access never inherits write permissions.</p>
+              </div>
+
+              <div class="safety-rule-card">
+                <span class="safety-card-icon" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>
+                <h4>Zero Credential Exposure</h4>
+                <p>Passwords, SSH private keys, API secrets, and raw authentication tokens are filtered out server-side. No credential material ever reaches the browser or model context.</p>
+              </div>
+
+              <div class="safety-rule-card">
+                <span class="safety-card-icon" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></span>
+                <h4>Controlled Write Execution</h4>
+                <p>Every write operation requires an exact server-prepared preview, risk rating, verification procedure, and single-use owner approval. Unseen changes are permanently blocked.</p>
+              </div>
+
+              <div class="safety-rule-card">
+                <span class="safety-card-icon" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></span>
+                <h4>Loopback Bound</h4>
+                <p>The MNE_Brain server binds strictly to loopback (127.0.0.1). Sessions are authenticated via HttpOnly cookies and protected with CSRF nonces.</p>
+              </div>
+            </div>
+          </section>
+
+          <!-- Category 6: Diagnostics -->
+          <section id="settings-panel-diagnostics" class="settings-tab-panel" role="tabpanel" hidden>
+            <h3>Console Diagnostics</h3>
+            <p class="settings-section-desc">Inspect operational status, engine connectivity, and generate sanitized debug bundles.</p>
+
+            <div class="diagnostics-action-bar">
+              <button id="btn-copy-diagnostics" type="button" class="primary compact">Copy Sanitized Diagnostics</button>
+              <span class="diagnostics-hint">Copies non-secret JSON including engine readiness, provider status, and policy boundaries.</span>
+            </div>
+
+            <div class="diagnostics-summary-card">
+              <h4>Active Policy Snapshot</h4>
+              <ul class="diagnostics-kv-list">
+                <li><span class="kv-key">Security Mode:</span> <span class="kv-val">Owner Direct (Presentation-only GUI)</span></li>
+                <li><span class="kv-key">Write Controls:</span> <span class="kv-val">Level 0–4 Exact Approval Gated</span></li>
+                <li><span class="kv-key">Telemetry Transport:</span> <span class="kv-val">Registered P7 Adapters Only</span></li>
+                <li><span class="kv-key">Local Persistence:</span> <span class="kv-val">JSON Schema Governed</span></li>
+              </ul>
+            </div>
+          </section>
+        </div>
+      </div>
+    </div>
   </dialog>
 
   <dialog id="security-agent-dialog" class="security-agent-dialog" aria-labelledby="sec-dialog-title">
     <form method="dialog" class="dialog-header sec-dialog-header">
       <div class="sec-header-left">
-        <span class="brand-mark" aria-hidden="true">🛡️</span>
+        <span class="brand-mark" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M5.072.56C6.157.265 7.31 0 8 0s1.843.265 2.928.56c1.11.3 2.229.655 2.887.87a1.54 1.54 0 0 1 1.044 1.262c.596 4.477-.787 7.795-2.465 9.99a11.775 11.775 0 0 1-2.517 2.453 7.159 7.159 0 0 1-1.048.625c-.28.132-.581.24-.829.24s-.548-.108-.829-.24a7.158 7.158 0 0 1-1.048-.625 11.777 11.777 0 0 1-2.517-2.453C1.928 10.487.545 7.169 1.141 2.692A1.54 1.54 0 0 1 2.185 1.43 62.456 62.456 0 0 1 5.072.56z"/></svg></span>
         <div>
           <span class="eyebrow">Autonomous Threat Intelligence & Reporting</span>
           <h2 id="sec-dialog-title">Cybersecurity Review Agent</h2>
@@ -200,7 +625,7 @@
       </div>
       <div class="sec-header-actions">
         <span id="sec-header-status-pill" class="status-pill safe">Initializing…</span>
-        <button value="close" class="close-btn" aria-label="Close Security Agent">✕</button>
+        <button value="close" class="close-btn" aria-label="Close Security Agent"><svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8 2.146 2.854z"/></svg></button>
       </div>
     </form>
 
@@ -220,21 +645,21 @@
         <div class="sec-action-toolbar" aria-label="Quick Actions">
           <div class="sec-action-left">
             <button id="sec-btn-run" class="primary sec-btn-prominent" type="button">
-              <span class="btn-icon" aria-hidden="true">⚡</span>
+              <span class="btn-icon" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M11.251.068a.5.5 0 0 1 .227.58L9.677 6.5H13a.5.5 0 0 1 .364.843l-8 8.5a.5.5 0 0 1-.842-.49L6.323 9.5H3a.5.5 0 0 1-.364-.843l8-8.5a.5.5 0 0 1 .615-.09z"/></svg></span>
               <span>Run Review Now</span>
             </button>
             <button id="sec-btn-view-html" class="sec-btn-action" type="button" title="Open the latest HTML Executive Report in a new tab">
-              <span class="btn-icon" aria-hidden="true">📄</span>
+              <span class="btn-icon" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M4 0h5.293A1 1 0 0 1 10 1.293L13.707 5a1 1 0 0 1 .293.707V14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2zm5.5 1.5v3.5a1 1 0 0 0 1 1h3.5zM4 1a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V6h-3.5A2.5 2.5 0 0 1 8 3.5V1z"/></svg></span>
               <span>View HTML Report</span>
             </button>
             <button id="sec-btn-download-pdf" class="sec-btn-action" type="button" title="Download the latest Executive PDF Briefing">
-              <span class="btn-icon" aria-hidden="true">📥</span>
+              <span class="btn-icon" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/><path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708z"/></svg></span>
               <span>Download PDF</span>
             </button>
           </div>
           <div class="sec-action-right">
             <button id="sec-btn-test-email" class="sec-btn-quiet" type="button" title="Dispatch a lightweight test email to verify SMTP delivery">
-              <span class="btn-icon" aria-hidden="true">✉️</span>
+              <span class="btn-icon" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M0 4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2zm2-1a1 1 0 0 0-1 1v.217l7 4.2 7-4.2V4a1 1 0 0 0-1-1zm13 2.383-4.708 2.825L15 11.105zm-.034 6.876-5.64-3.471L8 9.583l-1.326-.795-5.64 3.47A1 1 0 0 0 2 13h12a1 1 0 0 0 .966-.741M1 11.105l4.708-2.897L1 5.383z"/></svg></span>
               <span>Send Test Email</span>
             </button>
           </div>
@@ -278,7 +703,7 @@
           <!-- Schedule Automation Card -->
           <div class="sec-card" aria-labelledby="sec-schedule-heading">
             <div class="sec-card-header">
-              <h3 id="sec-schedule-heading">⏰ Daily Schedule Automation</h3>
+              <h3 id="sec-schedule-heading"><svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" style="vertical-align:-2px;margin-right:6px;"><path d="M8 3.5a.5.5 0 0 0-1 0V9a.5.5 0 0 0 .252.434l3.5 2a.5.5 0 0 0 .496-.868L8 8.71z"/><path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16m7-8A7 7 0 1 1 1 8a7 7 0 0 1 14 0"/></svg>Daily Schedule Automation</h3>
               <span id="sec-scheduler-badge" class="status-pill safe">Checking…</span>
             </div>
             <p class="sec-card-desc">Automatically executes bounded 24-hour log reviews across all 8 collectors and emails evidence-status reports every morning.</p>
@@ -310,7 +735,7 @@
           <!-- Email Distribution List Card -->
           <div class="sec-card" aria-labelledby="sec-recipients-heading">
             <div class="sec-card-header">
-              <h3 id="sec-recipients-heading">📧 Report Email Distribution List</h3>
+              <h3 id="sec-recipients-heading"><svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" style="vertical-align:-2px;margin-right:6px;"><path d="M0 4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2zm2-1a1 1 0 0 0-1 1v.217l7 4.2 7-4.2V4a1 1 0 0 0-1-1zm13 2.383-4.708 2.825L15 11.105zm-.034 6.876-5.64-3.471L8 9.583l-1.326-.795-5.64 3.47A1 1 0 0 0 2 13h12a1 1 0 0 0 .966-.741M1 11.105l4.708-2.897L1 5.383z"/></svg>Report Email Distribution List</h3>
               <span id="sec-recipients-count" class="badge-code">Loading…</span>
             </div>
             <p class="sec-card-desc">Daily cyber briefings, executive HTML summaries, and PDF attachments are dispatched to these addresses.</p>
@@ -331,7 +756,7 @@
         <!-- Monitored Security Appliances Card -->
         <div class="sec-card" aria-labelledby="sec-appliances-heading">
           <div class="sec-card-header">
-            <h3 id="sec-appliances-heading">🛡️ Monitored Security Appliances (7 Systems)</h3>
+            <h3 id="sec-appliances-heading"><svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" style="vertical-align:-2px;margin-right:6px;"><path d="M5.072.56C6.157.265 7.31 0 8 0s1.843.265 2.928.56c1.11.3 2.229.655 2.887.87a1.54 1.54 0 0 1 1.044 1.262c.596 4.477-.787 7.795-2.465 9.99a11.775 11.775 0 0 1-2.517 2.453 7.159 7.159 0 0 1-1.048.625c-.28.132-.581.24-.829.24s-.548-.108-.829-.24a7.158 7.158 0 0 1-1.048-.625 11.777 11.777 0 0 1-2.517-2.453C1.928 10.487.545 7.169 1.141 2.692A1.54 1.54 0 0 1 2.185 1.43 62.456 62.456 0 0 1 5.072.56z"/></svg>Monitored Security Appliances (7 Systems)</h3>
             <span class="trust-badge">Read-Only Telemetry</span>
           </div>
           <div id="sec-devices-grid" class="sec-devices-table">
@@ -344,7 +769,7 @@
       <section id="sec-panel-run" class="sec-tab-panel" role="tabpanel" aria-labelledby="sec-tab-run" hidden>
         <div class="sec-card">
           <div class="sec-card-header">
-            <h3>⚡ Execute On-Demand Cybersecurity Review</h3>
+            <h3><svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" style="vertical-align:-2px;margin-right:6px;"><path d="M11.251.068a.5.5 0 0 1 .227.58L9.677 6.5H13a.5.5 0 0 1 .364.843l-8 8.5a.5.5 0 0 1-.842-.49L6.323 9.5H3a.5.5 0 0 1-.364-.843l8-8.5a.5.5 0 0 1 .615-.09z"/></svg>Execute On-Demand Cybersecurity Review</h3>
             <span class="status-pill safe">Interactive Workspace</span>
           </div>
           <p class="sec-card-desc">Configure scope, time window, appliances, threat categories, and optional AI correlation engines.</p>
@@ -499,7 +924,7 @@
 
             <div class="sec-form-actions">
               <button id="sec-btn-start-review" class="primary sec-btn-prominent" type="button">
-                <span class="btn-icon" aria-hidden="true">⚡</span>
+                <span class="btn-icon" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M11.251.068a.5.5 0 0 1 .227.58L9.677 6.5H13a.5.5 0 0 1 .364.843l-8 8.5a.5.5 0 0 1-.842-.49L6.323 9.5H3a.5.5 0 0 1-.364-.843l8-8.5a.5.5 0 0 1 .615-.09z"/></svg></span>
                 <span>Start Security Review</span>
               </button>
             </div>
@@ -510,7 +935,7 @@
         <div id="sec-console-section" class="sec-card sec-console-card" aria-labelledby="sec-console-heading" hidden>
           <div class="sec-card-header">
             <div class="sec-console-header-left">
-              <h3 id="sec-console-heading">💻 Live Review Execution Log</h3>
+              <h3 id="sec-console-heading"><svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" style="vertical-align:-2px;margin-right:6px;"><path d="M0 4s0-2 2-2h12s2 0 2 2v6s0 2-2 2h-4c0 .667.083 1.167.25 1.5H11a.5.5 0 0 1 0 1H5a.5.5 0 0 1 0-1h.75c.167-.333.25-.833.25-1.5H2s-2 0-2-2zm1.398-.855A.76.76 0 0 0 1 3.5v6c0 .282.162.438.216.484.054.046.202.116.384.116h12.8c.182 0 .33-.07.384-.116.054-.046.216-.202.216-.484v-6c0-.282-.162-.438-.216-.484C14.73 3.07 14.582 3 14.4 3H1.6c-.182 0-.33.07-.384.116"/></svg>Live Review Execution Log</h3>
               <span id="sec-run-stage" class="badge-code">INITIALIZING</span>
               <span id="sec-current-collector" class="badge-subtle">Waiting…</span>
             </div>
@@ -531,10 +956,10 @@
 
           <!-- Real-Time Run Controls -->
           <div class="sec-console-controls">
-            <button id="sec-btn-cancel-run" class="danger compact" type="button" disabled>⏹ Cancel Run</button>
-            <button id="sec-btn-retry-failed" class="compact" type="button" hidden>🔄 Retry Failed Collectors</button>
-            <button id="sec-btn-run-again" class="compact" type="button" hidden>⚡ Run Again</button>
-            <button id="sec-btn-open-results" class="primary compact" type="button" hidden>📄 Open Results</button>
+            <button id="sec-btn-cancel-run" class="danger compact" type="button" disabled><svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" style="vertical-align:-1px;margin-right:4px;"><rect width="12" height="12" x="2" y="2" rx="2"/></svg>Cancel Run</button>
+            <button id="sec-btn-retry-failed" class="compact" type="button" hidden><svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" style="vertical-align:-1px;margin-right:4px;"><path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2z"/><path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466"/></svg>Retry Failed Collectors</button>
+            <button id="sec-btn-run-again" class="compact" type="button" hidden><svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" style="vertical-align:-1px;margin-right:4px;"><path d="M11.251.068a.5.5 0 0 1 .227.58L9.677 6.5H13a.5.5 0 0 1 .364.843l-8 8.5a.5.5 0 0 1-.842-.49L6.323 9.5H3a.5.5 0 0 1-.364-.843l8-8.5a.5.5 0 0 1 .615-.09z"/></svg>Run Again</button>
+            <button id="sec-btn-open-results" class="primary compact" type="button" hidden><svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" style="vertical-align:-1px;margin-right:4px;"><path d="M4 0h5.293A1 1 0 0 1 10 1.293L13.707 5a1 1 0 0 1 .293.707V14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2zm5.5 1.5v3.5a1 1 0 0 0 1 1h3.5zM4 1a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V6h-3.5A2.5 2.5 0 0 1 8 3.5V1z"/></svg>Open Results</button>
           </div>
         </div>
       </section>
@@ -543,7 +968,7 @@
       <section id="sec-panel-incidents" class="sec-tab-panel" role="tabpanel" aria-labelledby="sec-tab-incidents" hidden>
         <div class="sec-card">
           <div class="sec-card-header">
-            <h3>🚨 Consolidated Security Incidents</h3>
+            <h3><svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" style="vertical-align:-2px;margin-right:6px;"><path d="M7.005 3.1a1 1 0 1 1 1.99 0l-.388 6.35a.61.61 0 0 1-1.214 0zM7 12a1 1 0 1 1 2 0 1 1 0 0 1-2 0"/><path d="M4.968 1.045a.5.5 0 0 1 .088.702A7 7 0 0 0 3.03 6.03a.5.5 0 0 1-.99-.14 8 8 0 0 1 2.226-4.933.5.5 0 0 1 .702.088m6.064 0a.5.5 0 0 1 .702-.088 8 8 0 0 1 2.226 4.933.5.5 0 0 1-.99.14 7 7 0 0 0-2.026-4.283.5.5 0 0 1 .088-.702M0 10.5A1.5 1.5 0 0 1 1.5 9h13a1.5 1.5 0 0 1 1.5 1.5v1a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 0 11.5z"/></svg>Consolidated Security Incidents</h3>
             <div class="sec-search-group">
               <input id="sec-incidents-search" type="search" placeholder="Search incidents by IP, entity, category…" autocomplete="off">
               <select id="sec-incidents-filter-sev">
@@ -588,7 +1013,7 @@
       <section id="sec-panel-analysis" class="sec-tab-panel" role="tabpanel" aria-labelledby="sec-tab-analysis" hidden>
         <div class="sec-card">
           <div class="sec-card-header">
-            <h3>🧠 Autonomous AI Security Investigation</h3>
+            <h3><svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" style="vertical-align:-2px;margin-right:6px;"><path d="M6 1v1H4a2 2 0 0 0-2 2v2H1v2h1v2H1v2h1v2a2 2 0 0 0 2 2h2v1h2v-1h2v1h2v-1h2a2 2 0 0 0 2-2v-2h1v-2h-1V8h1V6h-1V4a2 2 0 0 0-2-2h-2V1H9v1H7V1zm-2 3h8a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1"/></svg>Autonomous AI Security Investigation</h3>
             <div class="sec-provider-badges">
               <span id="sec-codex-badge" class="badge-code">Codex: Ready</span>
               <span id="sec-antigravity-badge" class="badge-code">Antigravity: Ready</span>
@@ -611,7 +1036,7 @@
                 <option value="ANTIGRAVITY">Antigravity CLI</option>
               </select>
             </div>
-            <button id="sec-run-analysis-btn" class="primary compact" type="button">🚀 Run AI Analysis</button>
+            <button id="sec-run-analysis-btn" class="primary compact" type="button"><svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" style="vertical-align:-1px;margin-right:4px;"><path d="M14.08 1.92a.5.5 0 0 0-.6-.113l-4 2a.5.5 0 0 0-.194.218L6.467 9.24 3.75 6.523a.5.5 0 0 0-.708 0l-2 2a.5.5 0 0 0 0 .707l3.536 3.536a.5.5 0 0 0 .707 0l2-2a.5.5 0 0 0 0-.708L4.568 7.342l5.215-2.819a.5.5 0 0 0 .218-.194l2-4a.5.5 0 0 0-.114-.6zM9.854 11.146l-1-1a.5.5 0 0 0-.708.708l1 1a.5.5 0 0 0 .708-.708"/></svg>Run AI Analysis</button>
           </div>
           <div id="sec-analysis-progress" class="sec-console-stream" style="display: none; margin-bottom: 1rem; max-height: 180px;"></div>
           <div id="sec-analysis-container" class="sec-analysis-box">
@@ -624,8 +1049,8 @@
       <section id="sec-panel-history" class="sec-tab-panel" role="tabpanel" aria-labelledby="sec-tab-history" hidden>
         <div class="sec-card">
           <div class="sec-card-header">
-            <h3>📜 Security Review Run History</h3>
-            <button id="sec-history-refresh-btn" class="compact" type="button">🔄 Refresh History</button>
+            <h3><svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" style="vertical-align:-2px;margin-right:6px;"><path d="M14.5 3a.5.5 0 0 1 .5.5v9a2.5 2.5 0 0 1-2.5 2.5H2a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h10.5a.5.5 0 0 1 0 1H2a1 1 0 0 0-1 1v9a1 1 0 0 0 1 1h10.5a1.5 1.5 0 0 0 1.5-1.5V3.5a.5.5 0 0 1 .5-.5z"/><path d="M3 5.5a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7a.5.5 0 0 1-.5-.5zm0 3a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7a.5.5 0 0 1-.5-.5zm0 3a.5.5 0 0 1 .5-.5h4a.5.5 0 0 1 0 1h-4a.5.5 0 0 1-.5-.5z"/></svg>Security Review Run History</h3>
+            <button id="sec-history-refresh-btn" class="compact" type="button"><svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" style="vertical-align:-1px;margin-right:4px;"><path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2z"/><path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466"/></svg>Refresh History</button>
           </div>
           <div class="sec-table-container">
             <table id="sec-history-table" class="sec-data-table">
@@ -646,7 +1071,7 @@
             </table>
           </div>
           <div class="sec-card-header" style="margin-top: 1.5rem;">
-            <h3>📊 7-Day & 30-Day Fleet Threat Trends</h3>
+            <h3><svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" style="vertical-align:-2px;margin-right:6px;"><path d="M1 11a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1zm5-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1zm5-5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1z"/></svg>7-Day & 30-Day Fleet Threat Trends</h3>
             <span class="status-pill safe">Fleet Intelligence</span>
           </div>
           <div id="sec-trends-container" class="sec-trends-box" style="margin-top: 0.5rem;">
@@ -661,7 +1086,7 @@
   <dialog id="sec-incident-detail-dialog" class="security-agent-dialog sec-detail-modal" aria-labelledby="sec-detail-title">
     <div class="sec-dialog-header">
       <div class="sec-header-left">
-        <span class="brand-mark" aria-hidden="true">🛡️</span>
+        <span class="brand-mark" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M5.072.56C6.157.265 7.31 0 8 0s1.843.265 2.928.56c1.11.3 2.229.655 2.887.87a1.54 1.54 0 0 1 1.044 1.262c.596 4.477-.787 7.795-2.465 9.99a11.775 11.775 0 0 1-2.517 2.453 7.159 7.159 0 0 1-1.048.625c-.28.132-.581.24-.829.24s-.548-.108-.829-.24a7.158 7.158 0 0 1-1.048-.625 11.777 11.777 0 0 1-2.517-2.453C1.928 10.487.545 7.169 1.141 2.692A1.54 1.54 0 0 1 2.185 1.43 62.456 62.456 0 0 1 5.072.56z"/></svg></span>
         <div>
           <h2 id="sec-detail-title">Incident Details</h2>
           <span id="sec-detail-subtitle" class="badge-subtle">Stable Fingerprint</span>
@@ -670,7 +1095,7 @@
       <div class="sec-header-actions">
         <span id="sec-detail-severity-pill" class="status-pill warning">MEDIUM</span>
         <span id="sec-detail-lifecycle-pill" class="status-pill info">NEW</span>
-        <button id="sec-detail-close-btn" class="close-btn" type="button" aria-label="Close dialog">✕</button>
+        <button id="sec-detail-close-btn" class="close-btn" type="button" aria-label="Close dialog"><svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8 2.146 2.854z"/></svg></button>
       </div>
     </div>
     <div class="sec-dialog-body sec-detail-body">
@@ -714,7 +1139,7 @@
       <div id="sec-detail-identity-section" class="sec-detail-section" style="background:#0b172b;border:1px solid #1e293b;border-radius:8px;padding:12px 16px;margin-bottom:12px;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
           <h4 style="margin:0;color:#38bdf8;font-size:13px;">Attacker Identity Attribution</h4>
-          <button id="sec-detail-btn-resolve-identity" class="compact" type="button" style="border-color:#38bdf8;color:#38bdf8;font-size:11px;padding:3px 8px;">🔍 Resolve Identity</button>
+          <button id="sec-detail-btn-resolve-identity" class="compact" type="button" style="border-color:#38bdf8;color:#38bdf8;font-size:11px;padding:3px 8px;"><svg width="11" height="11" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" style="vertical-align:-1px;margin-right:4px;"><path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001q.044.06.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1 1 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0"/></svg>Resolve Identity</button>
         </div>
         <div class="sec-detail-grid" style="grid-template-columns:repeat(auto-fit, minmax(180px, 1fr));gap:10px;">
           <div class="sec-detail-col">
@@ -768,11 +1193,11 @@
       <div class="sec-detail-section sec-action-bar">
         <h4>Investigation & AI Analysis</h4>
         <div class="sec-action-buttons">
-          <button id="sec-detail-btn-analyze-codex" class="compact" type="button">🤖 Analyze with Codex</button>
-          <button id="sec-detail-btn-analyze-antigravity" class="compact" type="button">⚡ Analyze with Antigravity</button>
-          <button id="sec-detail-btn-analyze-both" class="compact" type="button">🔬 Analyze Both & Compare</button>
-          <button id="sec-detail-btn-open-chat" class="compact" type="button">💬 Open in Chat</button>
-          <button id="sec-detail-btn-troubleshoot" class="compact" type="button" style="border-color:#38bdf8;color:#38bdf8;font-weight:600;">🛠️ Start Troubleshooting</button>
+          <button id="sec-detail-btn-analyze-codex" class="compact" type="button"><svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" style="vertical-align:-1px;margin-right:4px;"><path d="M6 12.5a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 0 1h-3a.5.5 0 0 1-.5-.5M3 8.062C3 6.76 4.235 5.765 5.53 5.886a26.6 26.6 0 0 0 4.94 0C11.765 5.765 13 6.76 13 8.062v1.157a.93.93 0 0 1-.765.935c-.845.147-2.34.346-4.235.346s-3.39-.2-4.235-.346A.93.93 0 0 1 3 9.219zm4.542-.827a.75.75 0 1 0-1.084.675.75.75 0 0 0 1.084-.675m4 0a.75.75 0 1 0-1.084.675.75.75 0 0 0 1.084-.675M8 1a.5.5 0 0 1 .5.5v1.516a3.5 3.5 0 0 1 2.37 1.156A3.05 3.05 0 0 1 13 6v.5a.5.5 0 0 1-1 0V6a2.05 2.05 0 0 0-1.414-1.95A4.5 4.5 0 0 0 8 3.5c-.87 0-1.69.25-2.586.55A2.05 2.05 0 0 0 4 6v.5a.5.5 0 0 1-1 0V6a3.05 3.05 0 0 1 2.13-2.828A3.5 3.5 0 0 1 7.5 3.016V1.5A.5.5 0 0 1 8 1"/></svg>Analyze with Codex</button>
+          <button id="sec-detail-btn-analyze-antigravity" class="compact" type="button"><svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" style="vertical-align:-1px;margin-right:4px;"><path d="M11.251.068a.5.5 0 0 1 .227.58L9.677 6.5H13a.5.5 0 0 1 .364.843l-8 8.5a.5.5 0 0 1-.842-.49L6.323 9.5H3a.5.5 0 0 1-.364-.843l8-8.5a.5.5 0 0 1 .615-.09z"/></svg>Analyze with Antigravity</button>
+          <button id="sec-detail-btn-analyze-both" class="compact" type="button"><svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" style="vertical-align:-1px;margin-right:4px;"><path d="M5.5 0a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-1 0v-1a.5.5 0 0 1 .5-.5m4 0a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-1 0v-1a.5.5 0 0 1 .5-.5M6.646 3.146a.5.5 0 0 1 .708 0l2 2a.5.5 0 0 1 0 .708l-5 5a.5.5 0 0 1-.708 0l-2-2a.5.5 0 0 1 0-.708zm2.854 4.354-2-2L3 10l2 2zM1 14.5a.5.5 0 0 1 .5-.5h13a.5.5 0 0 1 0 1h-13a.5.5 0 0 1-.5-.5m4-2a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5"/></svg>Analyze Both & Compare</button>
+          <button id="sec-detail-btn-open-chat" class="compact" type="button"><svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" style="vertical-align:-1px;margin-right:4px;"><path d="M0 2a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-2.5a1 1 0 0 0-.8.4l-1.9 2.533a1 1 0 0 1-1.6 0L5.3 12.4a1 1 0 0 0-.8-.4H2a2 2 0 0 1-2-2z"/></svg>Open in Chat</button>
+          <button id="sec-detail-btn-troubleshoot" class="compact" type="button" style="border-color:#38bdf8;color:#38bdf8;font-weight:600;"><svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" style="vertical-align:-1px;margin-right:4px;"><path d="M1 0 0 1l2.2 3.081a1 1 0 0 0 .815.419h.07a1 1 0 0 1 .708.293l2.675 2.675-2.617 2.654A3.003 3.003 0 0 0 0 13a3 3 0 1 0 5.878-.851l2.654-2.617.968.968-.305.914a1 1 0 0 0 .242 1.023l3.27 3.27a.997.997 0 0 0 1.414 0l1.586-1.586a.997.997 0 0 0 0-1.414l-3.27-3.27a1 1 0 0 0-1.023-.242L10.5 9.5l-.96-.96 2.68-2.643A3.005 3.005 0 0 0 16 3q0-.405-.102-.777l-2.14 2.141L12 4l-.364-1.757L13.777.102a3 3 0 0 0-3.675 3.68L7.462 6.46 4.793 3.793a1 1 0 0 1-.293-.707v-.071a1 1 0 0 0-.419-.814zm9.646 10.646a.5.5 0 0 1 .708 0l2.5 2.5a.5.5 0 0 1-.708.708l-2.5-2.5a.5.5 0 0 1 0-.708"/></svg>Start Troubleshooting</button>
         </div>
       </div>
 
@@ -833,13 +1258,13 @@
 
   <dialog id="image-lightbox" class="image-lightbox" aria-label="Image Preview">
     <div class="lightbox-content">
-      <button id="close-lightbox" class="lightbox-close" type="button" aria-label="Close image">✕</button>
+      <button id="close-lightbox" class="lightbox-close" type="button" aria-label="Close image"><svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8 2.146 2.854z"/></svg></button>
       <img id="lightbox-img" src="" alt="Full size preview">
       <div id="lightbox-caption" class="lightbox-caption"></div>
     </div>
   </dialog>
 
   <noscript>This console requires JavaScript for presentation. Server safety controls remain authoritative.</noscript>
-  <script type="module" src="/scripts/auth.js"></script><script type="module" src="/scripts/threads.js"></script><script type="module" src="/scripts/composer.js"></script><script type="module" src="/scripts/activity.js"></script><script type="module" src="/scripts/evidence.js"></script><script type="module" src="/scripts/tool_calls.js"></script><script type="module" src="/scripts/providers.js"></script><script type="module" src="/scripts/approvals.js"></script><script type="module" src="/scripts/p10.js"></script><script type="module" src="/scripts/security_agent.js"></script>
+  <script type="module" src="/scripts/preferences.js"></script><script type="module" src="/scripts/auth.js"></script><script type="module" src="/scripts/threads.js"></script><script type="module" src="/scripts/composer.js"></script><script type="module" src="/scripts/activity.js"></script><script type="module" src="/scripts/evidence.js"></script><script type="module" src="/scripts/tool_calls.js"></script><script type="module" src="/scripts/providers.js"></script><script type="module" src="/scripts/approvals.js"></script><script type="module" src="/scripts/p10.js"></script><script type="module" src="/scripts/security_agent.js"></script>
 </body>
 </html>

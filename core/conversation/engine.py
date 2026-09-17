@@ -87,6 +87,18 @@ class ConversationEngine:
     def delete_thread(self, thread_id: str) -> bool:
         return self.store.delete_thread(thread_id)
 
+    def delete_threads(self, thread_ids: list[str]) -> dict[str, Any]:
+        return self.store.delete_threads(thread_ids)
+
+    def rename_thread(self, thread_id: str, title: str) -> dict[str, Any]:
+        return self.store.rename_thread(thread_id, title)
+
+    def archive_thread(self, thread_id: str) -> dict[str, Any]:
+        return self.store.archive_thread(thread_id)
+
+    def unarchive_thread(self, thread_id: str) -> dict[str, Any]:
+        return self.store.unarchive_thread(thread_id)
+
     def import_thread(self, payload: dict[str, Any]) -> dict[str, Any]:
         metadata = payload.get("thread", {}) if isinstance(payload, dict) else {}
         provider_id = str(metadata.get("provider_id", ""))
